@@ -7,10 +7,8 @@ export default function SettingsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-display font-bold">Settings</h1>
-        <p className="text-muted-foreground mt-1">
-          Manage your account and preferences
-        </p>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Settings</h1>
+        <p className="text-muted-foreground mt-1">Manage your account and preferences</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -19,9 +17,7 @@ export default function SettingsPage() {
             <CardTitle>Profile</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-muted-foreground">
-              Profile settings will be displayed here.
-            </p>
+            <p className="text-muted-foreground">Profile settings will be displayed here.</p>
           </CardContent>
         </Card>
 
@@ -41,9 +37,7 @@ export default function SettingsPage() {
             <CardTitle>API Settings</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-muted-foreground">
-              API configuration will be displayed here.
-            </p>
+            <p className="text-muted-foreground">API configuration will be displayed here.</p>
           </CardContent>
         </Card>
 

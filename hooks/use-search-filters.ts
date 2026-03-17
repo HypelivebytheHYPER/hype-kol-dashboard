@@ -17,10 +17,7 @@ export function useSearchFilters() {
     });
   }, []);
 
-  const setFilter = useCallback(<K extends keyof KOLFilter>(
-    key: K,
-    value: KOLFilter[K]
-  ) => {
+  const setFilter = useCallback(<K extends keyof KOLFilter>(key: K, value: KOLFilter[K]) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   }, []);
 
@@ -45,12 +42,12 @@ export function useSearchFilters() {
 export function useSearchCriteria() {
   const [criteria, setCriteria] = useState<SearchCriteria>({});
 
-  const setCriterion = useCallback(<K extends keyof SearchCriteria>(
-    key: K,
-    value: SearchCriteria[K]
-  ) => {
-    setCriteria((prev) => ({ ...prev, [key]: value }));
-  }, []);
+  const setCriterion = useCallback(
+    <K extends keyof SearchCriteria>(key: K, value: SearchCriteria[K]) => {
+      setCriteria((prev) => ({ ...prev, [key]: value }));
+    },
+    []
+  );
 
   const clearCriteria = useCallback(() => {
     setCriteria({});

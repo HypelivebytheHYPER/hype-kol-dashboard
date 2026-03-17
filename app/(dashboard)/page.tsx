@@ -1,321 +1,525 @@
-import { Suspense } from "react";
+"use client";
+
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { motion } from "framer-motion";
 import {
-  Briefcase,
+  Search,
   TrendingUp,
-  Percent,
   Radio,
-  ChevronRight,
-  Clock,
-  ArrowUpRight,
+  Sparkles,
+  Crown,
+  Users,
+  ArrowRight,
+  Play,
+  Star,
+  Zap,
+  Filter,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { formatCurrency } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { SmoothCarousel, CarouselItem } from "@/components/ui/smooth-carousel";
+import { KOLAvatar } from "@/components/ui/premium-avatar";
+import { useKOLs, useLiveSellers, useBeautyKOLs, useTechKOLs, useNicheKOLs } from "@/hooks";
+import { getKOLImageUrl } from "@/lib/lark-api";
+import { formatNumber, formatCurrency } from "@/lib/utils";
+import { getRecentSearches } from "@/lib/smart-search";
+import { useState, useMemo, useEffect } from "react";
+import { useI18n } from "@/lib/i18n-context";
+import { CATEGORIES } from "@/lib/config/categories";
 
-// Mock data - replace with actual API calls
-const stats = [
-  {
-    title: "Campaigns Active",
-    value: "2",
-    icon: Briefcase,
-    change: "+1 this week",
-    trend: "up",
-  },
-  {
-    title: "Projected GMV",
-    value: formatCurrency(4200000),
-    icon: TrendingUp,
-    change: "+15% vs last month",
-    trend: "up",
-  },
-  {
-    title: "Margin Avg",
-    value: "45%",
-    icon: Percent,
-    change: "+3% vs target",
-    trend: "up",
-  },
-  {
-    title: "Live Sellers",
-    value: "12",
-    icon: Radio,
-    change: "8 streaming now",
-    trend: "neutral",
-  },
-];
+export default function DiscoveryHubPage() {
+  const router = useRouter();
+  const { t, locale } = useI18n();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
 
-const recentSearches = [
-  { label: "Beauty > Micro", href: "/discovery?category=beauty&tier=micro" },
-  { label: "Live Seller > 1M GMV", href: "/discovery?type=live&gmvMin=1000000" },
-  { label: "Gen Z > Bangkok", href: "/discovery?audience=gen-z&location=bangkok" },
-];
+  // Fetch all KOLs and category-specific data
+  const { data: kolsData, isLoading: kolsLoading } = useKOLs();
+  const { data: sellersData, isLoading: sellersLoading } = useLiveSellers();
+  const { data: beautyData, isLoading: beautyLoading } = useBeautyKOLs();
+  const { data: techData, isLoading: techLoading } = useTechKOLs();
+  const { data: fashionData } = useNicheKOLs("fashion");
+  const { data: foodData } = useNicheKOLs("food");
 
-const activeCampaigns = [
-  {
-    id: "1",
-    name: "Sarah Beauty x Skincare Brand Q4",
-    brand: "L'Oreal",
-    budget: { total: 250000, spent: 185000 },
-    gmv: 185000,
-    roi: -26,
-    kolsAssigned: 3,
-    kolsTotal: 5,
-    status: "in_progress",
-    nextMilestone: "Nov 20 Content Review",
-  },
-  {
-    id: "2",
-    name: "Sunscreen x GoXip",
-    brand: "Goxip",
-    budget: { total: 500000, spent: 0 },
-    gmv: 0,
-    roi: 0,
-    kolsAssigned: 0,
-    kolsTotal: 8,
-    status: "planning",
-    nextMilestone: "KOL Selection by Mar 15",
-  },
-];
+  const kols = kolsData?.data || [];
+  const sellers = sellersData?.data || [];
 
-const trendingNow = [
-  {
-    name: "Mintra",
-    handle: "@mintrako8764",
-    isLive: true,
-    gmv: 450000,
-    viewers: 12000,
-    duration: 45,
-  },
-  {
-    name: "Winwin Center",
-    handle: "@winwincenter",
-    isLive: true,
-    gmv: 380000,
-    viewers: 8500,
-    duration: 32,
-  },
-  {
-    name: "Pimprapa",
-    handle: "@pimprapa",
-    isLive: false,
-    startingIn: 15,
-    gmv: null,
-    viewers: null,
-    duration: null,
-  },
-];
+  // Load recent searches
+  useEffect(() => {
+    setRecentSearches(getRecentSearches());
+  }, []);
 
-export default function CommandCenterPage() {
+  // Get category-specific KOLs with fallback to filtered general list
+  const categoryKOLs = useMemo(
+    () => ({
+      beauty: beautyData?.data || kols.filter((k) => k.categories?.includes("beauty")),
+      tech: techData?.data || kols.filter((k) => k.categories?.includes("tech")),
+      fashion: fashionData?.data || kols.filter((k) => k.categories?.includes("fashion")),
+      food: foodData?.data || kols.filter((k) => k.categories?.includes("food")),
+      lifestyle: kols.filter((k) => k.categories?.includes("lifestyle")),
+      health: kols.filter((k) => k.categories?.includes("health")),
+    }),
+    [beautyData, techData, fashionData, foodData, kols]
+  );
+
+  // Featured KOLs - top by GMV (overall)
+  // Note: computedImageUrl is provided by lark-http-hype API
+  const featuredKOLs = useMemo(() => {
+    return [...kols].sort((a, b) => (b.avgGMV || 0) - (a.avgGMV || 0)).slice(0, 4);
+  }, [kols]);
+
+  // Top live sellers
+  const topLiveSellers = useMemo(() => {
+    return [...sellers].sort((a, b) => (b.avgLiveGMV || 0) - (a.avgLiveGMV || 0)).slice(0, 6);
+  }, [sellers]);
+
+  // Rising stars - high engagement, medium followers
+  const risingStars = useMemo(() => {
+    return [...kols]
+      .filter((k) => k.followers >= 50000 && k.followers <= 500000)
+      .sort((a, b) => b.engagementRate - a.engagementRate)
+      .slice(0, 4);
+  }, [kols]);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/kols?q=${encodeURIComponent(searchQuery)}`);
+    }
+  };
+
+  const isLoading = kolsLoading || sellersLoading;
+
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-display font-bold">Command Center</h1>
-        <p className="text-muted-foreground mt-1">
-          Executive overview and quick actions
-        </p>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat) => (
-          <Card key={stat.title} className="card-hover">
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">{stat.title}</p>
-                  <p className="text-3xl font-bold mt-2">{stat.value}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {stat.change}
-                  </p>
-                </div>
-                <div className="p-3 rounded-lg bg-muted">
-                  <stat.icon className="w-5 h-5 text-primary" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Two Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Quick Discovery */}
-        <Card>
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg">Quick Discovery</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search KOLs, campaigns, or brands..."
-                className="w-full h-12 px-4 rounded-lg bg-muted border border-input focus:outline-none focus:ring-2 focus:ring-primary/20"
-              />
+    <div className="space-y-10">
+      {/* Hero Section */}
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/5 via-primary/10 to-background border">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent" />
+        <div className="relative px-4 sm:px-6 py-8 sm:py-12 md:px-12 md:py-16">
+          <div className="max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <Badge variant="secondary" className="gap-1.5 px-3 py-1">
+                <Sparkles className="w-3.5 h-3.5" />
+                {t("hero.badgePlatform")}
+              </Badge>
+              <Badge variant="outline" className="gap-1.5 px-3 py-1">
+                <Radio className="w-3.5 h-3.5 text-red-500" />
+                {sellers.filter((s) => s.isLiveNow).length} {t("hero.liveNow")}
+              </Badge>
             </div>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-4">
+              {t("hero.title")}
+            </h1>
+            <p className="text-base sm:text-lg text-muted-foreground mb-6 sm:mb-8">
+              {t("hero.description", { count: formatNumber(kolsData?.total || 0) })}
+            </p>
 
-            <div>
-              <p className="text-sm text-muted-foreground mb-3">Recent Searches</p>
-              <div className="space-y-2">
-                {recentSearches.map((search) => (
-                  <a
-                    key={search.label}
-                    href={search.href}
-                    className="flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors group"
+            {/* Smart Search */}
+            <form onSubmit={handleSearch} className="relative max-w-xl">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Input
+                placeholder={t("hero.searchPlaceholder")}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full h-12 sm:h-14 pl-12 pr-20 sm:pr-32 text-base rounded-2xl border-2 border-primary/20 focus:border-primary shadow-lg"
+              />
+              <Button
+                type="submit"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl"
+                size="sm"
+              >
+                <span className="hidden sm:inline">{t("common.search")}</span>
+                <Search className="w-4 h-4 sm:hidden" />
+              </Button>
+            </form>
+
+            {/* Quick suggestions */}
+            {recentSearches.length > 0 && (
+              <div className="flex items-center gap-2 mt-4 flex-wrap">
+                <span className="text-sm text-muted-foreground">{t("hero.recentSearches")}:</span>
+                {recentSearches.slice(0, 3).map((search) => (
+                  <button
+                    key={search}
+                    onClick={() => router.push(`/kols?q=${encodeURIComponent(search)}`)}
+                    className="text-sm text-primary hover:underline"
                   >
-                    <span className="text-sm">{search.label}</span>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </a>
+                    {search}
+                  </button>
                 ))}
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            )}
+          </div>
+        </div>
+      </section>
 
-        {/* Active Campaigns */}
-        <Card>
-          <CardHeader className="pb-4 flex flex-row items-center justify-between">
-            <CardTitle className="text-lg">Active Campaigns</CardTitle>
-            <Button variant="ghost" size="sm" asChild>
-              <a href="/campaigns">
-                View All
-                <ChevronRight className="w-4 h-4 ml-1" />
-              </a>
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {activeCampaigns.map((campaign) => (
+      {/* Categories */}
+      <section>
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
+          <h2 className="text-lg sm:text-xl font-semibold flex items-center gap-2">
+            <Filter className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+            {t("categories.browseBy")}
+          </h2>
+          <Button variant="ghost" size="sm" onClick={() => router.push("/kols")}>
+            <span className="hidden sm:inline">{t("common.viewAll")}</span>
+            <ArrowRight className="w-4 h-4 sm:ml-1" />
+          </Button>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => router.push(`/kols?category=${cat.id}`)}
+              className="group relative overflow-hidden rounded-xl sm:rounded-2xl p-3 sm:p-4 text-left transition-all hover:shadow-lg animate-in fade-in duration-300"
+            >
               <div
-                key={campaign.id}
-                className="p-4 rounded-lg border border-border space-y-3"
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h4 className="font-medium">{campaign.name}</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {campaign.kolsAssigned} KOL assigned
-                      {campaign.kolsAssigned !== 1 ? "s" : ""}
-                    </p>
-                  </div>
-                  <Badge
-                    variant={
-                      campaign.status === "in_progress" ? "default" : "secondary"
-                    }
-                  >
-                    {campaign.status === "in_progress"
-                      ? "In Progress"
-                      : "Planning"}
-                  </Badge>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">
-                      {formatCurrency(campaign.budget.spent)} /{" "}
-                      {formatCurrency(campaign.budget.total)}
-                    </span>
-                    <span
-                      className={
-                        campaign.roi >= 0 ? "text-green-500" : "text-red-500"
-                      }
-                    >
-                      {campaign.roi > 0 ? "+" : ""}
-                      {campaign.roi}% ROI
-                    </span>
-                  </div>
-                  <Progress
-                    value={(campaign.budget.spent / campaign.budget.total) * 100}
-                  />
-                </div>
-
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Clock className="w-3 h-3" />
-                  <span>Next: {campaign.nextMilestone}</span>
-                </div>
+                className={`absolute inset-0 bg-gradient-to-br ${cat.color} opacity-10 group-hover:opacity-20 transition-opacity`}
+              />
+              <div className="relative">
+                <cat.icon className="w-6 h-6 sm:w-8 sm:h-8 mb-2 sm:mb-3 block" />
+                <p className="font-medium text-xs sm:text-sm leading-tight">{cat.name}</p>
               </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
+            </button>
+          ))}
+        </div>
+      </section>
 
-      {/* Trending Now */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-title font-semibold">Trending Now</h2>
-          <Button variant="ghost" size="sm" asChild>
-            <a href="/live">
-              View Live Center
-              <ArrowUpRight className="w-4 h-4 ml-1" />
-            </a>
+      {/* Category-specific KOLs with Smooth Carousel */}
+      <section className="space-y-10">
+        {CATEGORIES.filter(
+          (cat) => categoryKOLs[cat.id as keyof typeof categoryKOLs]?.length > 0
+        ).map((cat) => (
+          <div key={cat.id}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <cat.icon className="w-5 h-5" />
+                <h2 className="text-lg font-semibold">{cat.name}</h2>
+                <Badge variant="secondary" className="ml-2">
+                  {categoryKOLs[cat.id as keyof typeof categoryKOLs]?.length || 0} KOLs
+                </Badge>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.push(`/kols?category=${cat.id}`)}
+              >
+                {t("common.viewAll")}
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </Button>
+            </div>
+            <SmoothCarousel itemWidth={240} gap={16}>
+              {categoryKOLs[cat.id as keyof typeof categoryKOLs]?.map(
+                (kol: {
+                  id: string;
+                  name: string;
+                  handle: string;
+                  tier?: string;
+                  followers?: number;
+                  avgGMV?: number;
+                  isLiveNow?: boolean;
+                  categories?: string[];
+                }) => (
+                  <CarouselItem key={kol.id} width={240}>
+                    <div
+                      onClick={() => router.push(`/kols/${kol.id}`)}
+                      className="group cursor-pointer p-4 rounded-xl border bg-card hover:shadow-lg hover:border-primary/20 transition-all h-full"
+                    >
+                      <div className="flex items-center gap-3 mb-3">
+                        <KOLAvatar
+                          kol={kol}
+                          size="lg"
+                          ring
+                          ringColor="ring-primary/20 group-hover:ring-primary"
+                          className="transition-all"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-sm truncate group-hover:text-primary transition-colors">
+                            {kol.name}
+                          </h4>
+                          <p className="text-xs text-muted-foreground truncate">@{kol.handle}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between text-xs mb-2">
+                        <span className="text-muted-foreground flex items-center gap-1">
+                          <Users className="w-3 h-3" />
+                          {formatNumber(kol.followers || 0)}
+                        </span>
+                        {kol.avgGMV ? (
+                          <span className="font-medium text-green-600">
+                            {formatCurrency(kol.avgGMV)}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </div>
+                      {kol.isLiveNow && (
+                        <Badge className="text-[10px] bg-red-500 text-white animate-pulse">
+                          <Radio className="w-2 h-2 mr-1" />
+                          {t("common.live")}
+                        </Badge>
+                      )}
+                    </div>
+                  </CarouselItem>
+                )
+              )}
+            </SmoothCarousel>
+          </div>
+        ))}
+      </section>
+
+      {/* Featured KOLs - Top Performers with Smooth Carousel */}
+      <section>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <Crown className="w-5 h-5 text-amber-500" />
+            <h2 className="text-xl font-semibold">{t("sections.topPerformers")}</h2>
+            <Badge variant="secondary">{t("sections.byGmv")}</Badge>
+          </div>
+          <Button variant="ghost" size="sm" onClick={() => router.push("/kols?sort=gmv")}>
+            {t("common.seeAll")}
+            <ArrowRight className="w-4 h-4 ml-1" />
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {trendingNow.map((kol) => (
-            <Card key={kol.handle} className="card-hover">
-              <CardContent className="p-4">
-                <div className="flex items-start gap-3">
-                  <Avatar className="w-12 h-12">
-                    <AvatarImage src={`/avatars/${kol.handle}.jpg`} />
-                    <AvatarFallback>{kol.name[0]}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-medium truncate">{kol.name}</h4>
-                      {kol.isLive && (
-                        <span className="flex items-center gap-1 text-xs text-red-500">
-                          <span className="w-2 h-2 rounded-full bg-red-500 live-indicator" />
-                          LIVE
-                        </span>
+        {isLoading ? (
+          <div className="flex gap-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-48 w-[280px] rounded-xl bg-muted animate-pulse flex-shrink-0"
+              />
+            ))}
+          </div>
+        ) : (
+          <SmoothCarousel itemWidth={280} gap={16}>
+            {featuredKOLs.map((kol, index) => (
+              <CarouselItem key={kol.id} width={280}>
+                <div
+                  onClick={() => router.push(`/kols/${kol.id}`)}
+                  className="group cursor-pointer relative overflow-hidden rounded-xl border bg-card hover:shadow-xl transition-all h-full"
+                >
+                  <div className="aspect-[4/3] relative bg-muted">
+                    <Image
+                      src={
+                        kol.computedImageUrl ||
+                        getKOLImageUrl({
+                          imageUrl: kol.imageUrl,
+                          handle: kol.handle,
+                          platform: kol.platform,
+                        })
+                      }
+                      alt={kol.name}
+                      fill
+                      sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 280px"
+                      priority={index < 2}
+                      loading={index < 2 ? "eager" : "lazy"}
+                      quality={index < 2 ? 85 : 75}
+                      placeholder="blur"
+                      blurDataURL="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PC9zdmc+"
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                    <div className="absolute top-3 left-3 flex gap-2">
+                      <Badge className="bg-primary text-white text-xs px-2 py-0.5">
+                        <Crown className="w-3 h-3 mr-1" />
+                        {kol.tier?.replace(" KOL", "")}
+                      </Badge>
+                      {kol.isLiveNow && (
+                        <Badge className="bg-red-500 text-white text-xs px-2 py-0.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse mr-1" />
+                          {t("common.live")}
+                        </Badge>
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground">{kol.handle}</p>
+                    <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+                      <h3 className="font-semibold text-lg truncate">{kol.name}</h3>
+                      <p className="text-sm text-white/80 truncate">@{kol.handle}</p>
+                      <div className="flex items-center gap-4 mt-2 text-sm">
+                        <span className="flex items-center gap-1">
+                          <Users className="w-4 h-4" />
+                          {formatNumber(kol.followers)}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <TrendingUp className="w-4 h-4" />
+                          {formatCurrency(kol.avgGMV || 0)}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
+              </CarouselItem>
+            ))}
+          </SmoothCarousel>
+        )}
+      </section>
 
-                <div className="mt-4 pt-4 border-t border-border">
-                  {kol.isLive ? (
-                    <div className="grid grid-cols-3 gap-2 text-center">
-                      <div>
-                        <p className="text-lg font-bold font-mono">
-                          {formatCurrency(kol.gmv || 0)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">GMV</p>
-                      </div>
-                      <div>
-                        <p className="text-lg font-bold font-mono">
-                          {kol.viewers?.toLocaleString()}
-                        </p>
-                        <p className="text-xs text-muted-foreground">Viewers</p>
-                      </div>
-                      <div>
-                        <p className="text-lg font-bold font-mono">
-                          {kol.duration}m
-                        </p>
-                        <p className="text-xs text-muted-foreground">Duration</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center gap-2 py-2">
-                      <Clock className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">
-                        Starting in {kol.startingIn} min
-                      </span>
-                    </div>
+      {/* Live Sellers Section */}
+      <section className="bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-950/20 dark:to-orange-950/20 rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-4 sm:mb-6">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="relative">
+              <Radio className="w-5 h-5 sm:w-6 sm:h-6 text-red-500" />
+              <span className="absolute -top-1 -right-1 w-2 h-2 sm:w-2.5 sm:h-2.5 bg-red-500 rounded-full animate-pulse" />
+            </div>
+            <div>
+              <h2 className="text-lg sm:text-xl font-semibold">
+                {t("sections.liveCommerceStars")}
+              </h2>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                {t("sections.liveCommerceDescription")}
+              </p>
+            </div>
+          </div>
+          <Button onClick={() => router.push("/live")} size="sm" className="w-full sm:w-auto">
+            <Play className="w-4 h-4 mr-2" />
+            {t("sections.viewLiveCenter")}
+          </Button>
+        </div>
+
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-24 sm:h-32 rounded-xl sm:rounded-2xl bg-white/50 animate-pulse"
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            {topLiveSellers.map((seller, i) => (
+              <motion.div
+                key={seller.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.05 }}
+                onClick={() => router.push(`/kols/${seller.id}`)}
+                className="group cursor-pointer flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-white dark:bg-black/20 border hover:shadow-lg transition-all"
+              >
+                <div className="relative shrink-0">
+                  <KOLAvatar
+                    kol={{
+                      ...seller,
+                      computedImageUrl: (seller as typeof seller & { computedImageUrl?: string })
+                        .computedImageUrl,
+                    }}
+                    size="xl"
+                    ring
+                    ringColor="ring-red-500/20"
+                  />
+                  {seller.isLiveNow && (
+                    <span className="absolute -bottom-1 -right-1 px-1 py-0.5 bg-red-500 text-white text-[8px] sm:text-[10px] font-bold rounded-full">
+                      LIVE
+                    </span>
                   )}
                 </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-semibold text-sm sm:text-base truncate">{seller.name}</h4>
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                    @{seller.handle}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2 mt-1">
+                    <Badge variant="outline" className="text-[10px] sm:text-xs">
+                      {seller.platform}
+                    </Badge>
+                    <span className="text-[10px] sm:text-xs text-green-600 font-medium">
+                      {formatCurrency(seller.avgLiveGMV || 0)} avg
+                    </span>
+                  </div>
+                </div>
+                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </section>
 
-                <Button className="w-full mt-4" variant="outline" size="sm">
-                  {kol.isLive ? "Watch Stream" : "Notify Me"}
-                </Button>
-              </CardContent>
-            </Card>
+      {/* Rising Stars */}
+      <section>
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
+          <div className="flex items-center gap-2">
+            <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500" />
+            <h2 className="text-lg sm:text-xl font-semibold">{t("sections.risingStars")}</h2>
+            <Badge variant="secondary" className="text-[10px] sm:text-xs">
+              {t("sections.highEngagement")}
+            </Badge>
+          </div>
+          <Button variant="ghost" size="sm" onClick={() => router.push("/kols?sort=engagement")}>
+            <span className="hidden sm:inline">{t("common.discoverMore")}</span>
+            <span className="sm:hidden">{t("common.more")}</span>
+            <ArrowRight className="w-4 h-4 ml-1" />
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          {risingStars.map((kol, i) => (
+            <motion.div
+              key={kol.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1 }}
+              onClick={() => router.push(`/kols/${kol.id}`)}
+              className="group cursor-pointer p-3 sm:p-4 rounded-xl sm:rounded-2xl border bg-card hover:shadow-lg transition-all"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <KOLAvatar kol={kol} size="lg" ring ringColor="ring-yellow-500/20" />
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-semibold text-sm sm:text-base truncate">{kol.name}</h4>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">@{kol.handle}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-center">
+                <div className="p-2 rounded-lg bg-muted">
+                  <p className="font-mono font-bold text-primary text-sm sm:text-base">
+                    {kol.engagementRate.toFixed(1)}%
+                  </p>
+                  <p className="text-[10px] sm:text-[11px] text-muted-foreground">Engagement</p>
+                </div>
+                <div className="p-2 rounded-lg bg-muted">
+                  <p className="font-mono font-bold text-sm sm:text-base">
+                    {formatNumber(kol.followers)}
+                  </p>
+                  <p className="text-[10px] sm:text-[11px] text-muted-foreground">Followers</p>
+                </div>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-1">
+                {kol.categories?.slice(0, 2).map((cat) => (
+                  <Badge key={cat} variant="secondary" className="text-[9px] sm:text-[10px]">
+                    {cat}
+                  </Badge>
+                ))}
+              </div>
+            </motion.div>
           ))}
         </div>
-      </div>
+      </section>
+
+      {/* Stats Footer */}
+      <section className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 py-6 sm:py-8 border-t">
+        {[
+          { label: t("stats.totalKols"), value: formatNumber(kolsData?.total || 0), icon: Users },
+          {
+            label: t("stats.liveSellers"),
+            value: formatNumber(sellersData?.total || 0),
+            icon: Radio,
+          },
+          {
+            label: t("stats.avgGmv"),
+            value: formatCurrency(
+              kols.length > 0 ? kols.reduce((s, k) => s + (k.avgGMV || 0), 0) / kols.length : 0
+            ),
+            icon: TrendingUp,
+          },
+          { label: t("stats.categories"), value: "15+", icon: Star },
+        ].map((stat) => (
+          <div key={stat.label} className="text-center p-2 sm:p-0">
+            <stat.icon className="w-4 h-4 sm:w-5 sm:h-5 mx-auto mb-1.5 sm:mb-2 text-primary" />
+            <p className="text-lg sm:text-2xl font-bold">{stat.value}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">{stat.label}</p>
+          </div>
+        ))}
+      </section>
     </div>
   );
 }

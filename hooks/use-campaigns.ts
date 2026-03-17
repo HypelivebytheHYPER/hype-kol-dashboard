@@ -2,69 +2,111 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { larkApi } from "@/lib/lark-api";
-import type { Campaign, CampaignCreateInput } from "@/lib/types";
 
-// Query keys
 export const campaignKeys = {
   all: ["campaigns"] as const,
-  lists: () => [...campaignKeys.all, "list"] as const,
-  list: (filters?: string) => [...campaignKeys.lists(), filters] as const,
-  details: () => [...campaignKeys.all, "detail"] as const,
-  detail: (id: string) => [...campaignKeys.details(), id] as const,
+  list: () => [...campaignKeys.all, "list"] as const,
+  detail: (id: string) => [...campaignKeys.all, "detail", id] as const,
 };
 
-// Hook to fetch all campaigns
+// Standard retry config for rate limiting
+const retryConfig = {
+  retry: (failureCount: number, error: Error) => {
+    if (error.message.includes("404")) return false;
+    if (error.message.includes("501")) return false;
+    if (error.message.includes("503")) return false;
+    return failureCount < 3;
+  },
+  retryDelay: (attemptIndex: number) => Math.min(1000 * Math.pow(2, attemptIndex), 10000),
+};
+
 export function useCampaigns() {
   return useQuery({
-    queryKey: campaignKeys.lists(),
-    queryFn: async () => {
-      // For now, return mock data
-      // In production: return await larkApi.getCampaigns();
-      return [] as Campaign[];
-    },
+    queryKey: campaignKeys.list(),
+    queryFn: () => larkApi.getCampaigns(),
+    staleTime: 60_000,
+    ...retryConfig,
   });
 }
 
-// Hook to fetch a single campaign
 export function useCampaign(id: string) {
   return useQuery({
     queryKey: campaignKeys.detail(id),
-    queryFn: async () => {
-      // For now, return null
-      // In production: return await larkApi.getCampaign(id);
-      return null as Campaign | null;
-    },
+    queryFn: () => larkApi.getCampaign(id),
     enabled: !!id,
+    staleTime: 60_000,
+    ...retryConfig,
   });
 }
 
-// Hook to create a campaign
 export function useCreateCampaign() {
-  const queryClient = useQueryClient();
-
+  const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: CampaignCreateInput) => {
-      // In production: return await larkApi.createCampaign(input);
-      return {} as Campaign;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: campaignKeys.lists() });
+    mutationFn: (body: Record<string, unknown>) => larkApi.createCampaign(body),
+    onSuccess: (data) => {
+      // Immediately inject into list cache so UI doesn't wait for CDN-cached GET
+      if (data?.data) {
+        qc.setQueryData(
+          campaignKeys.list(),
+          (old: { data: unknown[]; total: number } | undefined) => {
+            if (!old?.data) return old;
+            return { ...old, data: [...old.data, data.data], total: (old.total ?? 0) + 1 };
+          }
+        );
+      }
+      qc.invalidateQueries({ queryKey: campaignKeys.all });
     },
   });
 }
 
-// Hook to update a campaign
-export function useUpdateCampaign(id: string) {
-  const queryClient = useQueryClient();
-
+export function useUpdateCampaign() {
+  const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (data: Partial<Campaign>) => {
-      // In production: return await larkApi.updateCampaign(id, data);
-      return {} as Campaign;
+    mutationFn: ({ id, ...body }: { id: string } & Record<string, unknown>) =>
+      larkApi.updateCampaign(id, body),
+    onSuccess: (data, variables) => {
+      // Immediately update both detail and list caches — bypasses CDN stale reads
+      if (data?.data) {
+        qc.setQueryData(campaignKeys.detail(variables.id), { data: data.data });
+        qc.setQueryData(
+          campaignKeys.list(),
+          (old: { data: Record<string, unknown>[]; total: number } | undefined) => {
+            if (!old?.data) return old;
+            return {
+              ...old,
+              data: old.data.map((c) => (c.id === variables.id ? { ...c, ...data.data } : c)),
+            };
+          }
+        );
+      }
+      qc.invalidateQueries({ queryKey: campaignKeys.all });
+      qc.invalidateQueries({ queryKey: campaignKeys.detail(variables.id) });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: campaignKeys.detail(id) });
-      queryClient.invalidateQueries({ queryKey: campaignKeys.lists() });
+  });
+}
+
+export function useDeleteCampaign() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      fetch(`/api/lark/api/campaigns/${id}`, { method: "DELETE" }).then((res) => {
+        if (!res.ok) throw new Error("Failed to delete campaign");
+      }),
+    onSuccess: (_, id) => {
+      // Remove from list cache immediately
+      qc.setQueryData(
+        campaignKeys.list(),
+        (old: { data: Record<string, unknown>[]; total: number } | undefined) => {
+          if (!old?.data) return old;
+          return {
+            ...old,
+            data: old.data.filter((c) => c.id !== id),
+            total: Math.max(0, (old.total ?? 0) - 1),
+          };
+        }
+      );
+      qc.removeQueries({ queryKey: campaignKeys.detail(id) });
+      qc.invalidateQueries({ queryKey: campaignKeys.all });
     },
   });
 }

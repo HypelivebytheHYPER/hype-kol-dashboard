@@ -2,7 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:is(.dark, .dark *));
 
 :root {
   --radius: 0.625rem;
@@ -22,11 +22,11 @@
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.809 0.105 251.813);
-  --chart-2: oklch(0.623 0.214 259.815);
-  --chart-3: oklch(0.546 0.245 262.881);
-  --chart-4: oklch(0.488 0.243 264.376);
-  --chart-5: oklch(0.424 0.199 265.638);
+  --chart-1: oklch(0.65 0.22 35);
+  --chart-2: oklch(0.62 0.2 165);
+  --chart-3: oklch(0.6 0.22 280);
+  --chart-4: oklch(0.68 0.2 140);
+  --chart-5: oklch(0.62 0.24 350);
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --sidebar: oklch(0.985 0 0);
@@ -86,7 +86,11 @@
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -110,45 +114,152 @@ body {
   background: var(--muted-foreground);
 }
 
-/* Typography scale */
+/* =========================================================
+   TYPOGRAPHY SCALE
+   Based on 4px grid, Major Third (1.25) ratio
+   Body: 16px, Line-height: 1.5-1.6 for readability
+   ========================================================= */
+
+/* Display - Use sparingly for hero headlines */
 .text-display {
   font-size: 48px;
   line-height: 1.1;
   letter-spacing: -0.02em;
+  font-weight: 700;
 }
 
+/* Title - Page headers */
 .text-title {
   font-size: 32px;
   line-height: 1.2;
   letter-spacing: -0.02em;
+  font-weight: 700;
 }
 
+/* H2 - Section headers */
+.text-heading {
+  font-size: 24px;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  font-weight: 600;
+}
+
+/* Subtitle - Card titles, subsections */
 .text-subtitle {
   font-size: 18px;
   line-height: 1.4;
   letter-spacing: -0.01em;
+  font-weight: 500;
 }
 
+/* Body - Primary text (16px minimum for readability) */
 .text-body {
+  font-size: 16px;
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+/* Small - Secondary text, captions */
+.text-small {
   font-size: 14px;
   line-height: 1.5;
+  letter-spacing: 0;
+  font-weight: 400;
 }
 
-.text-small {
-  font-size: 12px;
-  line-height: 1.5;
-  letter-spacing: 0.01em;
-}
-
+/* Micro - Labels, tags, metadata */
 .text-micro {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.4;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
+  font-weight: 400;
+}
+
+/* =========================================================
+   SPACING SCALE (4px base grid)
+   Use these values for margins, padding, gaps
+   ========================================================= */
+
+:root {
+  --space-0: 0px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+}
+
+/* Utility classes for spacing */
+.gap-1 {
+  gap: var(--space-1);
+}
+.gap-2 {
+  gap: var(--space-2);
+}
+.gap-3 {
+  gap: var(--space-3);
+}
+.gap-4 {
+  gap: var(--space-4);
+}
+.gap-5 {
+  gap: var(--space-5);
+}
+.gap-6 {
+  gap: var(--space-6);
+}
+.gap-8 {
+  gap: var(--space-8);
+}
+
+.p-1 {
+  padding: var(--space-1);
+}
+.p-2 {
+  padding: var(--space-2);
+}
+.p-3 {
+  padding: var(--space-3);
+}
+.p-4 {
+  padding: var(--space-4);
+}
+.p-5 {
+  padding: var(--space-5);
+}
+.p-6 {
+  padding: var(--space-6);
+}
+
+.m-1 {
+  margin: var(--space-1);
+}
+.m-2 {
+  margin: var(--space-2);
+}
+.m-3 {
+  margin: var(--space-3);
+}
+.m-4 {
+  margin: var(--space-4);
+}
+.m-5 {
+  margin: var(--space-5);
+}
+.m-6 {
+  margin: var(--space-6);
 }
 
 /* Mono font for numbers */
 .font-mono {
-  font-family: 'JetBrains Mono', 'SF Mono', monospace;
+  font-family: "JetBrains Mono", "SF Mono", monospace;
 }
 
 /* Live indicator */
@@ -157,11 +268,12 @@ body {
 }
 
 @keyframes pulse-live {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
-    opacity: .5;
+    opacity: 0.5;
   }
 }
 
@@ -209,7 +321,7 @@ body {
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.87 0.00 0);
+  --primary: oklch(0.87 0 0);
   --primary-foreground: oklch(0.205 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
@@ -221,11 +333,11 @@ body {
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.809 0.105 251.813);
-  --chart-2: oklch(0.623 0.214 259.815);
-  --chart-3: oklch(0.546 0.245 262.881);
-  --chart-4: oklch(0.488 0.243 264.376);
-  --chart-5: oklch(0.424 0.199 265.638);
+  --chart-1: oklch(0.78 0.22 35);
+  --chart-2: oklch(0.74 0.2 165);
+  --chart-3: oklch(0.72 0.22 280);
+  --chart-4: oklch(0.8 0.2 140);
+  --chart-5: oklch(0.74 0.24 350);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
@@ -234,4 +346,125 @@ body {
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+}
+
+/* Remove ugly focus rings - use subtle shadow instead */
+*:focus {
+  outline: none !important;
+}
+
+*:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 2px var(--primary) !important;
+}
+
+button:focus-visible,
+a:focus-visible {
+  box-shadow:
+    0 0 0 2px var(--primary),
+    0 0 0 4px var(--background) !important;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Better touch targets for mobile */
+@media (max-width: 640px) {
+  button,
+  a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Disable text selection on interactive elements */
+button,
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* GPU acceleration for animations */
+.gpu-accelerated {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* Prevent horizontal scroll on mobile */
+body {
+  overflow-x: hidden;
+}
+
+/* Touch action for swipe gestures */
+.swipe-container {
+  touch-action: pan-y;
+  user-select: none;
+}
+
+/* Hide scrollbar utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* xs breakpoint utility (320px+) */
+@media (min-width: 320px) {
+  .xs\:inline {
+    display: inline;
+  }
+}
+
+/* iOS Safe Area support */
+.h-safe-area-inset-bottom {
+  height: env(safe-area-inset-bottom, 0px);
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Mobile bottom nav height */
+@media (max-width: 1023px) {
+  :root {
+    --bottom-nav-height: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Mobile performance optimizations */
+@media (max-width: 768px) {
+  /* Disable complex hover effects on touch devices */
+  .card-hover:hover {
+    transform: none;
+  }
+
+  /* Faster transitions on mobile */
+  * {
+    transition-duration: 0.15s !important;
+  }
+
+  /* Reduce motion for better performance */
+  @media (prefers-reduced-motion: no-preference) {
+    .motion-reduce-mobile {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
 }

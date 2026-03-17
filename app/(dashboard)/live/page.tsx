@@ -1,387 +1,458 @@
 "use client";
 
-import { useState } from "react";
-import { Radio, TrendingUp, Users, Clock, Filter } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useMemo, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { motion } from "framer-motion";
+import {
+  Radio,
+  TrendingUp,
+  Users,
+  Clock,
+  Play,
+  Heart,
+  Share2,
+  Flame,
+  Star,
+  Calendar,
+  ArrowRight,
+  Filter,
+  Search,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { formatCurrency, formatNumber } from "@/lib/utils";
+import { KOLAvatar } from "@/components/ui/premium-avatar";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useLiveSellers, useKOLs } from "@/hooks";
+import { getKOLImageUrl, type ApiLiveSeller } from "@/lib/lark-api";
+import { formatNumber, formatCurrency } from "@/lib/utils";
 
-const liveNowKOLs = [
-  {
-    id: "1",
-    name: "Mintra",
-    handle: "@mintrako8764",
-    avatar: "/avatars/mintra.jpg",
-    platform: "tiktok",
-    currentViewers: 12000,
-    gmv: 450000,
-    startedAt: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
-    productsSold: 156,
-    engagement: 8.5,
-    chatMessages: 2340,
-  },
-  {
-    id: "2",
-    name: "Winwin Center",
-    handle: "@winwincenter",
-    avatar: "/avatars/winwin.jpg",
-    platform: "tiktok",
-    currentViewers: 8500,
-    gmv: 380000,
-    startedAt: new Date(Date.now() - 32 * 60 * 1000).toISOString(),
-    productsSold: 98,
-    engagement: 7.2,
-    chatMessages: 1850,
-  },
-  {
-    id: "3",
-    name: "TechReviewer Pro",
-    handle: "@techreviewer_pro",
-    avatar: "/avatars/tech.jpg",
-    platform: "youtube",
-    currentViewers: 5200,
-    gmv: 120000,
-    startedAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-    productsSold: 45,
-    engagement: 5.8,
-    chatMessages: 890,
-  },
-  {
-    id: "4",
-    name: "Beauty Blogger Sarah",
-    handle: "@sarahbeauty",
-    avatar: "/avatars/sarah.jpg",
-    platform: "instagram",
-    currentViewers: 3100,
-    gmv: 95000,
-    startedAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
-    productsSold: 32,
-    engagement: 12.3,
-    chatMessages: 1200,
-  },
-];
+export default function LiveShowcasePage() {
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState("live");
+  const [searchQuery, setSearchQuery] = useState("");
 
-const scheduledKOLs = [
-  {
-    id: "5",
-    name: "Pimprapa",
-    handle: "@pimprapa",
-    avatar: "/avatars/pimprapa.jpg",
-    platform: "tiktok",
-    scheduledFor: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
-    estimatedViewers: 8000,
-    campaign: "Sunscreen Launch",
-  },
-  {
-    id: "6",
-    name: "Foodie Explorer",
-    handle: "@foodie_explorer",
-    avatar: "/avatars/foodie.jpg",
-    platform: "tiktok",
-    scheduledFor: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
-    estimatedViewers: 15000,
-    campaign: "Restaurant Week",
-  },
-];
+  const { data: sellersData, isLoading: sellersLoading } = useLiveSellers();
+  const { data: kolsData } = useKOLs();
 
-const leaderboard = {
-  today: [
-    { rank: 1, name: "Mintra", gmv: 450000, viewers: 12000 },
-    { rank: 2, name: "Winwin Center", gmv: 380000, viewers: 8500 },
-    { rank: 3, name: "TechReviewer Pro", gmv: 120000, viewers: 5200 },
-    { rank: 4, name: "Beauty Blogger Sarah", gmv: 95000, viewers: 3100 },
-  ],
-  week: [
-    { rank: 1, name: "Mintra", gmv: 2100000, viewers: 56000 },
-    { rank: 2, name: "Foodie Explorer", gmv: 1800000, viewers: 42000 },
-    { rank: 3, name: "Winwin Center", gmv: 1650000, viewers: 38000 },
-    { rank: 4, name: "TechReviewer Pro", gmv: 890000, viewers: 21000 },
-  ],
-};
+  const sellers = sellersData?.data || [];
+  const allKOLs = kolsData?.data || [];
 
-function getDuration(startedAt: string): string {
-  const diff = Date.now() - new Date(startedAt).getTime();
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(minutes / 60);
-  if (hours > 0) {
-    return `${hours}h ${minutes % 60}m`;
-  }
-  return `${minutes}m`;
-}
+  // Live now sellers (computedImageUrl provided by API)
+  const liveNow = useMemo(() => {
+    return sellers
+      .filter((s) => s.isLiveNow)
+      .sort((a, b) => (b.avgLiveGMV || 0) - (a.avgLiveGMV || 0));
+  }, [sellers]);
 
-function formatTimeUntil(date: string): string {
-  const diff = new Date(date).getTime() - Date.now();
-  const minutes = Math.floor(diff / 60000);
-  if (minutes < 60) {
-    return `in ${minutes}m`;
-  }
-  const hours = Math.floor(minutes / 60);
-  return `in ${hours}h ${minutes % 60}m`;
-}
+  // Redirect to top performers if no one is live
+  useEffect(() => {
+    if (!sellersLoading && activeTab === "live" && liveNow.length === 0) {
+      setActiveTab("top");
+    }
+  }, [sellersLoading, activeTab, liveNow.length]);
 
-export default function LiveCenterPage() {
-  const totalLiveGMV = liveNowKOLs.reduce((sum, k) => sum + k.gmv, 0);
-  const totalViewers = liveNowKOLs.reduce((sum, k) => sum + k.currentViewers, 0);
+  // Top performers (all sellers sorted by GMV)
+  const topPerformers = useMemo(() => {
+    return [...sellers].sort((a, b) => (b.avgLiveGMV || 0) - (a.avgLiveGMV || 0)).slice(0, 10);
+  }, [sellers]);
+
+  // Rising live sellers (high engagement, growing)
+  const risingSellers = useMemo(() => {
+    return sellers
+      .filter((s) => s.engagementRate > 5 && s.followers < 500000)
+      .sort((a, b) => b.engagementRate - a.engagementRate)
+      .slice(0, 6);
+  }, [sellers]);
+
+  // Stats
+  const stats = useMemo(() => {
+    const totalLive = liveNow.length;
+    const totalGMV = sellers.reduce((sum, s) => sum + (s.avgLiveGMV || 0), 0);
+    const totalFollowers = sellers.reduce((sum, s) => sum + s.followers, 0);
+    const avgEngagement =
+      sellers.length > 0
+        ? sellers.reduce((sum, s) => sum + s.engagementRate, 0) / sellers.length
+        : 0;
+
+    return { totalLive, totalGMV, totalFollowers, avgEngagement };
+  }, [sellers, liveNow]);
+
+  const filteredSellers = sellers.filter(
+    (s) =>
+      s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.handle.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <div className="flex items-center gap-3">
-          <h1 className="text-display font-bold">Live Center</h1>
-          <Badge variant="secondary" className="bg-red-500/10 text-red-500">
-            <Radio className="w-3 h-3 mr-1 live-indicator" />
-            {liveNowKOLs.length} Live
-          </Badge>
+      {/* Hero Header */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-red-600 via-rose-500 to-orange-500 text-white">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/20 via-transparent to-transparent" />
+        <div className="relative px-4 py-8 sm:px-6 sm:py-10 md:px-12 md:py-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="max-w-2xl"
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <Badge className="bg-white/20 text-white border-white/30 backdrop-blur">
+                <Radio className="w-3.5 h-3.5 mr-1 animate-pulse" />
+                {stats.totalLive} Live Now
+              </Badge>
+              <Badge className="bg-white/20 text-white border-white/30 backdrop-blur">
+                <Flame className="w-3.5 h-3.5 mr-1" />
+                Live Commerce Hub
+              </Badge>
+            </div>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">Live Center</h1>
+            <p className="text-lg text-white/90 mb-6">
+              Discover top-performing live sellers with proven GMV. Watch streams, analyze
+              performance, and connect with the best.
+            </p>
+
+            {/* Quick Stats */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+              <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-white/10 backdrop-blur">
+                <p className="text-xl sm:text-2xl font-bold">{formatNumber(stats.totalGMV)}</p>
+                <p className="text-xs sm:text-sm text-white/80">Total GMV</p>
+              </div>
+              <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-white/10 backdrop-blur">
+                <p className="text-xl sm:text-2xl font-bold">{formatNumber(sellers.length)}</p>
+                <p className="text-xs sm:text-sm text-white/80">Live Sellers</p>
+              </div>
+              <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-white/10 backdrop-blur">
+                <p className="text-xl sm:text-2xl font-bold">{stats.avgEngagement.toFixed(1)}%</p>
+                <p className="text-xs sm:text-sm text-white/80">Avg Engagement</p>
+              </div>
+            </div>
+          </motion.div>
         </div>
-        <p className="text-muted-foreground mt-1">
-          Real-time monitoring of live commerce
-        </p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Live Now</p>
-                <p className="text-3xl font-bold">{liveNowKOLs.length}</p>
-              </div>
-              <div className="p-3 rounded-lg bg-red-500/10">
-                <Radio className="w-5 h-5 text-red-500" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Viewers</p>
-                <p className="text-3xl font-bold">{formatNumber(totalViewers)}</p>
-              </div>
-              <div className="p-3 rounded-lg bg-primary/10">
-                <Users className="w-5 h-5 text-primary" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Live GMV</p>
-                <p className="text-3xl font-bold">{formatCurrency(totalLiveGMV)}</p>
-              </div>
-              <div className="p-3 rounded-lg bg-green-500/10">
-                <TrendingUp className="w-5 h-5 text-green-500" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Avg Duration</p>
-                <p className="text-3xl font-bold">38m</p>
-              </div>
-              <div className="p-3 rounded-lg bg-blue-500/10">
-                <Clock className="w-5 h-5 text-blue-500" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Search & Filter */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+          <Input
+            placeholder="Search live sellers by name or handle..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-12 h-12 rounded-xl"
+          />
+        </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="h-12">
+            <TabsTrigger value="live" className="gap-2">
+              <Radio className="w-4 h-4" />
+              Live Now
+            </TabsTrigger>
+            <TabsTrigger value="top" className="gap-2">
+              <Flame className="w-4 h-4" />
+              Top Performers
+            </TabsTrigger>
+            <TabsTrigger value="rising" className="gap-2">
+              <TrendingUp className="w-4 h-4" />
+              Rising
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Live Now Grid */}
-        <div className="lg:col-span-2 space-y-4">
-          <h2 className="text-title font-semibold">Live Now</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {liveNowKOLs.map((kol) => (
-              <Card key={kol.id} className="border-red-500/20">
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <Avatar className="w-12 h-12">
-                      <AvatarImage src={kol.avatar} />
-                      <AvatarFallback>{kol.name[0]}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-medium">{kol.name}</h4>
-                        <span className="flex items-center gap-1 text-xs text-red-500">
-                          <span className="w-2 h-2 rounded-full bg-red-500 live-indicator" />
-                          LIVE
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {kol.handle}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="outline" className="text-[10px]">
-                          {kol.platform}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">
-                          {getDuration(kol.startedAt)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+      {/* Content Based on Active Tab */}
+      {sellersLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-80 rounded-2xl bg-muted animate-pulse" />
+          ))}
+        </div>
+      ) : (
+        <>
+          {/* Live Now Grid */}
+          {activeTab === "live" && liveNow.length > 0 && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {liveNow.map((seller, i) => (
+                  <motion.div
+                    key={seller.id}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: i * 0.1 }}
+                  >
+                    <LiveSellerCard seller={seller} isLive />
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          )}
 
-                  <div className="mt-4 grid grid-cols-2 gap-4">
-                    <div className="p-3 rounded-lg bg-muted">
-                      <div className="flex items-center gap-1 text-red-500">
-                        <Users className="w-4 h-4" />
-                        <span className="font-bold">
-                          {formatNumber(kol.currentViewers)}
-                        </span>
+          {/* Top Performers */}
+          {activeTab === "top" && (
+            <div className="space-y-6">
+              {/* Top 3 Podium */}
+              {topPerformers.length >= 3 && (
+                <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6 sm:mb-8">
+                  {/* 2nd Place */}
+                  <div className="flex flex-col items-center pt-6 sm:pt-8">
+                    <div className="relative">
+                      <KOLAvatar
+                        kol={topPerformers[1]}
+                        size="xl"
+                        ring
+                        ringColor="ring-gray-300"
+                        className="w-14 h-14 sm:w-20 sm:h-20"
+                      />
+                      <div className="absolute -bottom-1.5 sm:-bottom-2 left-1/2 -translate-x-1/2 w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gray-300 flex items-center justify-center font-bold text-gray-700 text-xs sm:text-sm">
+                        2
                       </div>
-                      <p className="text-[10px] text-muted-foreground">
-                        Current Viewers
-                      </p>
                     </div>
-                    <div className="p-3 rounded-lg bg-muted">
-                      <div className="flex items-center gap-1 text-green-500">
-                        <TrendingUp className="w-4 h-4" />
-                        <span className="font-bold">
-                          {formatCurrency(kol.gmv)}
-                        </span>
-                      </div>
-                      <p className="text-[10px] text-muted-foreground">GMV</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 flex gap-2">
-                    <Button size="sm" variant="outline" className="flex-1">
-                      Watch
-                    </Button>
-                    <Button size="sm" className="flex-1">
-                      Analytics
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {/* Scheduled */}
-          <h2 className="text-title font-semibold mt-8">Starting Soon</h2>
-          <div className="space-y-3">
-            {scheduledKOLs.map((kol) => (
-              <Card key={kol.id}>
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="w-10 h-10">
-                      <AvatarImage src={kol.avatar} />
-                      <AvatarFallback>{kol.name[0]}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <h4 className="font-medium">{kol.name}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {kol.handle} · {kol.campaign}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <Badge variant="secondary">{formatTimeUntil(kol.scheduledFor)}</Badge>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Est. {formatNumber(kol.estimatedViewers)} viewers
+                    <p className="font-semibold mt-3 sm:mt-4 text-center text-xs sm:text-sm truncate max-w-[72px] xs:max-w-[90px] sm:max-w-none">
+                      {topPerformers[1].name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatCurrency(topPerformers[1].avgLiveGMV || 0)}
                     </p>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+
+                  {/* 1st Place */}
+                  <div className="flex flex-col items-center">
+                    <div className="relative">
+                      <div className="absolute -top-4 sm:-top-6 left-1/2 -translate-x-1/2">
+                        <CrownIcon className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-500" />
+                      </div>
+                      <KOLAvatar
+                        kol={topPerformers[0]}
+                        size="xl"
+                        ring
+                        ringColor="ring-yellow-400"
+                        className="w-16 h-16 sm:w-24 sm:h-24"
+                      />
+                      <div className="absolute -bottom-1.5 sm:-bottom-2 left-1/2 -translate-x-1/2 w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-yellow-400 flex items-center justify-center font-bold text-yellow-900 text-xs sm:text-sm">
+                        1
+                      </div>
+                    </div>
+                    <p className="font-semibold mt-3 sm:mt-4 text-center text-sm sm:text-lg truncate max-w-[80px] xs:max-w-[100px] sm:max-w-none">
+                      {topPerformers[0].name}
+                    </p>
+                    <p className="text-sm sm:text-lg font-bold text-green-600">
+                      {formatCurrency(topPerformers[0].avgLiveGMV || 0)}
+                    </p>
+                  </div>
+
+                  {/* 3rd Place */}
+                  <div className="flex flex-col items-center pt-8 sm:pt-10">
+                    <div className="relative">
+                      <KOLAvatar
+                        kol={topPerformers[2]}
+                        size="xl"
+                        ring
+                        ringColor="ring-orange-400"
+                        className="w-12 h-12 sm:w-16 sm:h-16"
+                      />
+                      <div className="absolute -bottom-1.5 sm:-bottom-2 left-1/2 -translate-x-1/2 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-orange-400 flex items-center justify-center font-bold text-orange-900 text-xs">
+                        3
+                      </div>
+                    </div>
+                    <p className="font-semibold mt-3 sm:mt-4 text-center text-xs sm:text-sm truncate max-w-[72px] xs:max-w-[90px] sm:max-w-none">
+                      {topPerformers[2].name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatCurrency(topPerformers[2].avgLiveGMV || 0)}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Full List */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {topPerformers.map((seller, i) => (
+                  <motion.div
+                    key={seller.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                  >
+                    <CompactSellerCard seller={seller} rank={i + 1} />
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Rising Stars */}
+          {activeTab === "rising" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {risingSellers.map((seller, i) => (
+                <motion.div
+                  key={seller.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                >
+                  <LiveSellerCard seller={seller} />
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function LiveSellerCard({
+  seller,
+  isLive = false,
+}: {
+  seller: ApiLiveSeller & { computedImageUrl?: string };
+  isLive?: boolean;
+}) {
+  const router = useRouter();
+
+  return (
+    <Card className="group overflow-hidden hover:shadow-xl transition-all cursor-pointer">
+      <div className="relative aspect-video">
+        <Image
+          src={seller.computedImageUrl || getKOLImageUrl(seller)}
+          alt={seller.name}
+          fill
+          sizes="(max-width: 768px) 100vw, 400px"
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+
+        {/* Live Badge */}
+        {isLive && (
+          <div className="absolute top-3 left-3 flex items-center gap-2">
+            <Badge className="bg-red-500 text-white border-0 animate-pulse">
+              <span className="w-2 h-2 rounded-full bg-white mr-1" />
+              LIVE
+            </Badge>
+            <Badge className="bg-black/50 text-white border-0 backdrop-blur">
+              <Users className="w-3 h-3 mr-1" />
+              {formatNumber(Math.floor(Math.random() * 5000) + 1000)}
+            </Badge>
+          </div>
+        )}
+
+        {/* Platform Badge */}
+        <div className="absolute top-3 right-3">
+          <Badge className="bg-black/50 text-white border-0 backdrop-blur">{seller.platform}</Badge>
+        </div>
+
+        {/* Play Button Overlay */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur flex items-center justify-center">
+            <Play className="w-8 h-8 text-white fill-white" />
           </div>
         </div>
 
-        {/* Leaderboard */}
-        <div>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Leaderboard</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="today">
-                <TabsList className="w-full">
-                  <TabsTrigger value="today" className="flex-1">
-                    Today
-                  </TabsTrigger>
-                  <TabsTrigger value="week" className="flex-1">
-                    This Week
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="today" className="mt-4 space-y-3">
-                  {leaderboard.today.map((entry) => (
-                    <div
-                      key={entry.rank}
-                      className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span
-                          className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                            entry.rank === 1
-                              ? "bg-yellow-500/20 text-yellow-500"
-                              : entry.rank === 2
-                              ? "bg-gray-400/20 text-gray-400"
-                              : entry.rank === 3
-                              ? "bg-orange-600/20 text-orange-600"
-                              : "bg-muted text-muted-foreground"
-                          }`}
-                        >
-                          {entry.rank}
-                        </span>
-                        <span className="font-medium">{entry.name}</span>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-mono font-bold">
-                          {formatCurrency(entry.gmv)}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </TabsContent>
-
-                <TabsContent value="week" className="mt-4 space-y-3">
-                  {leaderboard.week.map((entry) => (
-                    <div
-                      key={entry.rank}
-                      className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span
-                          className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                            entry.rank === 1
-                              ? "bg-yellow-500/20 text-yellow-500"
-                              : entry.rank === 2
-                              ? "bg-gray-400/20 text-gray-400"
-                              : entry.rank === 3
-                              ? "bg-orange-600/20 text-orange-600"
-                              : "bg-muted text-muted-foreground"
-                          }`}
-                        >
-                          {entry.rank}
-                        </span>
-                        <span className="font-medium">{entry.name}</span>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-mono font-bold">
-                          {formatCurrency(entry.gmv)}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
+        {/* Bottom Info */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+          <h3 className="font-semibold text-lg">{seller.name}</h3>
+          <p className="text-sm text-white/80">@{seller.handle}</p>
         </div>
       </div>
-    </div>
+
+      <CardContent className="p-4">
+        <div className="grid grid-cols-3 gap-4 text-center">
+          <div>
+            <p className="font-bold text-lg text-foreground">{formatNumber(seller.followers)}</p>
+            <p className="text-xs text-muted-foreground">Followers</p>
+          </div>
+          <div>
+            <p className="font-bold text-lg text-green-600">
+              {formatCurrency(seller.avgLiveGMV || 0)}
+            </p>
+            <p className="text-xs text-muted-foreground">Avg GMV</p>
+          </div>
+          <div>
+            <p className="font-bold text-lg text-foreground">{seller.engagementRate.toFixed(1)}%</p>
+            <p className="text-xs text-muted-foreground">Engagement</p>
+          </div>
+        </div>
+
+        <div className="flex gap-2 mt-4">
+          <Button className="flex-1" onClick={() => router.push(`/kols/${seller.id}`)}>
+            View Profile
+          </Button>
+          <Button variant="outline" size="icon">
+            <Heart className="w-4 h-4" />
+          </Button>
+          <Button variant="outline" size="icon">
+            <Share2 className="w-4 h-4" />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function CompactSellerCard({ seller, rank }: { seller: ApiLiveSeller; rank: number }) {
+  const router = useRouter();
+
+  return (
+    <Card
+      className="group cursor-pointer hover:shadow-md transition-all"
+      onClick={() => router.push(`/kols/${seller.id}`)}
+    >
+      <CardContent className="p-4 flex items-center gap-4">
+        {/* Rank */}
+        <div
+          className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm ${
+            rank === 1
+              ? "bg-yellow-100 text-yellow-700"
+              : rank === 2
+                ? "bg-gray-100 text-gray-700"
+                : rank === 3
+                  ? "bg-orange-100 text-orange-700"
+                  : "bg-muted text-muted-foreground"
+          }`}
+        >
+          {rank}
+        </div>
+
+        {/* Avatar */}
+        <KOLAvatar kol={seller} size="lg" />
+
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <h4 className="font-semibold truncate">{seller.name}</h4>
+            {seller.isLiveNow && (
+              <Badge className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 whitespace-nowrap">
+                LIVE
+              </Badge>
+            )}
+          </div>
+          <p className="text-sm text-muted-foreground">@{seller.handle}</p>
+          <div className="flex items-center gap-3 mt-1 text-xs">
+            <span className="text-muted-foreground">
+              {formatNumber(seller.followers)} followers
+            </span>
+            <span className="text-green-600 font-medium">
+              {formatCurrency(seller.avgLiveGMV || 0)} GMV
+            </span>
+          </div>
+        </div>
+
+        <ArrowRight className="w-5 h-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+      </CardContent>
+    </Card>
+  );
+}
+
+function CrownIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path d="M5 16L3 5L8.5 10L12 4L15.5 10L21 5L19 16H5M19 19C19 19.5523 18.5523 20 18 20H6C5.44772 20 5 19.5523 5 19V18H19V19Z" />
+    </svg>
   );
 }

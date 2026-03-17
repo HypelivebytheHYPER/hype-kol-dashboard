@@ -1,20 +1,35 @@
 import { Sidebar } from "@/components/sidebar";
+import { MobileSidebar } from "@/components/mobile-sidebar";
 import { Header } from "@/components/header";
+import { MobileBottomNav } from "@/components/mobile-bottom-nav";
+import { SelectionProvider } from "@/lib/selection-context";
+import { FloatingSelectionBar } from "@/components/selection/floating-selection-bar";
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-screen bg-background">
-      <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Header />
-        <main className="flex-1 overflow-y-auto p-6">
-          {children}
-        </main>
+    <SelectionProvider>
+      <div className="flex h-screen bg-background">
+        {/* Desktop Sidebar */}
+        <div className="hidden lg:block">
+          <Sidebar />
+        </div>
+
+        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+          {/* Mobile Header with Sidebar Toggle */}
+          <div className="lg:hidden">
+            <MobileSidebar />
+          </div>
+
+          {/* Desktop Header - hidden on mobile */}
+          <div className="hidden lg:block">
+            <Header />
+          </div>
+
+          <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-24 lg:pb-6">{children}</main>
+        </div>
       </div>
-    </div>
+      <FloatingSelectionBar />
+      <MobileBottomNav />
+    </SelectionProvider>
   );
 }

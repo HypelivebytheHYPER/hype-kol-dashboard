@@ -80,21 +80,15 @@ export default function NewCampaignPage() {
                 step.id < currentStep
                   ? "bg-green-500 text-white"
                   : step.id === currentStep
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
               }`}
             >
-              {step.id < currentStep ? (
-                <Check className="w-4 h-4" />
-              ) : (
-                step.id
-              )}
+              {step.id < currentStep ? <Check className="w-4 h-4" /> : step.id}
             </div>
             {index < steps.length - 1 && (
               <div
-                className={`flex-1 h-1 mx-2 ${
-                  step.id < currentStep ? "bg-green-500" : "bg-muted"
-                }`}
+                className={`flex-1 h-1 mx-2 ${step.id < currentStep ? "bg-green-500" : "bg-muted"}`}
               />
             )}
           </div>
@@ -223,11 +217,16 @@ export default function NewCampaignPage() {
       </Card>
 
       {/* Navigation */}
-      <div className="flex justify-between">
-        <Button variant="outline" onClick={handleBack} disabled={currentStep === 1}>
+      <div className="flex gap-3 justify-between">
+        <Button
+          variant="outline"
+          onClick={handleBack}
+          disabled={currentStep === 1}
+          className="flex-1 sm:flex-none"
+        >
           Back
         </Button>
-        <Button onClick={handleNext}>
+        <Button onClick={handleNext} className="flex-1 sm:flex-none">
           {currentStep === steps.length ? "Launch Campaign" : "Next"}
           {currentStep < steps.length && <ChevronRight className="w-4 h-4 ml-2" />}
         </Button>

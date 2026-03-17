@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "chrome-devtools": {
+      "type": "stdio",
+      "command": "/Users/mdch/.claude/chrome-devtools-wrapper.sh",
+      "args": []
+    }
+  }
+}

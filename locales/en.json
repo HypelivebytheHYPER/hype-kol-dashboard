@@ -1,0 +1,184 @@
+{
+  "meta": {
+    "title": "Hype KOL Dashboard",
+    "description": "Find and manage KOLs for your campaigns"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "discovery": "Find KOLs",
+    "campaigns": "My Campaigns",
+    "live": "Live Center",
+    "pricing": "Pricing",
+    "settings": "Settings"
+  },
+  "header": {
+    "searchPlaceholder": "Search anything...",
+    "notifications": "Notifications",
+    "toggleTheme": "Switch look",
+    "language": "Language"
+  },
+  "hero": {
+    "badgePlatform": "KOL Discovery Platform",
+    "liveNow": "Live Now",
+    "title": "Command Center",
+    "description": "Browse {{count}}+ verified influencers, live sellers, and content creators. Filter by tier, category, performance metrics, and more.",
+    "searchPlaceholder": "Search KOLs...",
+    "recentSearches": "Recent"
+  },
+  "categories": {
+    "browseBy": "Browse by Category"
+  },
+  "sections": {
+    "topPerformers": "Top Performers",
+    "byGmv": "By GMV",
+    "liveCommerceStars": "Live Commerce Stars",
+    "liveCommerceDescription": "Top-performing live sellers with proven GMV",
+    "viewLiveCenter": "View Live Center",
+    "risingStars": "Rising Stars",
+    "highEngagement": "High Engagement"
+  },
+  "stats": {
+    "totalKols": "Total KOLs",
+    "liveSellers": "Live Sellers",
+    "avgGmv": "Avg GMV",
+    "categories": "Categories"
+  },
+  "common": {
+    "loading": "Loading...",
+    "loadMore": "Load more",
+    "noResults": "No results found",
+    "tryAdjusting": "Try adjusting your filters",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "create": "Create",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "view": "View",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "showing": "Showing",
+    "of": "of",
+    "results": "results",
+    "perPage": "per page",
+    "live": "LIVE",
+    "viewAll": "View All",
+    "seeAll": "See All",
+    "discoverMore": "Discover More",
+    "more": "More"
+  },
+  "dashboard": {
+    "title": "Command Center",
+    "subtitle": "Everything you need at a glance",
+    "stats": {
+      "campaignsActive": {
+        "title": "Campaigns Active",
+        "change": "+1 this week"
+      },
+      "projectedGMV": {
+        "title": "Projected GMV",
+        "change": "+15% vs last month"
+      },
+      "marginAvg": {
+        "title": "Margin Avg",
+        "change": "+3% vs target"
+      },
+      "liveSellers": {
+        "title": "Live Sellers",
+        "change": "8 streaming now"
+      }
+    },
+    "quickDiscovery": {
+      "title": "Quick Discovery",
+      "recentSearches": "Recent searches"
+    },
+    "activeCampaigns": {
+      "title": "Active Campaigns",
+      "viewAll": "View all",
+      "kolsAssigned": "KOL assigned",
+      "kolsAssigned_plural": "KOLs assigned",
+      "nextMilestone": "Next up"
+    },
+    "trendingNow": {
+      "title": "Trending Now",
+      "viewLiveCenter": "View Live Center",
+      "gmv": "GMV",
+      "viewers": "Viewers",
+      "duration": "Duration",
+      "startingIn": "Starting in {{minutes}} min",
+      "watchStream": "Watch Stream",
+      "notifyMe": "Notify Me"
+    }
+  },
+  "kol": {
+    "metrics": {
+      "followers": {
+        "label": "Followers",
+        "tooltip": "Total subscribers on their main platform"
+      },
+      "engagement": {
+        "label": "Engagement",
+        "tooltip": "How much their audience interacts. Industry average is 1-3%",
+        "tooltipHigh": "Amazing engagement — their audience really connects!"
+      },
+      "gmv": {
+        "label": "Avg GMV",
+        "tooltip": "Average sales they generate per month"
+      },
+      "revenue": {
+        "label": "Revenue",
+        "tooltip": "Total revenue generated"
+      },
+      "views": {
+        "label": "Views",
+        "tooltip": "Total views across all their content"
+      },
+      "qualityScore": {
+        "label": "Quality Score",
+        "tooltip": "Our rating from 0-5 based on content quality, consistency, and professionalism",
+        "excellent": "Excellent — top tier creator",
+        "good": "Good — solid and reliable",
+        "average": "Decent — room to grow",
+        "belowAverage": "Below average — risky choice"
+      },
+      "contentOutput": {
+        "live": "Live",
+        "video": "Video",
+        "videos": "Videos",
+        "tooltip": "Content they've created — {{liveNum}} live streams, {{videoNum}} videos"
+      }
+    },
+    "actions": {
+      "viewProfile": "View Profile",
+      "addToCampaign": "Add to Campaign",
+      "contact": "Contact",
+      "select": "Select",
+      "selected": "Selected",
+      "review": "Review",
+      "exportPDF": "Export PDF",
+      "share": "Share"
+    },
+    "selection": {
+      "title": "Your Selection",
+      "empty": "No KOLs selected yet",
+      "estimatedTotal": "Estimated Total",
+      "clearAll": "Clear all",
+      "addToCampaign": "Add to Campaign",
+      "createCampaign": "Create Campaign",
+      "exportRateCard": "Export Rate Card"
+    },
+    "filters": {
+      "platform": "Platform",
+      "tier": "Tier",
+      "location": "Location",
+      "category": "Category",
+      "followerRange": "Follower count",
+      "engagementRate": "Engagement rate",
+      "priceRange": "Price range"
+    }
+  }
+}

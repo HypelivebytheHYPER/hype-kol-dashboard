@@ -3,30 +3,17 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import {
-  LayoutDashboard,
-  Search,
-  Users,
-  Radio,
-  Briefcase,
-  Tag,
-  Map,
-  Settings,
-} from "lucide-react";
+import { LayoutDashboard, Users, Radio, Briefcase, Settings, Building2 } from "lucide-react";
 
 const navigation = [
   { name: "Command Center", href: "/", icon: LayoutDashboard },
-  { name: "Discovery", href: "/discovery", icon: Search },
+  { name: "KOLs", href: "/kols", icon: Users },
   { name: "Live Center", href: "/live", icon: Radio },
   { name: "Campaigns", href: "/campaigns", icon: Briefcase },
-  { name: "KOLs", href: "/kols", icon: Users },
-  { name: "Pricing", href: "/pricing", icon: Tag },
-  { name: "Media Planner", href: "/media-planner", icon: Map },
+  { name: "OOH Media", href: "/ooh", icon: Building2 },
 ];
 
-const secondaryNav = [
-  { name: "Settings", href: "/settings", icon: Settings },
-];
+const secondaryNav = [{ name: "Settings", href: "/settings", icon: Settings }];
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -50,7 +37,7 @@ export function Sidebar() {
               key={item.name}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
                 isActive
                   ? "bg-primary/10 text-primary"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -68,7 +55,7 @@ export function Sidebar() {
           <Link
             key={item.name}
             href={item.href}
-            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
           >
             <item.icon className="w-4 h-4" />
             {item.name}

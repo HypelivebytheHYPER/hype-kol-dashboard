@@ -1,133 +1,195 @@
 # Hype KOL Dashboard
 
-A world-class KOL (Key Opinion Leader) and Live Seller discovery dashboard for Hype marketing agency.
+KOL (Key Opinion Leader) and Live Seller management dashboard for Hype marketing agency.
 
-## Features
+**Production**: https://hype-kol-dashboard.vercel.app
 
-### 8-Layer Page Architecture
+---
 
-1. **Command Center** (`/`) - Executive overview with stats, trending KOLs, and active campaigns
-2. **Discovery Engine** (`/discovery`) - Multi-dimensional KOL filtering with 15+ filters
-3. **KOL Profile** (`/kols/[id]`) - Comprehensive profile with analytics and campaign history
-4. **Live Center** (`/live`) - Real-time monitoring of live commerce streams
-5. **Campaign Manager** (`/campaigns`) - End-to-end campaign planning and tracking
-6. **Pricing Intelligence** (`/pricing`) - Rate comparison and margin optimization
-7. **OOH Media Planner** (`/media-planner`) - Integrated KOL + outdoor media planning
-8. **Staff Tools** (`/settings`) - Internal operations and management
+## Stack
 
-## Tech Stack
+| Layer         | Technology                                         |
+| ------------- | -------------------------------------------------- |
+| Framework     | Next.js 16.1.6 + React 19 (App Router)             |
+| Styling       | Tailwind CSS v4 + shadcn/ui                        |
+| Data fetching | TanStack Query v5                                  |
+| API backend   | Cloudflare Worker (`lark-http-hype`) → Lark Base   |
+| API proxy     | Vercel route `/api/lark/[...path]` with edge cache |
+| Animations    | Framer Motion                                      |
+| Charts        | Recharts                                           |
+| E2E tests     | Playwright                                         |
 
-- **Framework**: Next.js 16.1.6 with React 19
-- **Styling**: Tailwind CSS 4 with shadcn/ui components
-- **State Management**: TanStack Query (React Query)
-- **Charts**: Recharts
-- **Icons**: Lucide React
-- **Fonts**: Inter (UI), JetBrains Mono (numbers)
+---
+
+## Architecture
+
+```
+Browser
+  └── Next.js on Vercel
+        ├── /api/lark/[...path]   ← proxy with edge cache (s-maxage)
+        └── App Router pages
+              └── (dashboard) layout (sidebar + header)
+                    ├── / ............. Command Center
+                    ├── /kols ......... KOL catalog + smart search
+                    ├── /kols/[id] .... KOL profile
+                    ├── /live ......... Live Seller monitor
+                    ├── /campaigns .... Campaign list
+                    ├── /campaigns/new  New campaign form
+                    ├── /campaigns/[id] Campaign detail + KOL grid
+                    ├── /discover ..... Tinder-style KOL swipe finder
+                    ├── /ooh .......... OOH Media table
+                    └── /settings ..... Account settings
+
+Vercel /api/lark proxy
+  └── lark-http-hype.hypelive.workers.dev  (Cloudflare Worker)
+        └── Lark Base REST API (database)
+```
+
+---
+
+## Pages
+
+| Route             | Description                                                        |
+| ----------------- | ------------------------------------------------------------------ |
+| `/`               | Command Center — stats, trending KOLs, active campaigns            |
+| `/kols`           | KOL catalog — smart search, tier/platform/type filters, pagination |
+| `/kols/[id]`      | KOL profile — metrics, contact, campaign history                   |
+| `/live`           | Live Seller monitor — real-time GMV, live status                   |
+| `/campaigns`      | Campaign list — smart collections, KOL avatar previews             |
+| `/campaigns/new`  | New campaign form                                                  |
+| `/campaigns/[id]` | Campaign detail — KOL grid (same as /kols), remove/add KOLs        |
+| `/discover`       | Tinder-style KOL swipe finder — card-by-card discovery             |
+| `/ooh`            | OOH Media — outdoor advertising inventory table                    |
+| `/settings`       | Account settings — profile, notifications, API config              |
+
+---
+
+## Key Features
+
+### Smart Search
+
+Type natural language on `/kols` — e.g. `beauty micro bangkok`, `>100k followers live`, `>5% engagement`. Parses tier, platform, location, follower threshold, engagement rate from free text.
+
+### KOL Selection → Campaign Flow
+
+1. Select KOLs with checkboxes on `/kols` → floating bar appears
+2. Click "Add to Campaign" → dialog shows active campaigns
+3. Assign to existing campaign or create new one → saves to Lark Base
+4. **From campaign detail**: "Add KOLs" navigates to `/kols?addTo=ID` — banner appears, dialog pre-selects the campaign, auto-navigates back after adding
+
+### Edge Cache
+
+`/api/lark/[...path]` sets `Cache-Control: s-maxage` + `stale-while-revalidate` headers so Vercel CDN serves cached responses in ~370ms (vs 3s+ cold). KOL list: 60s fresh / 300s stale. Images: 23hr cache.
+
+### Dark Mode
+
+Full dark mode via `next-themes`. Uses `@custom-variant dark (&:is(.dark, .dark *))` to fix Tailwind v4 CSS variable opacity issue.
+
+---
 
 ## Getting Started
 
 ```bash
-# Install dependencies
-npm install
-
-# Run development server
-npm run dev
-
-# Build for production
-npm run build
+pnpm install
+pnpm dev          # http://localhost:3900
+pnpm build        # production build
+pnpm test:e2e     # run Playwright e2e tests (headless)
+pnpm test:e2e:ui  # Playwright UI mode (visual)
 ```
+
+---
 
 ## Project Structure
 
 ```
-my-app/
+dashboard/
 ├── app/
-│   ├── (dashboard)/           # Dashboard pages with sidebar layout
-│   │   ├── page.tsx           # Command Center (home)
-│   │   ├── discovery/         # Discovery Engine
-│   │   ├── kols/              # KOL profiles
-│   │   ├── live/              # Live Center
-│   │   ├── campaigns/         # Campaign Manager
-│   │   ├── pricing/           # Pricing Intelligence
-│   │   └── media-planner/     # OOH Media Planner
-│   ├── settings/              # Settings page (separate layout)
-│   ├── layout.tsx             # Root layout
-│   └── globals.css            # Global styles
+│   ├── (dashboard)/         # All pages sharing sidebar layout
+│   │   ├── layout.tsx       # Sidebar + Header + SelectionProvider
+│   │   ├── page.tsx         # Command Center
+│   │   ├── kols/            # KOL catalog + [id] profile
+│   │   ├── live/            # Live Seller monitor
+│   │   ├── campaigns/       # Campaign list + [campaignId] detail
+│   │   ├── ooh/             # OOH Media table
+│   │   ├── discover/        # Discovery (filter-heavy view)
+│   │   └── settings/        # Account settings
+│   ├── api/
+│   │   ├── lark/[...path]/  # Vercel proxy → CF Worker (with edge cache)
+│   │   └── proxy/image/     # External image CORS proxy (unavatar, twimg, etc.)
+│   ├── layout.tsx           # Root layout (QueryProvider, ThemeProvider)
+│   └── globals.css          # Tailwind v4 theme variables + typography
 ├── components/
-│   ├── ui/                    # shadcn/ui components
-│   ├── kol/                   # KOL-specific components
-│   ├── search/                # Search components
-│   ├── analytics/             # Analytics components
-│   └── campaigns/             # Campaign components
-├── hooks/                     # React hooks (TanStack Query)
+│   ├── ui/                  # shadcn/ui primitives
+│   ├── kol/                 # KOLFeedCard, KOLContactEditor, ScoreGauge
+│   ├── selection/           # FloatingSelectionBar, AddToCampaignDialog
+│   ├── search/              # CommandPalette (Cmd+K)
+│   ├── sidebar.tsx          # Desktop sidebar nav
+│   ├── mobile-sidebar.tsx   # Mobile header + drawer nav
+│   └── header.tsx           # Desktop header (search, theme, notifications)
+├── hooks/
+│   ├── use-kols.ts          # useKOLs, useLiveSellers (TanStack Query)
+│   └── use-campaigns.ts     # useCampaigns, useCreateCampaign, useUpdateCampaign
 ├── lib/
-│   ├── types/                 # TypeScript type definitions
-│   ├── lark-api.ts            # Lark Base API client
-│   ├── search-algorithm.ts    # Match scoring algorithm
-│   └── utils.ts               # Utility functions
-└── public/                    # Static assets
+│   ├── lark-api.ts          # API types + getKOLImageUrl()
+│   ├── selection-context.tsx # Global KOL selection state (targetCampaignId)
+│   ├── smart-search.ts      # Natural language search parser
+│   ├── config/
+│   │   ├── campaigns.ts     # Campaign status config
+│   │   └── tiers.ts         # Tier base rates
+│   └── utils.ts             # formatNumber, formatCurrency, getTierColor
+├── e2e/
+│   └── dashboard.spec.ts    # Playwright e2e tests (8 tests, ~10s)
+└── playwright.config.ts     # Playwright config → production URL
 ```
 
-## API Integration
+---
 
-The dashboard connects to a Cloudflare Worker at `lark-http-hype.hypelive.workers.dev` for Lark Base data:
+## API Proxy
 
-- `GET /api/kols` - Fetch KOLs with filters
-- `GET /api/kols/[id]` - Fetch single KOL
-- `GET /api/kols/live` - Fetch live KOLs
-- `GET /api/campaigns` - Fetch campaigns
-- `POST /api/campaigns` - Create campaign
-- `PATCH /api/campaigns/[id]` - Update campaign
-- `GET /api/rates` - Fetch rate cards
+All data goes through `/api/lark/[...path]/route.ts` which:
 
-## Design System
+- Adds `Authorization: Bearer` header server-side (never exposed to browser)
+- Sets edge cache headers per route pattern
+- Strips `Vary`, `Set-Cookie`, `content-encoding` to allow CDN caching
 
-### Colors
-- Background: `#0A0A0A`
-- Card: `#141414`
-- Primary: `#6366F1` (Indigo)
-- Accent: `#22C55E` (Green for positive metrics)
-- Border: `rgba(255, 255, 255, 0.08)`
+| Endpoint                | Cache                                                                           |
+| ----------------------- | ------------------------------------------------------------------------------- |
+| `/api/kols`             | 60s fresh, 300s stale                                                           |
+| `/api/live-sellers`     | 30s fresh, 120s stale                                                           |
+| `/api/image/*`          | 23hr fresh, 1hr stale                                                           |
+| `/api/campaigns*`       | no cache (mutations)                                                            |
+| `/api/proxy/image?url=` | External image CORS proxy — no Lark auth, direct fetch from allowlisted domains |
 
-### Typography
-- Display: 48px/1.1/-0.02em
-- Title: 32px/1.2/-0.02em
-- Body: 14px/1.5/0
-- Numbers use JetBrains Mono
+---
 
 ## Environment Variables
 
-```bash
-NEXT_PUBLIC_LARK_API_URL=https://lark-http-hype.hypelive.workers.dev
+Set in Vercel project settings (not committed):
+
+```
+LARK_API_KEY=<key>        # Lark Base API key — set as Vercel env var
 ```
 
-## Roadmap
+The CF Worker URL is hardcoded in `/api/lark/[...path]/route.ts`.
 
-### Phase 1: Foundation ✅
-- [x] Project setup with Next.js and shadcn/ui
-- [x] Dashboard layout with sidebar and header
-- [x] Command Palette (Cmd+K)
-- [x] Dark theme design system
+---
 
-### Phase 2: Core Features ✅
-- [x] Discovery page with filters
-- [x] KOL profile page
-- [x] Live Center with real-time updates
-- [x] Campaign manager
+## E2E Tests
 
-### Phase 3: Intelligence ✅
-- [x] Pricing comparison
-- [x] Margin calculator
-- [x] OOH Media Planner
+8 tests against production (`https://hype-kol-dashboard.vercel.app`):
 
-### Phase 4: Integration
-- [ ] Connect to Lark Base API
-- [ ] Webhook integration for live status
-- [ ] Real-time updates via WebSocket
-- [ ] Authentication
+| Test | What it checks                                |
+| ---- | --------------------------------------------- |
+| T1   | /kols loads with ≥3 KOL cards                 |
+| T2   | /settings has sidebar, heading ≤32px          |
+| T3   | Dark mode metric text is bright (not black)   |
+| T4   | /kols?addTo=X shows "Adding KOLs to" banner   |
+| T5   | KOL checkbox → floating selection bar appears |
+| T6   | /campaigns loads with New Campaign button     |
+| T7   | /api/lark/api/kols → 200 JSON with data array |
+| T8   | Image proxy responds without 5xx              |
 
-### Phase 5: Polish
-- [ ] Animations and transitions
-- [ ] Mobile responsiveness
-- [ ] Performance optimization
-- [ ] User onboarding
+```bash
+pnpm test:e2e
+# 8 passed (~10s)
+```

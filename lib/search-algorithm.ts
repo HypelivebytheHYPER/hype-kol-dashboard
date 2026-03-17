@@ -6,7 +6,7 @@ export function calculateMatchScore(kol: KOL, criteria: SearchCriteria): MatchSc
   const reasons: string[] = [];
 
   // Budget match (30% weight)
-  if (criteria.budget) {
+  if (criteria.budget && kol.avgGMV) {
     const estimatedCost = kol.avgGMV * 0.1; // Rough estimate
     if (estimatedCost <= criteria.budget) {
       score += 30;
@@ -20,8 +20,8 @@ export function calculateMatchScore(kol: KOL, criteria: SearchCriteria): MatchSc
   // Audience alignment (25% weight)
   if (criteria.targetAudience) {
     // Check if KOL's audience matches target
-    const hasAudienceMatch = kol.audience?.interests?.some(
-      (interest) => interest.toLowerCase().includes(criteria.targetAudience!.toLowerCase())
+    const hasAudienceMatch = kol.audience?.interests?.some((interest) =>
+      interest.toLowerCase().includes(criteria.targetAudience!.toLowerCase())
     );
     if (hasAudienceMatch) {
       score += 25;
@@ -30,7 +30,7 @@ export function calculateMatchScore(kol: KOL, criteria: SearchCriteria): MatchSc
   }
 
   // Performance history (20% weight)
-  if (criteria.minGMV && kol.avgGMV >= criteria.minGMV) {
+  if (criteria.minGMV && kol.avgGMV && kol.avgGMV >= criteria.minGMV) {
     score += 20;
     reasons.push("strong GMV history");
   }
@@ -74,22 +74,20 @@ export function calculateMatchScore(kol: KOL, criteria: SearchCriteria): MatchSc
 
 // Rank KOLs by match score
 export function rankKOLsByMatch(kols: KOL[], criteria: SearchCriteria): MatchScore[] {
-  return kols
-    .map((kol) => calculateMatchScore(kol, criteria))
-    .sort((a, b) => b.score - a.score);
+  return kols.map((kol) => calculateMatchScore(kol, criteria)).sort((a, b) => b.score - a.score);
 }
 
 // Filter KOLs by criteria
 export function filterKOLs(kols: KOL[], criteria: SearchCriteria): KOL[] {
   return kols.filter((kol) => {
     // Budget filter
-    if (criteria.budget) {
+    if (criteria.budget && kol.avgGMV) {
       const estimatedCost = kol.avgGMV * 0.1;
       if (estimatedCost > criteria.budget * 1.5) return false;
     }
 
     // Minimum GMV filter
-    if (criteria.minGMV && kol.avgGMV < criteria.minGMV) {
+    if (criteria.minGMV && kol.avgGMV && kol.avgGMV < criteria.minGMV) {
       return false;
     }
 
@@ -120,20 +118,15 @@ export function getRecommendationReason(score: MatchScore): string {
 }
 
 // Suggest similar KOLs based on a reference KOL
-export function suggestSimilarKOLs(
-  referenceKOL: KOL,
-  allKOLs: KOL[],
-  limit: number = 5
-): KOL[] {
+export function suggestSimilarKOLs(referenceKOL: KOL, allKOLs: KOL[], limit: number = 5): KOL[] {
   return allKOLs
     .filter((kol) => kol.id !== referenceKOL.id)
     .map((kol) => {
       let similarity = 0;
 
       // Same category
-      const sharedCategories = kol.categories?.filter((cat) =>
-        referenceKOL.categories?.includes(cat)
-      ) || [];
+      const sharedCategories =
+        kol.categories?.filter((cat) => referenceKOL.categories?.includes(cat)) || [];
       similarity += sharedCategories.length * 20;
 
       // Same tier
