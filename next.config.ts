@@ -16,6 +16,37 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
+      // CDN Caching: API routes - 60s fresh, 5min stale-while-revalidate
+      {
+        source: "/api/lark/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, s-maxage=60, stale-while-revalidate=300",
+          },
+        ],
+      },
+      // CDN Caching: Static assets - 1 year immutable
+      {
+        source: "/:path*\\.(jpg|jpeg|png|webp|avif|svg|ico|woff|woff2)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      // CDN Caching: JS/CSS chunks - 1 year immutable (Next.js hashed filenames)
+      {
+        source: "/_next/static/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      // Security headers for all routes
       {
         source: "/(.*)",
         headers: [

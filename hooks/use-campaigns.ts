@@ -24,7 +24,9 @@ export function useCampaigns() {
   return useQuery({
     queryKey: campaignKeys.list(),
     queryFn: () => larkApi.getCampaigns(),
-    staleTime: 60_000,
+    staleTime: 60_000, // 1 minute fresh
+    gcTime: 10 * 60 * 1000, // 10 minutes in cache
+    refetchOnWindowFocus: false,
     ...retryConfig,
   });
 }
@@ -35,6 +37,8 @@ export function useCampaign(id: string) {
     queryFn: () => larkApi.getCampaign(id),
     enabled: !!id,
     staleTime: 60_000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
     ...retryConfig,
   });
 }

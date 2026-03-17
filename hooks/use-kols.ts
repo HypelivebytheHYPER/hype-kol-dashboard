@@ -14,10 +14,12 @@ const retryConfig = {
   retryDelay: (attemptIndex: number) => Math.min(1000 * Math.pow(2, attemptIndex), 10000),
 };
 
-// Cache configuration - 5 minutes stale, 10 minutes garbage collection
+// Cache configuration - 5 minutes stale, 30 minutes garbage collection
 const cacheConfig = {
-  staleTime: 5 * 60 * 1000, // 5 minutes
-  gcTime: 10 * 60 * 1000, // 10 minutes
+  staleTime: 5 * 60 * 1000, // 5 minutes fresh
+  gcTime: 30 * 60 * 1000, // 30 minutes in cache
+  refetchOnWindowFocus: false, // Don't refetch on tab switch
+  refetchOnReconnect: true, // Refetch when network reconnects
 };
 
 export const kolKeys = {
