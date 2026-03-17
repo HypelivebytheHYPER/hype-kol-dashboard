@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  cacheComponents: true, // Enable Next.js 16 cache components
   images: {
     remotePatterns: [
       {
