@@ -32,24 +32,8 @@ export type LetterTier = "S" | "A" | "B" | "C";
 /** Combined tier type */
 export type KOLTier = Tier | LetterTier;
 
-// ============================================
-// Category Types
-// ============================================
-
-export type Category =
-  | "beauty"
-  | "tech"
-  | "fmcg"
-  | "lifestyle"
-  | "fashion"
-  | "food"
-  | "travel"
-  | "health"
-  | "parenting"
-  | "gaming"
-  | "finance"
-  | "education";
-
+import type { CategoryId } from "../categories";
+export type Category = CategoryId | string;
 export type KOLCategory = Category;
 
 // ============================================
@@ -110,7 +94,6 @@ export interface KOL {
   liveCount?: number;
   videoCount?: number;
   productCount?: number;
-  campaignCount?: number;
 
   // Quality Indicators
   qualityScore: number;
@@ -148,9 +131,6 @@ export interface KOL {
 
   // Rate Card
   rateCard?: RateCard;
-
-  // Campaign History
-  campaignHistory?: CampaignHistory[];
 
   // Availability
   availability?: Availability;
@@ -229,7 +209,7 @@ export interface KOLDisplayData {
   tiktokUrl?: string;
   instagramUrl?: string;
 
-  // Contact (only shown after added to campaign)
+  // Contact
   phone?: string;
   lineId?: string;
   email?: string;
@@ -281,21 +261,6 @@ export interface RateService {
   ourCost: number;
   duration?: string;
   includesUsage?: boolean;
-}
-
-export interface CampaignHistory {
-  id: string;
-  campaignName: string;
-  brand: string;
-  gmv: number;
-  roi: number;
-  contentTypes: ContentType[];
-  dateRange: {
-    start: string;
-    end: string;
-  };
-  performance: "exceeded" | "met" | "below";
-  notes?: string;
 }
 
 export interface Availability {

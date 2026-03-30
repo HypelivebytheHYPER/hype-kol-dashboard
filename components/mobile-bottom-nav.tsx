@@ -5,16 +5,15 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutDashboard, Users, Radio, Briefcase, Search, X, Command } from "lucide-react";
+import { Users, Radio, Search, X, Command, Cpu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 const navItems = [
-  { name: "Home", href: "/", icon: LayoutDashboard },
-  { name: "KOLs", href: "/kols", icon: Users },
+  { name: "Creators", href: "/kols", icon: Users },
   { name: "Search", href: "#search", icon: Search, isAction: true },
   { name: "Live", href: "/live", icon: Radio },
-  { name: "Campaigns", href: "/campaigns", icon: Briefcase },
+  { name: "Tech", href: "/tech", icon: Cpu },
 ];
 
 export function MobileBottomNav() {
@@ -58,7 +57,7 @@ export function MobileBottomNav() {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                     <Input
                       autoFocus
-                      placeholder="Search KOLs, campaigns..."
+                      placeholder="Search creators..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="pl-10 h-12 text-lg"
@@ -102,7 +101,7 @@ export function MobileBottomNav() {
                     { label: "Top Live Sellers", href: "/kols?tier=live" },
                     { label: "Beauty KOLs", href: "/kols?category=beauty" },
                     { label: "High GMV", href: "/kols?sort=gmv" },
-                    { label: "My Campaigns", href: "/campaigns" },
+                    { label: "Tech Creators", href: "/tech" },
                   ].map((item) => (
                     <Link
                       key={item.label}

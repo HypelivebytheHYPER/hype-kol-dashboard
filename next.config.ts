@@ -2,12 +2,23 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  cacheComponents: true, // Enable Next.js 16 cache components
+  reactCompiler: true,
+  logging: {
+    browserToTerminal: "warn",
+  },
+  experimental: {
+    sri: { algorithm: "sha256" },
+  },
   images: {
     remotePatterns: [
       {
         protocol: "https",
         hostname: "unavatar.io",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "pub-816814216dff403d8cc6955bb0ad1fec.r2.dev",
         pathname: "/**",
       },
     ],
@@ -37,16 +48,6 @@ const nextConfig: NextConfig = {
           },
         ],
       },
-      // CDN Caching: JS/CSS chunks - 1 year immutable (Next.js hashed filenames)
-      {
-        source: "/_next/static/:path*",
-        headers: [
-          {
-            key: "Cache-Control",
-            value: "public, max-age=31536000, immutable",
-          },
-        ],
-      },
       // Security headers for all routes
       {
         source: "/(.*)",
@@ -64,12 +65,16 @@ const nextConfig: NextConfig = {
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline'",
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' blob: data: https: open.larksuite.com sg.larksuite.com *.r2.dev",
-              "connect-src 'self' https: lark-http-hype.hypelive.workers.dev",
+              "img-src 'self' blob: data: https: lark-http-hype.hypelive.workers.dev pub-816814216dff403d8cc6955bb0ad1fec.r2.dev unavatar.io",
+              "media-src 'self' lark-http-hype.hypelive.workers.dev *.larksuite.com",
+              "connect-src 'self' lark-http-hype.hypelive.workers.dev *.larksuite.com",
               "font-src 'self'",
-              "frame-ancestors 'self' https://www.hypelive.io https://hypelive.io",
+              "object-src 'none'",
+              "child-src 'none'",
+              "frame-ancestors 'self'",
               "base-uri 'self'",
               "form-action 'self'",
+              "upgrade-insecure-requests",
             ].join("; "),
           },
         ],

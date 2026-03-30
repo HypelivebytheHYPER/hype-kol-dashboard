@@ -17,18 +17,8 @@ interface Filters {
 }
 
 const PLATFORMS = ["TikTok", "Shopee", "Lazada", "Instagram", "YouTube"];
-const CATEGORIES = [
-  "Beauty",
-  "Fashion",
-  "Food",
-  "Tech",
-  "Gaming",
-  "Lifestyle",
-  "Health",
-  "Finance",
-  "Travel",
-  "Entertainment",
-];
+import { CATEGORIES as ALL_CATS } from "@/lib/categories";
+const CATEGORIES = ALL_CATS.map((c) => c.label);
 const TIERS = ["S", "A", "B", "C"];
 
 export function FilterPanel() {

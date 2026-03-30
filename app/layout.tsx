@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
-import { QueryProvider } from "@/components/query-provider";
+
 import { ThemeProvider } from "@/components/theme-provider";
 import { I18nProvider } from "@/lib/i18n-context";
 import { cn } from "@/lib/utils";
@@ -15,8 +15,8 @@ const geist = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "Hype KOL Dashboard",
-  description: "Discover and manage KOLs for your campaigns",
+  title: "HypeCreators Dashboard",
+  description: "Discover and manage creators, live sellers, and tech talent",
   other: {
     "http-equiv": "x-dns-prefetch-control",
     content: "on",
@@ -38,10 +38,8 @@ export default function RootLayout({
       <body className={`${geist.variable} font-sans antialiased`}>
         <ThemeProvider>
           <I18nProvider initialMessages={enMessages}>
-            <QueryProvider>
               {children}
               <Toaster position="bottom-right" richColors />
-            </QueryProvider>
           </I18nProvider>
         </ThemeProvider>
       </body>

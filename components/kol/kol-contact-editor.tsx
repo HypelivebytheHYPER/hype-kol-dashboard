@@ -1,18 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Edit2, Check, X, MessageCircle, Phone, Mail, Plus } from "lucide-react";
+import { motion } from "framer-motion";
+import { Edit2, Check, X, MessageCircle, Phone, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+
 import type { ApiKOL } from "@/lib/lark-api";
 
 interface KOLContactEditorProps {
@@ -21,15 +14,12 @@ interface KOLContactEditorProps {
 }
 
 export function KOLContactEditor({ kol, onSave }: KOLContactEditorProps) {
-  const [isOpen, setIsOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [contact, setContact] = useState({
     lineId: kol.contact?.lineId || "",
     phone: kol.contact?.phone || "",
     email: kol.contact?.email || "",
   });
-
-  const hasAnyContact = contact.lineId || contact.phone || contact.email;
 
   const handleSave = () => {
     onSave?.(contact);

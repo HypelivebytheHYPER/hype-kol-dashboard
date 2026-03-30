@@ -114,8 +114,7 @@ dashboard/
 │   │   ├── discover/        # Discovery (filter-heavy view)
 │   │   └── settings/        # Account settings
 │   ├── api/
-│   │   ├── lark/[...path]/  # Vercel proxy → CF Worker (with edge cache)
-│   │   └── proxy/image/     # External image CORS proxy (unavatar, twimg, etc.)
+│   │   └── lark/[...path]/  # Vercel proxy → CF Worker (with edge cache)
 │   ├── layout.tsx           # Root layout (QueryProvider, ThemeProvider)
 │   └── globals.css          # Tailwind v4 theme variables + typography
 ├── components/
@@ -152,13 +151,12 @@ All data goes through `/api/lark/[...path]/route.ts` which:
 - Sets edge cache headers per route pattern
 - Strips `Vary`, `Set-Cookie`, `content-encoding` to allow CDN caching
 
-| Endpoint                | Cache                                                                           |
-| ----------------------- | ------------------------------------------------------------------------------- |
-| `/api/kols`             | 60s fresh, 300s stale                                                           |
-| `/api/live-sellers`     | 30s fresh, 120s stale                                                           |
-| `/api/image/*`          | 23hr fresh, 1hr stale                                                           |
-| `/api/campaigns*`       | no cache (mutations)                                                            |
-| `/api/proxy/image?url=` | External image CORS proxy — no Lark auth, direct fetch from allowlisted domains |
+| Endpoint            | Cache                       |
+| ------------------- | --------------------------- |
+| `/api/kols`         | 60s fresh, 300s stale       |
+| `/api/live-sellers` | 30s fresh, 120s stale       |
+| `/api/image/*`      | 23hr fresh, 1hr stale       |
+| `/api/campaigns*`   | no cache (mutations)        |
 
 ---
 
@@ -187,7 +185,7 @@ The CF Worker URL is hardcoded in `/api/lark/[...path]/route.ts`.
 | T5   | KOL checkbox → floating selection bar appears |
 | T6   | /campaigns loads with New Campaign button     |
 | T7   | /api/lark/api/kols → 200 JSON with data array |
-| T8   | Image proxy responds without 5xx              |
+| T8   | KOL image redirect responds without 5xx       |
 
 ```bash
 pnpm test:e2e

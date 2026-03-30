@@ -139,7 +139,7 @@ export function KOLAvatar({ kol, className, size = "md", ring, ringColor }: KOLA
   );
 }
 
-// Campaign/User avatar with different styling
+// User avatar with different styling
 interface UserAvatarProps {
   src?: string;
   name: string;

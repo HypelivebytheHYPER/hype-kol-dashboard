@@ -1,14 +1,14 @@
 {
   "meta": {
-    "title": "Hype KOL Dashboard",
-    "description": "Find and manage KOLs for your campaigns"
+    "title": "HypeCreators Dashboard",
+    "description": "Discover and manage creators, live sellers, and tech talent"
   },
   "nav": {
-    "dashboard": "Dashboard",
-    "discovery": "Find KOLs",
-    "campaigns": "My Campaigns",
-    "live": "Live Center",
-    "pricing": "Pricing",
+    "dashboard": "Creators",
+    "discovery": "Discover",
+    "creators": "Creators",
+    "techCreators": "Tech Creators",
+    "live": "Live Catalog",
     "settings": "Settings"
   },
   "header": {
@@ -18,9 +18,9 @@
     "language": "Language"
   },
   "hero": {
-    "badgePlatform": "KOL Discovery Platform",
+    "badgePlatform": "HypeCreators Discovery Platform",
     "liveNow": "Live Now",
-    "title": "Command Center",
+    "title": "Creators",
     "description": "Browse {{count}}+ verified influencers, live sellers, and content creators. Filter by tier, category, performance metrics, and more.",
     "searchPlaceholder": "Search KOLs...",
     "recentSearches": "Recent"
@@ -72,11 +72,11 @@
     "more": "More"
   },
   "dashboard": {
-    "title": "Command Center",
+    "title": "Creators",
     "subtitle": "Everything you need at a glance",
     "stats": {
-      "campaignsActive": {
-        "title": "Campaigns Active",
+      "creatorsActive": {
+        "title": "Active Creators",
         "change": "+1 this week"
       },
       "projectedGMV": {
@@ -95,13 +95,6 @@
     "quickDiscovery": {
       "title": "Quick Discovery",
       "recentSearches": "Recent searches"
-    },
-    "activeCampaigns": {
-      "title": "Active Campaigns",
-      "viewAll": "View all",
-      "kolsAssigned": "KOL assigned",
-      "kolsAssigned_plural": "KOLs assigned",
-      "nextMilestone": "Next up"
     },
     "trendingNow": {
       "title": "Trending Now",
@@ -154,7 +147,7 @@
     },
     "actions": {
       "viewProfile": "View Profile",
-      "addToCampaign": "Add to Campaign",
+      "viewProfile": "View Profile",
       "contact": "Contact",
       "select": "Select",
       "selected": "Selected",
@@ -167,8 +160,7 @@
       "empty": "No KOLs selected yet",
       "estimatedTotal": "Estimated Total",
       "clearAll": "Clear all",
-      "addToCampaign": "Add to Campaign",
-      "createCampaign": "Create Campaign",
+      "viewProfile": "View Profile",
       "exportRateCard": "Export Rate Card"
     },
     "filters": {

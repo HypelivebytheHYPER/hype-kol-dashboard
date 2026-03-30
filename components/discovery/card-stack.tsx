@@ -18,14 +18,12 @@ import { useDiscoveryStore } from "@/lib/store/discovery-store";
 interface CardStackProps {
   initialKols: KOLCardData[];
   onLoadMore?: () => Promise<KOLCardData[]>;
-  onSaveToCampaign?: (kol: KOLDisplayData) => void;
   onKOLLiked?: (kol: KOLCardData) => void;
 }
 
 export function CardStack({
   initialKols,
   onLoadMore,
-  onSaveToCampaign,
   onKOLLiked,
 }: CardStackProps) {
   const [cards, setCards] = useState(initialKols);
@@ -119,11 +117,6 @@ export function CardStack({
     }
   }, [currentCard, addToPassed, moveToNextCard]);
 
-  const handleSaveToCampaign = useCallback(() => {
-    if (currentDisplayData && onSaveToCampaign) {
-      onSaveToCampaign(currentDisplayData);
-    }
-  }, [currentDisplayData, onSaveToCampaign]);
 
   const handleOpenDetail = useCallback(() => {
     if (currentDisplayData) {
@@ -287,7 +280,6 @@ export function CardStack({
       <ActionButtons
         onPass={handlePass}
         onLike={handleLike}
-        onSaveToCampaign={onSaveToCampaign ? handleSaveToCampaign : undefined}
         isLoading={isLoading}
       />
 
@@ -312,7 +304,6 @@ export function CardStack({
         kol={detailKol || currentDisplayData}
         isOpen={isDetailOpen}
         onClose={handleCloseDetail}
-        isInCampaign={false}
       />
     </div>
   );

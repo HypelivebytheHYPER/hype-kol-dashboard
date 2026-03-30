@@ -12,7 +12,7 @@ import { useI18n } from "@/lib/i18n-context";
 export function Header() {
   const [commandOpen, setCommandOpen] = useState(false);
   const { theme, setTheme } = useTheme();
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
 
   return (
     <>
@@ -58,11 +58,7 @@ export function Header() {
           </Button>
 
           <div className="flex items-center gap-3 pl-3 border-l border-border">
-            <div className="text-right hidden md:block">
-              <p className="text-sm font-medium">Admin User</p>
-              <p className="text-xs text-muted-foreground">hype@agency.com</p>
-            </div>
-            <UserAvatar name="Admin User" size="md" />
+            <UserAvatar name="H" size="md" />
           </div>
         </div>
       </header>

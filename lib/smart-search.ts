@@ -15,42 +15,6 @@ export interface SearchFilters {
   hasContact?: boolean;
 }
 
-interface ParsedQuery {
-  filters: SearchFilters;
-  rawQuery: string;
-}
-
-// Natural language patterns
-const PATTERNS = {
-  // Tier: nano, micro, mid, macro, mega
-  tier: /\b(nano|micro|mid[-\s]?tier|macro|mega)\s*(kol)?\b/gi,
-
-  // Platform: tiktok, instagram, youtube, facebook
-  platform: /\b(tiktok|ig|instagram|youtube|facebook|fb)\b/gi,
-
-  // Location: bangkok, chiang mai, phuket, etc.
-  location:
-    /\b(bangkok|bkk|chiang\s*mai|phuket|chonburi|korat|nakhon\s*ratchasima|hua\s*hin|pattaya)\b/gi,
-
-  // Followers: 100k, 1m, >100k, <500k, 100k-500k
-  followers:
-    /([><]=?|between)?\s*(\d+(?:\.\d+)?)\s*(k|m|thousand|million)?\s*(?:to|-)\s*(\d+(?:\.\d+)?)?\s*(k|m|thousand|million)?\s*(?:followers?|fans?)?/gi,
-  followersSingle: /([><]=?)\s*(\d+(?:\.\d+)?)\s*(k|m|thousand|million)?\s*(?:followers?|fans?)?/gi,
-
-  // Engagement: >5% engagement, 3-10%
-  engagement: /([><]=?)\s*(\d+(?:\.\d+)?)\s*%?\s*(?:engagement|er)/gi,
-
-  // Content type: live, video, content creator
-  contentType: /\b(live|video|content)\s*(?:creator|seller|streamer)?\b/gi,
-
-  // Has contact: line, phone, email, contact
-  hasContact: /\b(has\s*)?(line|phone|email|contact)\b/gi,
-
-  // Category keywords
-  categories:
-    /\b(beauty|fashion|food|tech|gaming|fitness|travel|lifestyle|mom|parenting|finance|crypto|business|education|entertainment|comedy|music)\b/gi,
-};
-
 const PLATFORM_ALIASES: Record<string, string> = {
   ig: "Instagram",
   fb: "Facebook",
@@ -239,9 +203,9 @@ export function getSearchSuggestions(kols: ApiKOL[], partial: string): string[] 
   });
 
   // Locations
-  const locations = new Set(kols.map((k) => k.location).filter(Boolean));
+  const locations = new Set(kols.map((k) => k.location).filter((l): l is string => !!l));
   locations.forEach((loc) => {
-    if (loc!.toLowerCase().startsWith(q)) suggestions.add(loc!);
+    if (loc.toLowerCase().startsWith(q)) suggestions.add(loc);
   });
 
   // Tiers

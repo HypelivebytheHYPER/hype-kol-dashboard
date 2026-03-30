@@ -23,7 +23,6 @@ import {
   Phone,
   Mail,
   MessageCircle,
-  Lock,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -31,7 +30,6 @@ interface KOLCardDetailProps {
   kol: KOLDisplayData;
   isOpen: boolean;
   onClose: () => void;
-  isInCampaign?: boolean;
 }
 
 function getTierColor(tier: string): string {
@@ -73,7 +71,7 @@ function getQualityLabel(score: number): string {
   return "Developing";
 }
 
-export function KOLCardDetail({ kol, isOpen, onClose, isInCampaign = false }: KOLCardDetailProps) {
+export function KOLCardDetail({ kol, isOpen, onClose }: KOLCardDetailProps) {
   const [activeTab, setActiveTab] = useState<"overview" | "contact">("overview");
 
   if (!isOpen) return null;
@@ -188,7 +186,6 @@ export function KOLCardDetail({ kol, isOpen, onClose, isInCampaign = false }: KO
               }`}
             >
               Contact
-              {!isInCampaign && <Lock className="w-3 h-3" />}
             </button>
           </div>
 
@@ -351,18 +348,7 @@ export function KOLCardDetail({ kol, isOpen, onClose, isInCampaign = false }: KO
                 aria-labelledby="contact-tab"
                 className="space-y-4"
               >
-                {!isInCampaign ? (
-                  <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl p-8 text-center">
-                    <Lock className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                    <h3 className="font-medium text-gray-700 mb-1">Contact Info Locked</h3>
-                    <p className="text-sm text-gray-500 mb-4">
-                      Add this KOL to a campaign to unlock contact information
-                    </p>
-                    <button className="px-4 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors">
-                      Add to Campaign
-                    </button>
-                  </div>
-                ) : (
+                {(
                   <div className="space-y-3">
                     {kol.phone && (
                       <a

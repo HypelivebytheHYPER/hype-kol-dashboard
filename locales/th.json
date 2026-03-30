@@ -1,14 +1,14 @@
 {
   "meta": {
-    "title": "Hype KOL Dashboard",
-    "description": "ค้นหาและจัดการ KOL สำหรับแคมเปญของคุณ"
+    "title": "HypeCreators Dashboard",
+    "description": "ค้นหาและจัดการครีเอเตอร์ ไลฟ์เซลเลอร์ และเทคครีเอเตอร์"
   },
   "nav": {
-    "dashboard": "ภาพรวม",
-    "discovery": "ค้นหา KOL",
-    "campaigns": "แคมเปญของฉัน",
-    "live": "ไลฟ์สด",
-    "pricing": "ราคา",
+    "dashboard": "ศูนย์กลาง",
+    "discovery": "ค้นหา",
+    "creators": "ครีเอเตอร์",
+    "techCreators": "เทคครีเอเตอร์",
+    "live": "แคตตาล็อกไลฟ์",
     "settings": "ตั้งค่า"
   },
   "header": {
@@ -18,11 +18,11 @@
     "language": "ภาษา"
   },
   "hero": {
-    "badgePlatform": "แพลตฟอร์มค้นหา KOL",
+    "badgePlatform": "HypeCreators Discovery Platform",
     "liveNow": "กำลังไลฟ์",
     "title": "ห้องควบคุม",
-    "description": "ค้นหา KOL ที่ได้รับการยืนยัน {{count}}+ คน, ผู้ขายสด, และครีเอเตอร์ กรองตามระดับ, หมวดหมู่, ตัวชี้วัดประสิทธิภาพ, และอื่นๆ",
-    "searchPlaceholder": "ค้นหา KOL...",
+    "description": "ค้นหา Creator {{count}}+ คน, Live Seller, Live Creator กรองตามระดับ, หมวดหมู่, และตัวชี้วัด",
+    "searchPlaceholder": "ค้นหา Creator...",
     "recentSearches": "การค้นหาล่าสุด"
   },
   "categories": {
@@ -32,14 +32,14 @@
     "topPerformers": "ผู้ทำผลงานยอดเยี่ยม",
     "byGmv": "ตาม GMV",
     "liveCommerceStars": "ดาวไลฟ์ขายของ",
-    "liveCommerceDescription": "ผู้ขายสดที่ทำผลงานยอดเยี่ยมพิสูจน์แล้ว",
+    "liveCommerceDescription": "Live Sellerที่ทำผลงานยอดเยี่ยมพิสูจน์แล้ว",
     "viewLiveCenter": "ดูศูนย์ไลฟ์",
     "risingStars": "ดาวรุ่ง",
     "highEngagement": "การมีส่วนร่วมสูง"
   },
   "stats": {
-    "totalKols": "KOL ทั้งหมด",
-    "liveSellers": "ผู้ขายสด",
+    "totalKols": "Creator ทั้งหมด",
+    "liveSellers": "Live Seller",
     "avgGmv": "GMV เฉลี่ย",
     "categories": "หมวดหมู่"
   },
@@ -75,8 +75,8 @@
     "title": "ห้องควบคุม",
     "subtitle": "ทุกอย่างที่คุณต้องการในที่เดียว",
     "stats": {
-      "campaignsActive": {
-        "title": "แคมเปญที่กำลังทำงาน",
+      "creatorsActive": {
+        "title": "ครีเอเตอร์ที่กำลังทำงาน",
         "change": "+1 สัปดาห์นี้"
       },
       "projectedGMV": {
@@ -95,13 +95,6 @@
     "quickDiscovery": {
       "title": "ค้นหาแบบเร็ว",
       "recentSearches": "ค้นหาล่าสุด"
-    },
-    "activeCampaigns": {
-      "title": "แคมเปญที่กำลังดำเนินการ",
-      "viewAll": "ดูทั้งหมด",
-      "kolsAssigned": "KOL ที่รับงาน",
-      "kolsAssigned_plural": "KOL ที่รับงาน",
-      "nextMilestone": "ต่อไป"
     },
     "trendingNow": {
       "title": "กำลังฮิตตอนนี้",
@@ -140,7 +133,7 @@
       "qualityScore": {
         "label": "คะแนนคุณภาพ",
         "tooltip": "คะแนนของเราจาก 0-5 ตามคุณภาพคอนเทนต์ ความต่อเนื่อง และความเป็นมืออาชีพ",
-        "excellent": "ดีมาก — KOL ระดับท็อป",
+        "excellent": "ดีมาก — Creator ระดับท็อป",
         "good": "ดี — น่าเชื่อถือ",
         "average": "พอใช้ — ยังมีที่ต้องปรับปรุง",
         "belowAverage": "ต่ำกว่ามาตรฐาน — เลือกระวัง"
@@ -154,7 +147,7 @@
     },
     "actions": {
       "viewProfile": "ดูโปรไฟล์",
-      "addToCampaign": "เพิ่มในแคมเปญ",
+      "viewProfile": "ดูโปรไฟล์",
       "contact": "ติดต่อ",
       "select": "เลือก",
       "selected": "เลือกแล้ว",
@@ -164,11 +157,10 @@
     },
     "selection": {
       "title": "รายการที่เลือก",
-      "empty": "ยังไม่ได้เลือก KOL",
+      "empty": "ยังไม่ได้เลือก Creator",
       "estimatedTotal": "ราคาประมาณ",
       "clearAll": "ล้างทั้งหมด",
-      "addToCampaign": "เพิ่มในแคมเปญ",
-      "createCampaign": "สร้างแคมเปญใหม่",
+      "viewProfile": "ดูโปรไฟล์",
       "exportRateCard": "ส่งออก Rate Card"
     },
     "filters": {

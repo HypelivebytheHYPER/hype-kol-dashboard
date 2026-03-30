@@ -35,9 +35,9 @@ const defaultMessages = {
     more: "More",
   },
   hero: {
-    badgePlatform: "KOL Discovery Platform",
+    badgePlatform: "HypeCreators Discovery Platform",
     liveNow: "Live Now",
-    title: "Command Center",
+    title: "Creators",
     description:
       "Browse {{count}}+ verified influencers, live sellers, and content creators. Filter by tier, category, performance metrics, and more.",
     searchPlaceholder: "Search KOLs...",
@@ -70,7 +70,7 @@ const defaultMessages = {
   nav: {
     dashboard: "Dashboard",
     discovery: "Find KOLs",
-    campaigns: "My Campaigns",
+    techCreators: "Tech Creators",
     live: "Live Center",
     pricing: "Pricing",
     settings: "Settings",

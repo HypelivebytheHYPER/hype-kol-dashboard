@@ -1,16 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Users, Radio, Briefcase, Settings, Building2 } from "lucide-react";
+import { Users, Settings, Video, Cpu } from "lucide-react";
 
 const navigation = [
-  { name: "Command Center", href: "/", icon: LayoutDashboard },
-  { name: "KOLs", href: "/kols", icon: Users },
-  { name: "Live Center", href: "/live", icon: Radio },
-  { name: "Campaigns", href: "/campaigns", icon: Briefcase },
-  { name: "OOH Media", href: "/ooh", icon: Building2 },
+  { name: "Creators", href: "/kols", icon: Users },
+  { name: "Tech Creators", href: "/tech", icon: Cpu },
+  { name: "Live Catalog", href: "/live", icon: Video },
 ];
 
 const secondaryNav = [{ name: "Settings", href: "/settings", icon: Settings }];
@@ -20,12 +19,16 @@ export function Sidebar() {
 
   return (
     <div className="w-64 bg-card border-r border-border flex flex-col">
-      <div className="p-6">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
-            <span className="text-white font-bold text-sm">H</span>
-          </div>
-          <span className="font-semibold text-lg">hype</span>
+      <div className="p-5">
+        <Link href="/kols" className="flex items-center gap-2.5">
+          <Image
+            src="https://pub-816814216dff403d8cc6955bb0ad1fec.r2.dev/Hypeshop%20transparent.png"
+            alt="HypeCreators"
+            width={36}
+            height={36}
+            className="rounded-lg drop-shadow-md"
+          />
+          <span className="font-bold text-lg tracking-tight">HypeCreators</span>
         </Link>
       </div>
 

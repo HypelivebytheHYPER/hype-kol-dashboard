@@ -1,151 +1,194 @@
-// Cached data fetching for Server Components
-// Uses Next.js 16 "use cache" directive for edge caching
+// Server-side data fetching — single source of truth
+// ALL data comes from POST /records/search via lark-base.ts
+// No GET /api/kols or /api/live-sellers — direct Lark Base queries only
 
-import { cacheLife, cacheTag } from "next/cache";
+import { fetchRecords, TABLES, str, num, arr, url, attachments, type TableId } from "./lark-base";
+import type { LarkAttachment, LarkRecord } from "./lark-base";
+import { normalizeCategories, CATEGORY_FIELD } from "./categories";
 
-const LARK_API_URL = process.env.NEXT_PUBLIC_LARK_API_URL || "https://lark-http-hype.hypelive.workers.dev";
-const LARK_API_KEY = process.env.LARK_API_KEY;
+// Re-export
+export type { ApiKOL } from "./lark-api";
+export type { LiveMC, TechKOL } from "./types/catalog";
+export { TABLES, mediaDownloadUrl } from "./lark-base";
 
-// Types (matching your existing types)
-export interface KOL {
-  id: string;
-  name: string;
-  handle: string;
-  tier?: string;
-  followers?: number;
-  avgGMV?: number;
-  avgLiveGMV?: number;
-  engagementRate: number;
-  isLiveNow?: boolean;
-  categories?: string[];
-  computedImageUrl?: string;
-  imageUrl?: string;
-  platform?: string;
-}
+import type { ApiKOL } from "./lark-api";
+import type { LiveMC, TechKOL } from "./types/catalog";
 
-interface KOLResponse {
-  data: KOL[];
-  total: number;
-}
+// ============ Record → ApiKOL mapper ============
 
-/**
- * Fetch popular KOLs with caching
- * Cached for 5 minutes at edge - first visitor triggers fetch, rest get cached
- */
-export async function getPopularKOLs(): Promise<KOLResponse> {
-  "use cache";
-  cacheLife("minutes"); // Cache for minutes (default 5min)
-  cacheTag("kols-popular");
-
-  const headers: Record<string, string> = {};
-  if (LARK_API_KEY) {
-    headers["Authorization"] = `Bearer ${LARK_API_KEY}`;
-  }
-
-  const res = await fetch(`${LARK_API_URL}/api/kols?limit=20`, {
-    headers,
-    // Use force-cache for Server Components - Next.js will cache the fetch
-    cache: "force-cache",
-    next: {
-      revalidate: 300, // 5 minutes
-      tags: ["kols"],
+function recordToKOL(r: LarkRecord): ApiKOL {
+  const f = r.fields;
+  return {
+    id: r.record_id,
+    kolId: str(f, "Record ID") || r.record_id,
+    name: str(f, "Nickname") || str(f, "Handle"),
+    handle: str(f, "Handle"),
+    platform: str(f, "Platform"),
+    tier: str(f, "Levels of KOLs"),
+    followers: num(f, "Follower"),
+    engagementRate: num(f, "Engagement Rate"),
+    avgGMV: num(f, "Avg_Monthly_GMV_Numeric"),
+    avgLiveGMV: num(f, "Avg_Live_GMV_Numeric"),
+    qualityScore: num(f, "Quality Score"),
+    categories: normalizeCategories(arr(f, CATEGORY_FIELD)),
+    location: arr(f, "Location").join(", "),
+    kolType: str(f, "KOLs Type"),
+    contact: {
+      lineId: str(f, "LineId"),
+      phone: str(f, "Phone"),
+      email: str(f, "Contact_Email"),
     },
+    isLiveNow: false,
+    stats: {
+      liveGmv: num(f, "LiveGmv"),
+      videoGmv: num(f, "VideoGmv"),
+      revenue: num(f, "Revenue"),
+      views: num(f, "Views"),
+      productCount: num(f, "ProductCount"),
+      liveNum: num(f, "LiveNum"),
+      videoNum: num(f, "VideoNum"),
+    },
+    bio: { th: str(f, "Bio_TH"), en: str(f, "Bio_EN") },
+    condition: str(f, "Condition"),
+    scope: str(f, "Scope"),
+    sourceUrl: url(f, "SourceUrl"),
+    channel: url(f, "Channel"),
+    imageUrl: "",
+  };
+}
+
+// ============ ALL_KOLS queries (POST /records/search) ============
+
+export async function getAllKOLs(): Promise<{ data: ApiKOL[]; total: number }> {
+  const { data, total } = await fetchRecords(TABLES.ALL_KOLS, {
+    pageSize: 500,
+    revalidate: 300,
+    tags: ["kols"],
+  });
+  return { data: data.map(recordToKOL), total };
+}
+
+export async function getKOL(id: string): Promise<{ data: ApiKOL | null }> {
+  const { data } = await fetchRecords(TABLES.ALL_KOLS, {
+    filter: {
+      conjunction: "and",
+      conditions: [{ field_name: "Record ID", operator: "is", value: [id] }],
+    },
+    pageSize: 1,
+    revalidate: 300,
+    tags: ["kols"],
+  });
+  return { data: data.length > 0 ? recordToKOL(data[0]) : null };
+}
+
+export async function getKOLRelated(id: string): Promise<{ data: { parent: ApiKOL | null; children: ApiKOL[] } }> {
+  // Search for KOLs that reference this record as parent
+  const { data: children } = await fetchRecords(TABLES.ALL_KOLS, {
+    filter: {
+      conjunction: "and",
+      conditions: [{ field_name: "Parent KOL", operator: "is", value: [id] }],
+    },
+    pageSize: 10,
+    revalidate: 300,
+    tags: ["kols"],
+  });
+  return { data: { parent: null, children: children.map(recordToKOL) } };
+}
+
+export async function searchCreatorsByCategory(
+  category: string,
+  tableId: TableId = TABLES.ALL_KOLS
+): Promise<{ data: ApiKOL[]; total: number }> {
+  const { data, total } = await fetchRecords(tableId, {
+    filter: {
+      conjunction: "and",
+      conditions: [{ field_name: CATEGORY_FIELD, operator: "contains", value: [category] }],
+    },
+    pageSize: 500,
+    revalidate: 300,
+    tags: ["kols", `category-${category.toLowerCase()}`],
+  });
+  return { data: data.map(recordToKOL), total };
+}
+
+export async function searchCreatorsByType(
+  kolType: string
+): Promise<{ data: ApiKOL[]; total: number }> {
+  const { data, total } = await fetchRecords(TABLES.ALL_KOLS, {
+    filter: {
+      conjunction: "and",
+      conditions: [{ field_name: "KOLs Type", operator: "is", value: [kolType] }],
+    },
+    pageSize: 500,
+    revalidate: 300,
+    tags: ["kols", `type-${kolType.toLowerCase()}`],
+  });
+  return { data: data.map(recordToKOL), total };
+}
+
+// ============ LIVE_MC_LIST ============
+
+export async function getLiveMCs(): Promise<{ data: LiveMC[]; total: number }> {
+  const { data: records, total } = await fetchRecords(TABLES.LIVE_MC_LIST, {
+    revalidate: 300,
+    tags: ["live-mc"],
   });
 
-  if (!res.ok) {
-    console.error("Failed to fetch KOLs:", res.status);
-    return { data: [], total: 0 };
-  }
-
-  return res.json();
-}
-
-/**
- * Fetch live sellers with shorter cache (30s)
- */
-export async function getLiveSellers(): Promise<KOLResponse> {
-  "use cache";
-  cacheLife("seconds"); // Shorter cache for live data
-  cacheTag("live-sellers");
-
-  const headers: Record<string, string> = {};
-  if (LARK_API_KEY) {
-    headers["Authorization"] = `Bearer ${LARK_API_KEY}`;
-  }
-
-  const res = await fetch(`${LARK_API_URL}/api/live-sellers?limit=20`, {
-    headers,
-    cache: "force-cache",
-    next: {
-      revalidate: 30, // 30 seconds
-      tags: ["live-sellers"],
-    },
+  const mcs: LiveMC[] = records.map((r) => {
+    const f = r.fields;
+    const refs = attachments(f, "LIVE Reference");
+    return {
+      id: r.record_id,
+      handle: str(f, "Handle"),
+      brands: arr(f, "Brand"),
+      categories: normalizeCategories(arr(f, CATEGORY_FIELD)),
+      videos: refs.filter((a: LarkAttachment) => a.type?.startsWith("video/")).map((v: LarkAttachment) => ({ token: v.file_token, name: v.name, size: v.size })),
+    };
   });
 
-  if (!res.ok) {
-    return { data: [], total: 0 };
-  }
-
-  return res.json();
+  return { data: mcs, total };
 }
 
-/**
- * Fetch category-specific KOLs
- */
-export async function getCategoryKOLs(category: string): Promise<KOLResponse> {
-  "use cache";
-  cacheLife("minutes");
-  cacheTag(`kols-category-${category}`);
+// ============ KOL_Tech ============
 
-  const headers: Record<string, string> = {};
-  if (LARK_API_KEY) {
-    headers["Authorization"] = `Bearer ${LARK_API_KEY}`;
-  }
+export async function getTechKOLs(): Promise<{ data: TechKOL[]; total: number }> {
+  const { data: records, total } = await fetchRecords(TABLES.KOL_TECH, {
+    revalidate: 300,
+    tags: ["tech-kols"],
+  });
 
-  const res = await fetch(
-    `${LARK_API_URL}/api/kols?category=${encodeURIComponent(category)}&limit=10`,
-    {
-      headers,
-      cache: "force-cache",
-      next: {
-        revalidate: 300,
-        tags: ["kols", `category-${category}`],
+  const kols: TechKOL[] = records.map((r) => {
+    const f = r.fields;
+    return {
+      id: r.record_id,
+      name: str(f, "Nickname"),
+      handle: str(f, "Handle"),
+      followers: num(f, "Follower"),
+      specialization: arr(f, "Specialization"),
+      categories: arr(f, "Categories"),
+      products: arr(f, "Products"),
+      location: arr(f, "Location"),
+      liveGmv: num(f, "LiveGmv"),
+      videoGmv: num(f, "VideoGmv"),
+      views: num(f, "Views"),
+      liveNum: num(f, "LiveNum"),
+      videoNum: num(f, "VideoNum"),
+      urls: {
+        tiktok: url(f, "TiktokUrl"),
+        instagram: url(f, "InstagramUrl"),
+        facebook: url(f, "FacebookUrl"),
+        youtube: url(f, "YoutubeUrl"),
+        x: str(f, "XUrl"),
       },
-    }
-  );
-
-  if (!res.ok) {
-    return { data: [], total: 0 };
-  }
-
-  return res.json();
-}
-
-/**
- * Fetch campaigns
- */
-export async function getCampaigns(): Promise<{ data: unknown[]; total: number }> {
-  "use cache";
-  cacheLife("minutes");
-  cacheTag("campaigns");
-
-  const headers: Record<string, string> = {};
-  if (LARK_API_KEY) {
-    headers["Authorization"] = `Bearer ${LARK_API_KEY}`;
-  }
-
-  const res = await fetch(`${LARK_API_URL}/api/campaigns`, {
-    headers,
-    cache: "force-cache",
-    next: {
-      revalidate: 60,
-      tags: ["campaigns"],
-    },
+      contact: { email: str(f, "Contact_Email"), phone: str(f, "Contact_Phone") },
+      bio: str(f, "Bio_TH") || str(f, "Bio_EN"),
+      profileImage: url(f, "Profile_Image_URL"),
+      collaborationStage: str(f, "Collaboration stage"),
+      mcnAgency: str(f, "MCN Agency"),
+      detailedInfo: str(f, "Detailed information"),
+      sourceUrl: url(f, "SourceUrl"),
+    };
   });
 
-  if (!res.ok) {
-    return { data: [], total: 0 };
-  }
-
-  return res.json();
+  return { data: kols, total };
 }

@@ -111,7 +111,7 @@ export function transformToDisplayData(kol: KOL): KOLDisplayData {
     tiktokUrl: kol.tiktokUrl,
     instagramUrl: kol.instagramUrl,
 
-    // Contact (hidden until added to campaign)
+    // Contact
     phone: kol.phone,
     lineId: kol.lineId,
     email: kol.email,
