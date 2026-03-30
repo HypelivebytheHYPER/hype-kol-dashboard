@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { getPopularKOLs, getLiveSellers, getCategoryKOLs } from "@/lib/cached-data";
-import DiscoveryHubClient from "./DiscoveryHubClient";
+import DiscoveryHubClient from "./discovery-hub-client";
 import { LoadingDashboard } from "@/components/loading-dashboard";
 
 // ISR: Regenerate page every 5 minutes in background

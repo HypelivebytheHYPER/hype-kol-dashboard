@@ -9,10 +9,10 @@
 import { useState, useCallback } from "react";
 import { motion, PanInfo, useMotionValue, useTransform } from "framer-motion";
 import { KOLCardData } from "@/lib/types/kol";
-import { transformCardToDisplayData, KOLDisplayData } from "@/lib/hooks/useKOLDisplay";
-import { KOLCard } from "./KOLCard";
-import { KOLCardDetail } from "./KOLCardDetail";
-import { ActionButtons } from "./ActionButtons";
+import { transformCardToDisplayData, KOLDisplayData } from "@/hooks/use-kol-display";
+import { KOLCard } from "./kol-card";
+import { KOLCardDetail } from "./kol-card-detail";
+import { ActionButtons } from "./action-buttons";
 import { useDiscoveryStore } from "@/lib/store/discovery-store";
 
 interface CardStackProps {

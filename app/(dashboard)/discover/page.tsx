@@ -9,16 +9,16 @@
 import { useEffect, useState, useCallback } from "react";
 import { Suspense } from "react";
 import { useRouter } from "next/navigation";
-import { CardStack } from "@/components/discovery/CardStack";
-import { FilterPanel } from "@/components/discovery/FilterPanel";
-import { CampaignSelector } from "@/components/discovery/CampaignSelector";
-import { CampaignStats } from "@/components/discovery/CampaignStats";
-import { QuickAddToastContainer, useQuickAddToast } from "@/components/discovery/QuickAddToast";
+import { CardStack } from "@/components/discovery/card-stack";
+import { FilterPanel } from "@/components/discovery/filter-panel";
+import { CampaignSelector } from "@/components/discovery/campaign-selector";
+import { CampaignStats } from "@/components/discovery/campaign-stats";
+import { QuickAddToastContainer, useQuickAddToast } from "@/components/discovery/quick-add-toast";
 import { useDiscoveryStore } from "@/lib/store/discovery-store";
 import { useCampaignStore } from "@/lib/store/campaign-store";
 import type { KOLCardData } from "@/lib/types/kol";
 import { larkApi } from "@/lib/lark-api";
-import { apiKOLToCardData } from "@/lib/hooks/useKOLDisplay";
+import { apiKOLToCardData } from "@/hooks/use-kol-display";
 
 function DiscoveryLoading() {
   return (

@@ -7,7 +7,7 @@
 "use client";
 
 import { KOLDisplayData } from "@/lib/types/kol";
-import { formatFollowers } from "@/lib/hooks/useKOLDisplay";
+import { formatFollowers } from "@/hooks/use-kol-display";
 import Image from "next/image";
 import {
   User,
