@@ -1,15 +1,15 @@
 import { Suspense } from "react";
-import { getTechKOLs } from "@/lib/cached-data";
+import { fetchRecords, TABLES, recordToTechKOL } from "@/lib/cached-data";
 import { TechKOLClient } from "./tech-kol-client";
 
 export const revalidate = 300;
 
 export default async function TechKOLPage() {
-  const { data: kols, total } = await getTechKOLs();
+  const { data, total } = await fetchRecords(TABLES.KOL_TECH, { tags: ["tech-kols"] });
 
   return (
     <Suspense fallback={<PageSkeleton />}>
-      <TechKOLClient kols={kols} total={total} />
+      <TechKOLClient kols={data.map(recordToTechKOL)} total={total} />
     </Suspense>
   );
 }

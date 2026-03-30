@@ -1,35 +1,30 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { getKOL, getKOLRelated } from "@/lib/cached-data";
+import { fetchRecords, TABLES, recordToKOL } from "@/lib/cached-data";
 import { KOLProfileClient } from "./kol-profile-client";
 
 export const revalidate = 300;
 
-export default async function KOLProfilePage({
-  params,
-}: {
-  params: Promise<{ kolId: string }>;
-}) {
+export default async function KOLProfilePage({ params }: { params: Promise<{ kolId: string }> }) {
   const { kolId } = await params;
 
-  let kolData, relatedData;
+  let kolData;
   try {
-    [kolData, relatedData] = await Promise.all([
-      getKOL(kolId),
-      getKOLRelated(kolId).catch(() => ({ data: { parent: null, children: [] } })),
-    ]);
+    const { data } = await fetchRecords(TABLES.ALL_KOLS, {
+      filter: { conjunction: "and", conditions: [{ field_name: "Record ID", operator: "is", value: [kolId] }] },
+      pageSize: 1,
+      tags: ["kols"],
+    });
+    kolData = data[0] ? recordToKOL(data[0]) : null;
   } catch {
     notFound();
   }
 
-  if (!kolData?.data) notFound();
+  if (!kolData) notFound();
 
   return (
     <Suspense fallback={<PageSkeleton />}>
-      <KOLProfileClient
-        kol={kolData.data}
-        related={relatedData?.data ?? { parent: null, children: [] }}
-      />
+      <KOLProfileClient kol={kolData} related={{ parent: null, children: [] }} />
     </Suspense>
   );
 }

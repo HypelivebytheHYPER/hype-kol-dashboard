@@ -1,15 +1,15 @@
 import { Suspense } from "react";
-import { getAllKOLs } from "@/lib/cached-data";
+import { fetchRecords, TABLES, recordToKOL } from "@/lib/cached-data";
 import { DiscoverClient } from "./discover-client";
 
 export const revalidate = 300;
 
 export default async function DiscoverPage() {
-  const { data: initialKOLs } = await getAllKOLs();
+  const { data } = await fetchRecords(TABLES.ALL_KOLS, { pageSize: 50, tags: ["kols"] });
 
   return (
     <Suspense fallback={<PageSkeleton />}>
-      <DiscoverClient initialKOLs={initialKOLs} />
+      <DiscoverClient initialKOLs={data.map(recordToKOL)} />
     </Suspense>
   );
 }

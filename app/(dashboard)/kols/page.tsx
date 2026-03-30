@@ -1,15 +1,15 @@
 import { Suspense } from "react";
-import { getAllKOLs } from "@/lib/cached-data";
+import { fetchRecords, TABLES, recordToKOL } from "@/lib/cached-data";
 import { KOLsListClient } from "./kols-list-client";
 
 export const revalidate = 300;
 
 export default async function KOLsPage() {
-  const { data: kols, total } = await getAllKOLs();
+  const { data, total } = await fetchRecords(TABLES.ALL_KOLS, { pageSize: 50, tags: ["kols"] });
 
   return (
     <Suspense fallback={<PageSkeleton />}>
-      <KOLsListClient initialKOLs={kols} total={total} />
+      <KOLsListClient initialKOLs={data.map(recordToKOL)} total={total} />
     </Suspense>
   );
 }
