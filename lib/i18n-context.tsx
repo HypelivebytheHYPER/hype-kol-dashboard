@@ -1,8 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
-import type { Locale } from "@/i18n/config";
-import { defaultLocale, locales } from "@/i18n/config";
+import { defaultLocale, locales, type Locale } from "@/i18n/config";
 // Force cache-bust: v3
 // Hardcoded default messages to ensure they're bundled
 const defaultMessages = {

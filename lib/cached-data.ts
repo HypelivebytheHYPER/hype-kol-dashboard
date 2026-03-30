@@ -2,8 +2,7 @@
 // ALL data comes from POST /records/search via lark-base.ts
 // No GET /api/kols or /api/live-sellers — direct Lark Base queries only
 
-import { fetchRecords, TABLES, str, num, arr, url, attachments, type TableId } from "./lark-base";
-import type { LarkAttachment, LarkRecord } from "./lark-base";
+import { fetchRecords, TABLES, str, num, arr, url, attachments, type TableId, type LarkAttachment, type LarkRecord } from "./lark-base";
 import { normalizeCategories, CATEGORY_FIELD } from "./categories";
 
 // Re-export
@@ -62,7 +61,6 @@ function recordToKOL(r: LarkRecord): ApiKOL {
 export async function getAllKOLs(): Promise<{ data: ApiKOL[]; total: number }> {
   const { data, total } = await fetchRecords(TABLES.ALL_KOLS, {
     pageSize: 500,
-    revalidate: 300,
     tags: ["kols"],
   });
   return { data: data.map(recordToKOL), total };
@@ -75,7 +73,6 @@ export async function getKOL(id: string): Promise<{ data: ApiKOL | null }> {
       conditions: [{ field_name: "Record ID", operator: "is", value: [id] }],
     },
     pageSize: 1,
-    revalidate: 300,
     tags: ["kols"],
   });
   return { data: data.length > 0 ? recordToKOL(data[0]) : null };
@@ -89,7 +86,6 @@ export async function getKOLRelated(id: string): Promise<{ data: { parent: ApiKO
       conditions: [{ field_name: "Parent KOL", operator: "is", value: [id] }],
     },
     pageSize: 10,
-    revalidate: 300,
     tags: ["kols"],
   });
   return { data: { parent: null, children: children.map(recordToKOL) } };
@@ -105,7 +101,6 @@ export async function searchCreatorsByCategory(
       conditions: [{ field_name: CATEGORY_FIELD, operator: "contains", value: [category] }],
     },
     pageSize: 500,
-    revalidate: 300,
     tags: ["kols", `category-${category.toLowerCase()}`],
   });
   return { data: data.map(recordToKOL), total };
@@ -120,7 +115,6 @@ export async function searchCreatorsByType(
       conditions: [{ field_name: "KOLs Type", operator: "is", value: [kolType] }],
     },
     pageSize: 500,
-    revalidate: 300,
     tags: ["kols", `type-${kolType.toLowerCase()}`],
   });
   return { data: data.map(recordToKOL), total };
@@ -130,7 +124,6 @@ export async function searchCreatorsByType(
 
 export async function getLiveMCs(): Promise<{ data: LiveMC[]; total: number }> {
   const { data: records, total } = await fetchRecords(TABLES.LIVE_MC_LIST, {
-    revalidate: 300,
     tags: ["live-mc"],
   });
 
@@ -153,7 +146,6 @@ export async function getLiveMCs(): Promise<{ data: LiveMC[]; total: number }> {
 
 export async function getTechKOLs(): Promise<{ data: TechKOL[]; total: number }> {
   const { data: records, total } = await fetchRecords(TABLES.KOL_TECH, {
-    revalidate: 300,
     tags: ["tech-kols"],
   });
 

@@ -10,8 +10,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { formatNumber, formatCurrency, getTierColor } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n-context";
 import { ScoreGauge } from "@/components/ui/score-gauge";
-import type { ApiKOL } from "@/lib/lark-api";
-import { getKOLImageUrl } from "@/lib/lark-api";
+import { getKOLImageUrl, type ApiKOL } from "@/lib/lark-api";
 
 const TIER_BASE_RATE: Record<string, number> = {
   "Nano KOL": 5000,

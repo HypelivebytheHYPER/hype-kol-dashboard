@@ -56,7 +56,6 @@ interface FetchOptions {
   filter?: SearchFilter;
   fieldNames?: string[];
   sort?: Array<{ field_name: string; desc?: boolean }>;
-  revalidate?: number;
   tags?: string[];
 }
 
@@ -92,7 +91,7 @@ export async function fetchRecords(
   tableId: TableId,
   opts: FetchOptions = {}
 ): Promise<FetchResult> {
-  const { pageSize = 100, filter, fieldNames, sort, revalidate = 300, tags = [] } = opts;
+  const { pageSize = 100, filter, fieldNames, sort, tags = [] } = opts;
   const cacheKey = `lark:${tableId}:${JSON.stringify({ pageSize, filter, fieldNames, sort })}`;
 
   return dedup(cacheKey, async () => {
@@ -109,7 +108,7 @@ export async function fetchRecords(
         ...(fieldNames && { field_names: fieldNames }),
         ...(sort && { sort }),
       }),
-      next: { revalidate, tags: ["lark", ...tags] },
+      next: { tags: ["lark", ...tags] },
     });
 
     if (!res.ok) return { data: [], total: 0, has_more: false };

@@ -83,6 +83,7 @@
 
 * {
   border-color: var(--border);
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -196,66 +197,6 @@ body {
   --space-24: 96px;
 }
 
-/* Utility classes for spacing */
-.gap-1 {
-  gap: var(--space-1);
-}
-.gap-2 {
-  gap: var(--space-2);
-}
-.gap-3 {
-  gap: var(--space-3);
-}
-.gap-4 {
-  gap: var(--space-4);
-}
-.gap-5 {
-  gap: var(--space-5);
-}
-.gap-6 {
-  gap: var(--space-6);
-}
-.gap-8 {
-  gap: var(--space-8);
-}
-
-.p-1 {
-  padding: var(--space-1);
-}
-.p-2 {
-  padding: var(--space-2);
-}
-.p-3 {
-  padding: var(--space-3);
-}
-.p-4 {
-  padding: var(--space-4);
-}
-.p-5 {
-  padding: var(--space-5);
-}
-.p-6 {
-  padding: var(--space-6);
-}
-
-.m-1 {
-  margin: var(--space-1);
-}
-.m-2 {
-  margin: var(--space-2);
-}
-.m-3 {
-  margin: var(--space-3);
-}
-.m-4 {
-  margin: var(--space-4);
-}
-.m-5 {
-  margin: var(--space-5);
-}
-.m-6 {
-  margin: var(--space-6);
-}
 
 /* Mono font for numbers */
 .font-mono {
@@ -379,9 +320,11 @@ html {
   }
 }
 
-/* Disable text selection on interactive elements */
+/* Interactive elements */
 button,
-.no-select {
+a,
+[role="button"] {
+  touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
 }
