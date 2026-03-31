@@ -85,7 +85,6 @@ export function transformToDisplayData(kol: KOL): KOLDisplayData {
     tier: kol.tier || "C",
     verified: kol.verified || false,
     profileImage: getKOLImageUrl({
-      imageUrl: kol.profileImage,
       handle: kol.handle,
       platform: kol.platform,
     }),
@@ -133,7 +132,6 @@ export function transformCardToDisplayData(kol: KOLCardData): KOLDisplayData {
     tier: kol.tier,
     verified: kol.verified,
     profileImage: getKOLImageUrl({
-      imageUrl: kol.profileImage,
       handle: kol.handle,
       platform: kol.platform,
     }),
@@ -208,7 +206,6 @@ export function apiKOLToCardData(kol: {
     tier: (kol.tier as KOL["tier"]) || "C",
     verified: false,
     profileImage: getKOLImageUrl({
-      imageUrl: kol.imageUrl,
       handle: kol.handle,
       platform: kol.platform,
     }),

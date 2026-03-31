@@ -28,7 +28,6 @@ export function recordToKOL(r: LarkRecord): ApiKOL {
     location: arr(f, "Location").join(", "),
     kolType: str(f, "KOLs Type"),
     contact: { lineId: str(f, "LineId"), phone: str(f, "Phone"), email: str(f, "Contact_Email") },
-    isLiveNow: false,
     stats: {
       liveGmv: num(f, "LiveGmv"), videoGmv: num(f, "VideoGmv"), revenue: num(f, "Revenue"),
       views: num(f, "Views"), productCount: num(f, "ProductCount"),
@@ -39,7 +38,6 @@ export function recordToKOL(r: LarkRecord): ApiKOL {
     scope: str(f, "Scope"),
     sourceUrl: url(f, "SourceUrl"),
     channel: url(f, "Channel"),
-    imageUrl: "",
     accountType: str(f, "Account Type") as ApiKOL["accountType"],
     parentKOL: str(f, "Parent KOL") || null,
   };

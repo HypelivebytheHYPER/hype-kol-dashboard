@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { MapPin, Eye, Radio, Video, BarChart3, Info } from "lucide-react";
+import { MapPin, Eye, Video, BarChart3, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -40,7 +40,6 @@ export function KOLFeedCard({ kol, index = 0, priority = false }: KOLFeedCardPro
   const [imgLoaded, setImgLoaded] = useState(false);
   const { t, locale } = useI18n();
   const imageUrl = getKOLImageUrl({
-    imageUrl: kol.computedImageUrl || kol.imageUrl,
     handle: kol.handle,
     platform: kol.platform,
   });
@@ -48,7 +47,7 @@ export function KOLFeedCard({ kol, index = 0, priority = false }: KOLFeedCardPro
   const rate = TIER_BASE_RATE[kol.tier] || 0;
 
   const typeIcon = kol.kolType?.toLowerCase().includes("live") ? (
-    <Radio className="w-3 h-3 text-red-400" />
+    <Video className="w-3 h-3 text-red-400" />
   ) : kol.kolType?.toLowerCase().includes("video") ? (
     <Video className="w-3 h-3 text-blue-400" />
   ) : (
@@ -128,20 +127,6 @@ export function KOLFeedCard({ kol, index = 0, priority = false }: KOLFeedCardPro
             {kol.tier}
           </Badge>
         </div>
-
-        {/* Live indicator */}
-        {kol.isLiveNow && (
-          <motion.span
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="absolute top-10 left-3 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500 text-white text-[9px] font-bold"
-            aria-live="polite"
-            role="status"
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" aria-hidden="true" />
-            LIVE
-          </motion.span>
-        )}
 
         {/* Name overlay */}
         <div className="absolute bottom-3 left-3 right-3 z-10">

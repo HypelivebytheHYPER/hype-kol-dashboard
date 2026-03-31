@@ -37,7 +37,6 @@ import {
   Video,
   ShoppingBag,
   Star,
-  Radio,
   Info,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -79,8 +78,6 @@ interface KOLProfileClientProps {
 }
 
 export function KOLProfileClient({ kol, related }: KOLProfileClientProps) {
-  const urls = kol.urls;
-
   // Trend charts
   const revenueTrend = buildTrend(kol.stats.revenue);
   const viewsTrend = buildTrend(kol.stats.views);
@@ -148,12 +145,6 @@ export function KOLProfileClient({ kol, related }: KOLProfileClientProps) {
                     {kol.tier}
                   </Badge>
                   {kol.kolType && <Badge variant="outline">{kol.kolType}</Badge>}
-                  {kol.isLiveNow && (
-                    <Badge className="bg-red-500 text-white border-0 gap-1">
-                      <Radio className="w-3 h-3" />
-                      LIVE
-                    </Badge>
-                  )}
                 </div>
                 <p className="text-muted-foreground text-sm mt-0.5">@{kol.handle}</p>
                 <div className="flex items-center gap-1.5 flex-wrap mt-2">
@@ -183,58 +174,38 @@ export function KOLProfileClient({ kol, related }: KOLProfileClientProps) {
                   </Button>
                 </a>
               )}
-              {urls?.instagram && (
-                <a href={urls.instagram} target="_blank" rel="noopener noreferrer">
-                  <Button variant="outline" size="sm" className="gap-1.5">
-                    <ExternalLink className="w-3.5 h-3.5" />
-                    Instagram
-                  </Button>
-                </a>
-              )}
             </div>
           </div>
 
-          {/* Account Type & Categories */}
-          {(kol.accountType || (kol.inferredCategories && kol.inferredCategories.length > 0)) && (
+          {/* Account Type */}
+          {kol.accountType && (
             <div className="flex items-center gap-2 flex-wrap mt-3">
-              {kol.accountType && (
-                <Tooltip>
-                  <TooltipTrigger>
-                    <span className="inline-flex">
-                      <Badge
-                        variant={kol.accountType === "Main" ? "default" : "secondary"}
-                        className="text-xs cursor-help"
-                      >
-                        {kol.accountType === "Main" && (
-                          <Star className="w-3 h-3 fill-current mr-1" />
-                        )}
-                        {kol.accountType}
-                      </Badge>
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">
-                      {kol.accountType === "Main"
-                        ? "Primary account for this KOL"
-                        : kol.accountType === "Secondary"
-                          ? "Secondary/backup channel"
-                          : kol.accountType === "Backup"
-                            ? "Backup account"
-                            : "Sub-brand account"}
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
-              {kol.inferredCategories && kol.inferredCategories.length > 0 && (
-                <>
-                  <span className="text-xs text-muted-foreground">Auto-tagged:</span>
-                  {kol.inferredCategories.map((cat) => (
-                    <Badge key={cat} variant="outline" className="text-xs bg-primary/5">
-                      {cat}
+              <Tooltip>
+                <TooltipTrigger>
+                  <span className="inline-flex">
+                    <Badge
+                      variant={kol.accountType === "Main" ? "default" : "secondary"}
+                      className="text-xs cursor-help"
+                    >
+                      {kol.accountType === "Main" && (
+                        <Star className="w-3 h-3 fill-current mr-1" />
+                      )}
+                      {kol.accountType}
                     </Badge>
-                  ))}
-                </>
-              )}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">
+                    {kol.accountType === "Main"
+                      ? "Primary account for this KOL"
+                      : kol.accountType === "Secondary"
+                        ? "Secondary/backup channel"
+                        : kol.accountType === "Backup"
+                          ? "Backup account"
+                          : "Sub-brand account"}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
             </div>
           )}
 
@@ -577,22 +548,6 @@ export function KOLProfileClient({ kol, related }: KOLProfileClientProps) {
                   icon={<ExternalLink className="w-4 h-4" />}
                   label="Channel"
                   value={kol.channel}
-                  isLink
-                />
-              )}
-              {urls?.instagram && (
-                <ContactRow
-                  icon={<ExternalLink className="w-4 h-4" />}
-                  label="Instagram"
-                  value={urls.instagram}
-                  isLink
-                />
-              )}
-              {urls?.facebook && (
-                <ContactRow
-                  icon={<ExternalLink className="w-4 h-4" />}
-                  label="Facebook"
-                  value={urls.facebook}
                   isLink
                 />
               )}

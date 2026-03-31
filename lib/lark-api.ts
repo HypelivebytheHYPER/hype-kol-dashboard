@@ -1,5 +1,4 @@
-// KOL types and image URL resolver
-// Types match the Lark Base ALL_KOLS table schema
+// KOL type — matches ALL_KOLS Lark Base table schema via POST /records/search
 
 export interface ApiKOL {
   id: string;
@@ -17,7 +16,6 @@ export interface ApiKOL {
   location: string;
   kolType: string;
   contact: { lineId: string; phone: string; email: string };
-  isLiveNow: boolean;
   stats: {
     liveGmv: number;
     videoGmv: number;
@@ -32,27 +30,15 @@ export interface ApiKOL {
   scope: string;
   sourceUrl: string;
   channel: string;
-  imageUrl: string;
-  computedImageUrl?: string;
-  accountType?: "Main" | "Secondary" | "Backup" | "Sub-brand";
+  accountType?: string;
   parentKOL?: string | null;
-  cleanName?: string;
-  inferredCategories?: string[];
-  urls?: Record<string, string>;
 }
 
-// Resolve KOL image URL — unavatar.io fallback for profile photos
+// Profile photo from unavatar.io/{platform}/{handle}
 export function getKOLImageUrl(kol: {
-  imageUrl?: string;
   handle?: string;
   platform?: string;
 }): string {
-  if (kol.imageUrl?.startsWith("http://") || kol.imageUrl?.startsWith("https://")) {
-    return kol.imageUrl;
-  }
-
-  if (kol.imageUrl) return kol.imageUrl;
-
   const handle = kol.handle?.trim().replace(/^@/, "");
   if (!handle) return "";
 

@@ -120,11 +120,10 @@ export function KOLAvatar({ kol, className, size = "md", ring, ringColor }: KOLA
   const src = useMemo(
     () =>
       getKOLImageUrl({
-        imageUrl: kol.computedImageUrl || kol.imageUrl || kol.avatar,
         handle: kol.handle,
         platform: kol.platform,
       }),
-    [kol.computedImageUrl, kol.imageUrl, kol.avatar, kol.handle, kol.platform]
+    [kol.handle, kol.platform]
   );
 
   return (
@@ -178,11 +177,10 @@ function AvatarGroupItem({
   const src = useMemo(
     () =>
       getKOLImageUrl({
-        imageUrl: kol.computedImageUrl || kol.imageUrl || kol.avatar,
         handle: kol.handle,
         platform: kol.platform,
       }),
-    [kol.computedImageUrl, kol.imageUrl, kol.avatar, kol.handle, kol.platform]
+    [kol.handle, kol.platform]
   );
 
   return (
