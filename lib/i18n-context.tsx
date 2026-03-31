@@ -112,14 +112,6 @@ export function I18nProvider({
   const [messages, setMessages] = useState<Translations>(initialMessages || defaultMessages);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Debug logging
-  useEffect(() => {
-    console.log("[i18n] Initial messages count:", Object.keys(initialMessages || {}).length);
-    console.log("[i18n] Default messages count:", Object.keys(defaultMessages || {}).length);
-    console.log("[i18n] Current messages count:", Object.keys(messages || {}).length);
-    console.log("[i18n] Has common.viewAll:", !!(messages as any)?.common?.viewAll);
-  }, []);
-
   const setLocale = useCallback(
     async (newLocale: Locale) => {
       if (newLocale === locale) return;

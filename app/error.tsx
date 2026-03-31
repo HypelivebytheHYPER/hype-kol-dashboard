@@ -11,8 +11,6 @@ interface ErrorProps {
 
 export default function GlobalError({ error, reset }: ErrorProps) {
   useEffect(() => {
-    // Log error to monitoring service
-    // eslint-disable-next-line no-console
     console.error("Global error:", error);
   }, [error]);
 

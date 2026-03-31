@@ -11,8 +11,6 @@ interface ErrorProps {
 
 export default function DashboardError({ error, reset }: ErrorProps) {
   useEffect(() => {
-    // Log error to monitoring service
-    // eslint-disable-next-line no-console
     console.error("Dashboard error:", error);
   }, [error]);
 
