@@ -186,7 +186,7 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
       {/* === HEADER === */}
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">KOLs</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Creators</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Discover, filter and shortlist creators
           </p>
@@ -446,7 +446,7 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
             <Users className="w-12 h-12 mx-auto" />
           </div>
           <p className="text-lg font-medium text-muted-foreground">
-            No KOLs match your filters
+            No creators match your filters
           </p>
           <Button variant="ghost" onClick={clearAllFilters} className="mt-3">
             Clear all filters

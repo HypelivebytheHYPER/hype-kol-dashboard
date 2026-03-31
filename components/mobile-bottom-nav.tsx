@@ -99,7 +99,7 @@ export function MobileBottomNav() {
                 <div className="space-y-2">
                   {[
                     { label: "Top Live Sellers", href: "/kols?tier=live" },
-                    { label: "Beauty KOLs", href: "/kols?category=beauty" },
+                    { label: "Beauty Creators", href: "/kols?category=beauty" },
                     { label: "High GMV", href: "/kols?sort=gmv" },
                     { label: "Tech Creators", href: "/tech" },
                   ].map((item) => (

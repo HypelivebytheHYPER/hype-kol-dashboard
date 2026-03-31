@@ -22,7 +22,7 @@
     "liveNow": "Live Now",
     "title": "Creators",
     "description": "Browse {{count}}+ verified influencers, live sellers, and content creators. Filter by tier, category, performance metrics, and more.",
-    "searchPlaceholder": "Search KOLs...",
+    "searchPlaceholder": "Search creators...",
     "recentSearches": "Recent"
   },
   "categories": {
@@ -38,7 +38,7 @@
     "highEngagement": "High Engagement"
   },
   "stats": {
-    "totalKols": "Total KOLs",
+    "totalKols": "Total Creators",
     "liveSellers": "Live Sellers",
     "avgGmv": "Avg GMV",
     "categories": "Categories"
@@ -157,7 +157,7 @@
     },
     "selection": {
       "title": "Your Selection",
-      "empty": "No KOLs selected yet",
+      "empty": "No creators selected yet",
       "estimatedTotal": "Estimated Total",
       "clearAll": "Clear all",
       "viewProfile": "View Profile",

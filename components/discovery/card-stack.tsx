@@ -164,7 +164,7 @@ export function CardStack({
           </svg>
         </div>
         <h2 className="text-2xl font-bold text-gray-900 mb-2">You&apos;ve seen everyone!</h2>
-        <p className="text-gray-600 mb-6">No more KOLs to discover right now</p>
+        <p className="text-gray-600 mb-6">No more creators to discover right now</p>
         <button
           onClick={() => {
             setCurrentIndex(0);
@@ -186,7 +186,7 @@ export function CardStack({
           <div className="animate-spin inline-block">
             <div className="h-12 w-12 border-4 border-purple-300 border-t-purple-600 rounded-full" />
           </div>
-          <p className="mt-4 text-gray-600">Loading KOLs...</p>
+          <p className="mt-4 text-gray-600">Loading creators...</p>
         </div>
       </div>
     );
@@ -286,7 +286,7 @@ export function CardStack({
       {/* Progress Indicator */}
       <div className="mt-6 text-center" aria-live="polite" aria-atomic="true">
         <div className="text-sm text-gray-600">
-          {currentIndex + 1} of {cards.length} KOLs
+          {currentIndex + 1} of {cards.length} creators
         </div>
         <div className="mt-2 h-1 bg-gray-200 rounded-full overflow-hidden max-w-xs mx-auto">
           <motion.div

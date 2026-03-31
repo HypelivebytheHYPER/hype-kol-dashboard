@@ -39,7 +39,7 @@ const defaultMessages = {
     title: "Creators",
     description:
       "Browse {{count}}+ verified influencers, live sellers, and content creators. Filter by tier, category, performance metrics, and more.",
-    searchPlaceholder: "Search KOLs...",
+    searchPlaceholder: "Search creators...",
     recentSearches: "Recent",
   },
   categories: {
@@ -55,7 +55,7 @@ const defaultMessages = {
     highEngagement: "High Engagement",
   },
   stats: {
-    totalKols: "Total KOLs",
+    totalKols: "Total Creators",
     liveSellers: "Live Sellers",
     avgGmv: "Avg GMV",
     categories: "Categories",
@@ -68,7 +68,7 @@ const defaultMessages = {
   },
   nav: {
     dashboard: "Dashboard",
-    discovery: "Find KOLs",
+    discovery: "Discover",
     techCreators: "Tech Creators",
     live: "Live Center",
     pricing: "Pricing",

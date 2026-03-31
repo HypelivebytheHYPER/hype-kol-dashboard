@@ -35,16 +35,16 @@ export function DiscoverClient({ initialKOLs }: DiscoverClientProps) {
         {/* Header */}
         <header className="mb-6">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Discover KOLs</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Discover Creators</h1>
             <p className="text-muted-foreground text-sm mt-1">
-              Swipe through profiles and find the perfect KOL for your brand
+              Swipe through profiles and find the perfect creator for your brand
             </p>
           </div>
         </header>
 
         {kols.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">No KOLs available</p>
+            <p className="text-muted-foreground">No creators available</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
