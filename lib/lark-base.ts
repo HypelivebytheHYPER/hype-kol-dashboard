@@ -187,24 +187,16 @@ export function attachments(fields: Record<string, unknown>, key: string): LarkA
 
 // Media download uses same base URL
 
-export function mediaDownloadUrl(token: string): string {
-  return `${LARK_API_URL}/files/${token}/download`;
-}
 
 /**
  * Resolve file tokens to Lark CDN temp URLs (24h valid, supports Range/byte-serving)
  * Use for video src — browser can do preload="metadata" with Range requests
  */
 export async function resolveFileUrl(token: string): Promise<string> {
-  try {
-    // GET /api/image/TOKEN — cached 23h by worker, returns { url: "CDN..." }
-    const res = await fetch(`${LARK_API_URL}/api/image/${token}`);
-    if (!res.ok) return mediaDownloadUrl(token);
-    const data = await res.json() as { url: string };
-    return data.url || mediaDownloadUrl(token);
-  } catch {
-    return mediaDownloadUrl(token);
-  }
+  const res = await fetch(`${LARK_API_URL}/api/image/${token}`);
+  if (!res.ok) return "";
+  const data = await res.json() as { url: string };
+  return data.url || "";
 }
 
 export async function resolveFileUrls(tokens: string[]): Promise<Record<string, string>> {

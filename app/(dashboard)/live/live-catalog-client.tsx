@@ -5,7 +5,6 @@ import { Search, X, Play, Video, Pause } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { formatNumber } from "@/lib/utils";
 import type { LiveMC } from "@/lib/cached-data";
-import { mediaDownloadUrl } from "@/lib/lark-base";
 
 interface LiveCatalogClientProps {
   mcs: LiveMC[];
@@ -65,7 +64,7 @@ export function LiveCatalogClient({ mcs, videoUrls }: LiveCatalogClientProps) {
           <MCCard
             key={mc.id}
             mc={mc}
-            videoUrl={mc.videos[0]?.token ? (videoUrls[mc.videos[0].token] || mediaDownloadUrl(mc.videos[0].token)) : null}
+            videoUrl={mc.videos[0]?.token ? videoUrls[mc.videos[0].token] : null}
             isPlaying={playingId === mc.id}
             onPlay={() => setPlayingId(playingId === mc.id ? null : mc.id)}
           />

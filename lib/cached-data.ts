@@ -8,7 +8,7 @@ import type { LiveMC, TechKOL } from "./types/catalog";
 
 export type { ApiKOL } from "./lark-api";
 export type { LiveMC, TechKOL } from "./types/catalog";
-export { TABLES, mediaDownloadUrl, fetchRecords } from "./lark-base";
+export { TABLES, fetchRecords } from "./lark-base";
 
 export function recordToKOL(r: LarkRecord): ApiKOL {
   const f = r.fields;
