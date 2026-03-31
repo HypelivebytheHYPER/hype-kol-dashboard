@@ -180,7 +180,7 @@ export function useKOLDisplayList(kols: (KOL | KOLCardData)[]): KOLDisplayData[]
 }
 
 /**
- * Convert ApiKOL (from lark-api) to KOLCardData for discovery components
+ * Convert Creator (from lark-api) to KOLCardData for discovery components
  */
 export function apiKOLToCardData(kol: {
   id: string;

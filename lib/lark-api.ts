@@ -1,6 +1,6 @@
 // KOL type — matches ALL_KOLS Lark Base table schema via POST /records/search
 
-export interface ApiKOL {
+export interface Creator {
   id: string;
   kolId: string;
   name: string;

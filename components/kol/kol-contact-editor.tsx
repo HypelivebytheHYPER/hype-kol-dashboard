@@ -6,11 +6,11 @@ import { Edit2, Check, X, MessageCircle, Phone, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import type { ApiKOL } from "@/lib/lark-api";
+import type { Creator } from "@/lib/lark-api";
 
 interface KOLContactEditorProps {
-  kol: ApiKOL;
-  onSave?: (updated: Partial<ApiKOL["contact"]>) => void;
+  kol: Creator;
+  onSave?: (updated: Partial<Creator["contact"]>) => void;
 }
 
 export function KOLContactEditor({ kol, onSave }: KOLContactEditorProps) {

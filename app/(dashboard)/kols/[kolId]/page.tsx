@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { fetchRecords, TABLES, recordToKOL } from "@/lib/cached-data";
+import { fetchRecords, TABLES, recordToCreator } from "@/lib/cached-data";
 import { KOLProfileClient } from "./kol-profile-client";
 
 export const revalidate = 300;
@@ -15,7 +15,7 @@ export default async function KOLProfilePage({ params }: { params: Promise<{ kol
       pageSize: 1,
       tags: ["kols"],
     });
-    kolData = data[0] ? recordToKOL(data[0]) : null;
+    kolData = data[0] ? recordToCreator(data[0]) : null;
   } catch {
     notFound();
   }

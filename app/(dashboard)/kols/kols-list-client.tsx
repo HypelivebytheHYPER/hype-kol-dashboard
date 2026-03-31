@@ -18,7 +18,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { KOLFeedCard } from "@/components/kol/kol-feed-card";
 import { Pagination } from "@/components/ui/pagination";
 import { formatNumber, formatCurrency } from "@/lib/utils";
-import type { ApiKOL } from "@/lib/lark-api";
+import type { Creator } from "@/lib/lark-api";
 import {
   parseSmartSearch,
   applySmartFilters,
@@ -45,7 +45,7 @@ const SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: "quality", label: "Score" },
 ];
 
-function getSortValue(kol: ApiKOL, key: SortKey): number {
+function getSortValue(kol: Creator, key: SortKey): number {
   switch (key) {
     case "followers":
       return kol.followers;
@@ -63,7 +63,7 @@ function getSortValue(kol: ApiKOL, key: SortKey): number {
 }
 
 interface KOLsListClientProps {
-  initialKOLs: ApiKOL[];
+  initialKOLs: Creator[];
   total: number;
 }
 

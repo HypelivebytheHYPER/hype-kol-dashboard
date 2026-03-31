@@ -1,6 +1,6 @@
 "use client";
 
-import type { ApiKOL } from "./lark-api";
+import type { Creator } from "./lark-api";
 
 export interface SearchFilters {
   query?: string;
@@ -135,7 +135,7 @@ function parseNumber(value: string, unit?: string): number {
   return num;
 }
 
-export function applySmartFilters(kols: ApiKOL[], filters: SearchFilters): ApiKOL[] {
+export function applySmartFilters(kols: Creator[], filters: SearchFilters): Creator[] {
   return kols.filter((kol) => {
     // Text search on name/handle
     if (filters.query) {
@@ -190,7 +190,7 @@ export function applySmartFilters(kols: ApiKOL[], filters: SearchFilters): ApiKO
   });
 }
 
-export function getSearchSuggestions(kols: ApiKOL[], partial: string): string[] {
+export function getSearchSuggestions(kols: Creator[], partial: string): string[] {
   const q = partial.toLowerCase().trim();
   if (!q || q.length < 2) return [];
 

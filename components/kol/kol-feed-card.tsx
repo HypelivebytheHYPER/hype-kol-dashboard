@@ -10,7 +10,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { formatNumber, formatCurrency, getTierColor } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n-context";
 import { ScoreGauge } from "@/components/ui/score-gauge";
-import { getKOLImageUrl, type ApiKOL } from "@/lib/lark-api";
+import { getKOLImageUrl, type Creator } from "@/lib/lark-api";
 
 const TIER_BASE_RATE: Record<string, number> = {
   "Nano KOL": 5000,
@@ -30,7 +30,7 @@ function getPlatformGradient(p: string) {
 }
 
 interface KOLFeedCardProps {
-  kol: ApiKOL;
+  kol: Creator;
   index?: number;
   priority?: boolean;
 }

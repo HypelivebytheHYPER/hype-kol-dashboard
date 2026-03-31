@@ -41,7 +41,7 @@ import {
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import Link from "next/link";
-import type { ApiKOL } from "@/lib/lark-api";
+import type { Creator } from "@/lib/lark-api";
 
 const areaConfig = {
   value: { label: "Value", color: "var(--chart-1)" },
@@ -73,8 +73,8 @@ function buildTrend(total: number, points = 6) {
 }
 
 interface KOLProfileClientProps {
-  kol: ApiKOL;
-  related: { parent: ApiKOL | null; children: ApiKOL[] };
+  kol: Creator;
+  related: { parent: Creator | null; children: Creator[] };
 }
 
 export function KOLProfileClient({ kol, related }: KOLProfileClientProps) {
@@ -663,8 +663,8 @@ function LinkedAccountsSection({
   parentKol,
   childKols,
 }: {
-  parentKol: ApiKOL | null;
-  childKols: ApiKOL[];
+  parentKol: Creator | null;
+  childKols: Creator[];
 }) {
   // Don't show section if no relationships
   if (!parentKol && childKols.length === 0) return null;
@@ -706,7 +706,7 @@ function LinkedAccountsSection({
                 Secondary Accounts ({childKols.length})
               </p>
               <div className="space-y-2">
-                {childKols.map((child: ApiKOL) => (
+                {childKols.map((child: Creator) => (
                   <Link
                     key={child.id}
                     href={`/kols/${child.id}`}

@@ -3,14 +3,14 @@
 
 import { str, num, arr, url, attachments, type LarkRecord, type LarkAttachment } from "./lark-base";
 import { normalizeCategories, CATEGORY_FIELD } from "./categories";
-import type { ApiKOL } from "./lark-api";
+import type { Creator } from "./lark-api";
 import type { LiveMC, TechKOL } from "./types/catalog";
 
-export type { ApiKOL } from "./lark-api";
+export type { Creator } from "./lark-api";
 export type { LiveMC, TechKOL } from "./types/catalog";
 export { TABLES, fetchRecords } from "./lark-base";
 
-export function recordToKOL(r: LarkRecord): ApiKOL {
+export function recordToCreator(r: LarkRecord): Creator {
   const f = r.fields;
   return {
     id: r.record_id,
@@ -38,7 +38,7 @@ export function recordToKOL(r: LarkRecord): ApiKOL {
     scope: str(f, "Scope"),
     sourceUrl: url(f, "SourceUrl"),
     channel: url(f, "Channel"),
-    accountType: str(f, "Account Type") as ApiKOL["accountType"],
+    accountType: str(f, "Account Type") as Creator["accountType"],
     parentKOL: str(f, "Parent KOL") || null,
   };
 }

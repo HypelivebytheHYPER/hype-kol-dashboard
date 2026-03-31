@@ -6,10 +6,10 @@ import { FilterPanel } from "@/components/discovery/filter-panel";
 import { useDiscoveryStore } from "@/lib/store/discovery-store";
 import type { KOLCardData } from "@/lib/types/kol";
 import { apiKOLToCardData } from "@/hooks/use-kol-display";
-import type { ApiKOL } from "@/lib/lark-api";
+import type { Creator } from "@/lib/lark-api";
 
 interface DiscoverClientProps {
-  initialKOLs: ApiKOL[];
+  initialKOLs: Creator[];
 }
 
 export function DiscoverClient({ initialKOLs }: DiscoverClientProps) {

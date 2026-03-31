@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { fetchRecords, TABLES, recordToKOL } from "@/lib/cached-data";
+import { fetchRecords, TABLES, recordToCreator } from "@/lib/cached-data";
 import { KOLsListClient } from "./kols-list-client";
 
 export const revalidate = 300;
@@ -9,7 +9,7 @@ export default async function KOLsPage() {
 
   return (
     <Suspense fallback={<PageSkeleton />}>
-      <KOLsListClient initialKOLs={data.map(recordToKOL)} total={total} />
+      <KOLsListClient initialKOLs={data.map(recordToCreator)} total={total} />
     </Suspense>
   );
 }
