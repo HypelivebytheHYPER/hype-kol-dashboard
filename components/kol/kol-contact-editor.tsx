@@ -6,7 +6,7 @@ import { Edit2, Check, X, MessageCircle, Phone, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import type { Creator } from "@/lib/lark-api";
+import type { Creator } from "@/lib/types/catalog";
 
 interface KOLContactEditorProps {
   kol: Creator;

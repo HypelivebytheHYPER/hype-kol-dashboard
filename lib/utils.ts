@@ -39,3 +39,13 @@ export function getTierColor(tier: string): string {
   if (t.includes("nano")) return "bg-slate-500";
   return "bg-gray-500";
 }
+
+export function getCreatorImageUrl(kol: { handle?: string; platform?: string }): string {
+  const handle = kol.handle?.trim().replace(/^@/, "");
+  if (!handle) return "";
+  const p = (kol.platform || "").toLowerCase();
+  if (p.includes("instagram")) return `https://unavatar.io/instagram/${handle}`;
+  if (p.includes("youtube")) return `https://unavatar.io/youtube/${handle}`;
+  if (p.includes("facebook")) return `https://unavatar.io/facebook/${handle}`;
+  return `https://unavatar.io/tiktok/${handle}`;
+}

@@ -3,11 +3,10 @@
 
 import { str, num, arr, url, attachments, type LarkRecord, type LarkAttachment } from "./lark-base";
 import { normalizeCategories, CATEGORY_FIELD } from "./categories";
-import type { Creator } from "./lark-api";
+import type { Creator } from "./types/catalog";
 import type { LiveMC, TechKOL } from "./types/catalog";
 
-export type { Creator } from "./lark-api";
-export type { LiveMC, TechKOL } from "./types/catalog";
+export type { Creator, LiveMC, TechKOL } from "./types/catalog";
 export { TABLES, fetchRecords } from "./lark-base";
 
 export function recordToCreator(r: LarkRecord): Creator {

@@ -10,7 +10,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { formatNumber, formatCurrency, getTierColor } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n-context";
 import { ScoreGauge } from "@/components/ui/score-gauge";
-import { getKOLImageUrl, type Creator } from "@/lib/lark-api";
+import type { Creator } from "@/lib/types/catalog";
+import { getCreatorImageUrl } from "@/lib/utils";
 
 const TIER_BASE_RATE: Record<string, number> = {
   "Nano KOL": 5000,
@@ -39,7 +40,7 @@ export function KOLFeedCard({ kol, index = 0, priority = false }: KOLFeedCardPro
   const [imgErr, setImgErr] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
   const { t, locale } = useI18n();
-  const imageUrl = getKOLImageUrl({
+  const imageUrl = getCreatorImageUrl({
     handle: kol.handle,
     platform: kol.platform,
   });

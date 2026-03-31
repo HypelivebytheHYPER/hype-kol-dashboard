@@ -1,6 +1,6 @@
 "use client";
 
-import type { Creator } from "./lark-api";
+import type { Creator } from "./types/catalog";
 
 export interface SearchFilters {
   query?: string;

@@ -41,7 +41,7 @@ import {
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import Link from "next/link";
-import type { Creator } from "@/lib/lark-api";
+import type { Creator } from "@/lib/types/catalog";
 
 const areaConfig = {
   value: { label: "Value", color: "var(--chart-1)" },

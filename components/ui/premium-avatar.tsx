@@ -2,7 +2,7 @@
 
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { getKOLImageUrl } from "@/lib/lark-api";
+import { getCreatorImageUrl } from "@/lib/utils";
 import { useMemo } from "react";
 
 // Premium gradient combinations for different name initials
@@ -98,7 +98,7 @@ export function PremiumAvatar({
   );
 }
 
-// Specialized variant for KOL avatars that uses getKOLImageUrl
+// Specialized variant for KOL avatars that uses getCreatorImageUrl
 interface KOLAvatarProps {
   kol: {
     id?: string;
@@ -116,10 +116,10 @@ interface KOLAvatarProps {
 }
 
 export function KOLAvatar({ kol, className, size = "md", ring, ringColor }: KOLAvatarProps) {
-  // computedImageUrl from worker is /api/image/TOKEN — must be resolved via getKOLImageUrl
+  // computedImageUrl from worker is /api/image/TOKEN — must be resolved via getCreatorImageUrl
   const src = useMemo(
     () =>
-      getKOLImageUrl({
+      getCreatorImageUrl({
         handle: kol.handle,
         platform: kol.platform,
       }),
@@ -176,7 +176,7 @@ function AvatarGroupItem({
 }) {
   const src = useMemo(
     () =>
-      getKOLImageUrl({
+      getCreatorImageUrl({
         handle: kol.handle,
         platform: kol.platform,
       }),

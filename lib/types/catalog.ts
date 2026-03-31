@@ -1,4 +1,39 @@
-// Types matching Lark Base table schemas
+// Types matching Lark Base table schemas — single source of truth
+
+// ALL_KOLS (tbl5864QVOiEokTQ)
+export interface Creator {
+  id: string;
+  kolId: string;
+  name: string;
+  handle: string;
+  platform: string;
+  tier: string;
+  followers: number;
+  engagementRate: number;
+  avgGMV: number;
+  avgLiveGMV: number;
+  qualityScore: number;
+  categories: string[];
+  location: string;
+  kolType: string;
+  contact: { lineId: string; phone: string; email: string };
+  stats: {
+    liveGmv: number;
+    videoGmv: number;
+    revenue: number;
+    views: number;
+    productCount: number;
+    liveNum: number;
+    videoNum: number;
+  };
+  bio: { th: string; en: string };
+  condition: string;
+  scope: string;
+  sourceUrl: string;
+  channel: string;
+  accountType?: string;
+  parentKOL?: string | null;
+}
 
 // LIVE_MC_LIST (tblozhTWBHelXqRR)
 export interface LiveMC {

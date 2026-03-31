@@ -12,7 +12,7 @@ import type {
   DisplayContentType,
   Category,
 } from "@/lib/types/kol";
-import { getKOLImageUrl } from "@/lib/lark-api";
+import { getCreatorImageUrl } from "@/lib/utils";
 
 // Re-export types for convenience
 export type { KOLDisplayData, DisplayContentType as ContentType };
@@ -84,7 +84,7 @@ export function transformToDisplayData(kol: KOL): KOLDisplayData {
     category: (kol.category as Category | undefined) || undefined,
     tier: kol.tier || "C",
     verified: kol.verified || false,
-    profileImage: getKOLImageUrl({
+    profileImage: getCreatorImageUrl({
       handle: kol.handle,
       platform: kol.platform,
     }),
@@ -131,7 +131,7 @@ export function transformCardToDisplayData(kol: KOLCardData): KOLDisplayData {
     category: kol.category,
     tier: kol.tier,
     verified: kol.verified,
-    profileImage: getKOLImageUrl({
+    profileImage: getCreatorImageUrl({
       handle: kol.handle,
       platform: kol.platform,
     }),
@@ -205,7 +205,7 @@ export function apiKOLToCardData(kol: {
     category: (kol.categories?.[0] as Category | undefined) || undefined,
     tier: (kol.tier as KOL["tier"]) || "C",
     verified: false,
-    profileImage: getKOLImageUrl({
+    profileImage: getCreatorImageUrl({
       handle: kol.handle,
       platform: kol.platform,
     }),

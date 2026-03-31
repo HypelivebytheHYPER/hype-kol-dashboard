@@ -18,7 +18,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { KOLFeedCard } from "@/components/kol/kol-feed-card";
 import { Pagination } from "@/components/ui/pagination";
 import { formatNumber, formatCurrency } from "@/lib/utils";
-import type { Creator } from "@/lib/lark-api";
+import type { Creator } from "@/lib/types/catalog";
 import {
   parseSmartSearch,
   applySmartFilters,
