@@ -8,10 +8,9 @@ const APP_TOKEN = "H2GQbZBFqaUW2usqPswlczYggWg";
 // ============ Lark Base Table Registry ============
 
 export const TABLES = {
-  ALL_KOLS:    "tbl5864QVOiEokTQ",  // Main table — filter by KOLs Type
+  ALL_KOLS:    "tbl5864QVOiEokTQ",  // Main table — filter by KOLs Type or Inferred Categories
   LIVE_MC_LIST:"tblozhTWBHelXqRR",  // Live MC portfolio with video refs
-  KOL_TECH:    "tbl8rJWSTEemTeJh",  // Tech creators
-  KOL_DOCTOR:  "tblsjNpkLZaovGZb",  // Doctor/Health creators
+  KOL_TECH:    "tbl8rJWSTEemTeJh",  // Tech creators (different schema)
 } as const;
 
 // KOLs Type field values (Formula: based on LiveGmv + VideoGmv)
