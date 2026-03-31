@@ -198,9 +198,7 @@ export function mediaDownloadUrl(token: string): string {
 export async function resolveFileUrl(token: string): Promise<string> {
   try {
     // GET /api/image/TOKEN — cached 23h by worker, returns { url: "CDN..." }
-    const res = await fetch(`${LARK_API_URL}/api/image/${token}`, {
-      next: { revalidate: 3600 },
-    });
+    const res = await fetch(`${LARK_API_URL}/api/image/${token}`);
     if (!res.ok) return mediaDownloadUrl(token);
     const data = await res.json() as { url: string };
     return data.url || mediaDownloadUrl(token);
