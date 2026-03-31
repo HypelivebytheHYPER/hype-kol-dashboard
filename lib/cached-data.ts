@@ -40,6 +40,8 @@ export function recordToKOL(r: LarkRecord): ApiKOL {
     sourceUrl: url(f, "SourceUrl"),
     channel: url(f, "Channel"),
     imageUrl: "",
+    accountType: str(f, "Account Type") as ApiKOL["accountType"],
+    parentKOL: str(f, "Parent KOL") || null,
   };
 }
 
