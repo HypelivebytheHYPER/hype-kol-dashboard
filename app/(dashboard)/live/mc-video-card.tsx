@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Play, Pause, Volume2, VolumeX } from "lucide-react";
 import { VideoPlayer, usePreloadVideo } from "./video-player";
 import type { LiveMC } from "@/lib/types/catalog";
@@ -8,7 +8,7 @@ import type { LiveMC } from "@/lib/types/catalog";
 interface MCVideoCardProps {
   mc: LiveMC;
   videoUrl: string | null;
-  nextVideoUrl?: string | null; // For preloading
+  nextVideoUrl?: string | null;
   isPlaying: boolean;
   onPlay: () => void;
 }
@@ -33,8 +33,14 @@ export function MCVideoCard({
   onPlay 
 }: MCVideoCardProps) {
   const [muted, setMuted] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
-  // Preload next video when this one starts playing
+  // Prevent SSR mismatch - only render video client-side
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Preload next video
   usePreloadVideo(isPlaying && nextVideoUrl ? nextVideoUrl : null);
 
   const handleMuteClick = useCallback((e: React.MouseEvent) => {
@@ -45,11 +51,14 @@ export function MCVideoCard({
   const gradient = generatePlaceholder(mc.handle);
   const initials = mc.handle.slice(0, 2).toUpperCase();
 
+  // Only show video when mounted (client-side) AND isPlaying
+  const showVideo = mounted && isPlaying && videoUrl;
+
   return (
     <div className="relative rounded-xl overflow-hidden bg-zinc-900">
       <div className="relative aspect-[9/16]">
         {/* Video or Placeholder */}
-        {isPlaying && videoUrl ? (
+        {showVideo ? (
           <VideoPlayer
             src={videoUrl}
             isPlaying={isPlaying}
@@ -63,49 +72,49 @@ export function MCVideoCard({
 
         {/* Click overlay */}
         <div className="absolute inset-0 cursor-pointer" onClick={onPlay}>
-          {/* Play button */}
+          {/* Play button - show when not playing */}
           {!isPlaying && (
-            <div className="absolute inset-0 flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center justify-center z-20">
               <div className="w-12 h-12 rounded-full bg-black/50 flex items-center justify-center hover:scale-110 transition-transform">
                 <Play className="w-5 h-5 text-white fill-white ml-0.5" />
               </div>
             </div>
           )}
 
-          {/* Controls when playing */}
-          {isPlaying && (
+          {/* Controls - ONLY show when isPlaying */}
+          {isPlaying && mounted && (
             <>
-              {/* Mute button */}
+              {/* Mute button - TOP LEFT */}
               <button
                 onClick={handleMuteClick}
-                className="absolute top-2 left-2 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center hover:bg-black/70 transition-colors z-10"
+                className="absolute top-2 left-2 w-10 h-10 rounded-full bg-black/60 flex items-center justify-center hover:bg-black/80 transition-colors z-30"
                 aria-label={muted ? "Unmute" : "Mute"}
               >
                 {muted ? (
-                  <VolumeX className="w-4 h-4 text-white" />
+                  <VolumeX className="w-5 h-5 text-white" />
                 ) : (
-                  <Volume2 className="w-4 h-4 text-white" />
+                  <Volume2 className="w-5 h-5 text-white" />
                 )}
               </button>
 
-              {/* Pause indicator */}
-              <div className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center z-10">
-                <Pause className="w-4 h-4 text-white" />
+              {/* Pause indicator - TOP RIGHT */}
+              <div className="absolute top-2 right-2 w-10 h-10 rounded-full bg-black/60 flex items-center justify-center z-30">
+                <Pause className="w-5 h-5 text-white" />
               </div>
             </>
           )}
         </div>
 
-        {/* Video count */}
+        {/* Video count badge */}
         {!isPlaying && mc.videos.length > 1 && (
-          <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-black/50 text-white text-[10px] font-medium">
+          <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-black/50 text-white text-[10px] font-medium z-20">
             {mc.videos.length} vid
           </div>
         )}
 
-        {/* Info */}
+        {/* Info at bottom */}
         {!isPlaying && (
-          <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent">
+          <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent z-20">
             <p className="text-white font-semibold text-sm truncate">{mc.handle}</p>
             {mc.brands.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-1">
