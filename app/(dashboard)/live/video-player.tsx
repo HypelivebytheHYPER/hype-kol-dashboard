@@ -96,6 +96,7 @@ export function VideoPlayer({ src, poster, isPlaying, muted, onLoad }: VideoPlay
       <video
         ref={videoRef}
         poster={poster}
+        muted={muted}
         playsInline
         loop
         className="absolute inset-0 w-full h-full object-cover"

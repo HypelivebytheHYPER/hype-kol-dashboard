@@ -5,6 +5,7 @@ import { LiveCatalogClient } from "./live-catalog-client";
 import { HydrationBoundary, dehydrate } from "@tanstack/react-query";
 import { queryClient } from "@/lib/query-client";
 import { larkKeys } from "@/lib/hooks/use-lark-data";
+import type { LiveMC } from "@/lib/types/catalog";
 
 export const revalidate = 300;
 
@@ -26,9 +27,9 @@ async function LiveContent() {
     },
   });
 
-  const mcs = queryClient.getQueryData(larkKeys.records(TABLES.LIVE_MC_LIST)) || [];
+  const mcs = queryClient.getQueryData<LiveMC[]>(larkKeys.records(TABLES.LIVE_MC_LIST)) || [];
   
-  const videoTokens = mcs.map((mc: { videos: { token: string }[] }) => mc.videos[0]?.token).filter(Boolean);
+  const videoTokens = mcs.map((mc) => mc.videos[0]?.token).filter(Boolean) as string[];
   
   // Prefetch video URLs
   await Promise.all(

@@ -1,5 +1,3 @@
-import { Cpu } from "lucide-react";
-
 export default function TechKolsLoading() {
   return (
     <div className="space-y-6">

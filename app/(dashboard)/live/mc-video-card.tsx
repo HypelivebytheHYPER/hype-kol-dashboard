@@ -33,10 +33,9 @@ export function MCVideoCard({
   onPlay 
 }: MCVideoCardProps) {
   const [muted, setMuted] = useState(true);
-  const [hasLoaded, setHasLoaded] = useState(false);
 
   // Preload next video when this one starts playing
-  usePreloadVideo(isPlaying ? nextVideoUrl : null);
+  usePreloadVideo(isPlaying && nextVideoUrl ? nextVideoUrl : null);
 
   const handleMuteClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -55,7 +54,6 @@ export function MCVideoCard({
             src={videoUrl}
             isPlaying={isPlaying}
             muted={muted}
-            onLoad={() => setHasLoaded(true)}
           />
         ) : (
           <div className={`absolute inset-0 bg-gradient-to-b ${gradient} flex items-center justify-center`}>

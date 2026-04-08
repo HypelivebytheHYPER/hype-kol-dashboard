@@ -1,4 +1,4 @@
-import { Loader2, Video } from "lucide-react";
+import { Video } from "lucide-react";
 
 export default function LiveCatalogLoading() {
   return (
