@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Play, Pause } from "lucide-react";
+import { Play, Pause, Volume2, VolumeX } from "lucide-react";
 import { VideoPlayer, usePreloadVideo } from "./video-player";
 import type { LiveMC } from "@/lib/types/catalog";
 
@@ -32,11 +32,19 @@ export function MCVideoCard({
   isPlaying, 
   onPlay 
 }: MCVideoCardProps) {
+  const [muted, setMuted] = useState(true); // Start muted for autoplay
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Reset mute when video stops
+  useEffect(() => {
+    if (!isPlaying) {
+      setMuted(true);
+    }
+  }, [isPlaying]);
 
   usePreloadVideo(isPlaying && nextVideoUrl ? nextVideoUrl : null);
 
@@ -49,7 +57,7 @@ export function MCVideoCard({
       <div className="relative aspect-[9/16]">
         {/* Video or Placeholder */}
         {showVideo ? (
-          <VideoPlayer src={videoUrl} isPlaying={isPlaying} muted={true} />
+          <VideoPlayer src={videoUrl} isPlaying={isPlaying} muted={muted} />
         ) : (
           <div className={`absolute inset-0 bg-gradient-to-b ${gradient} flex items-center justify-center`}>
             <span className="text-white text-2xl font-bold">{initials}</span>
@@ -68,19 +76,40 @@ export function MCVideoCard({
           </button>
         )}
 
-        {/* Pause overlay - click anywhere to pause */}
-        {isPlaying && (
-          <button 
-            onClick={onPlay}
-            className="absolute inset-0 z-20"
-            aria-label="Pause"
-          />
-        )}
+        {/* Controls container - only when playing */}
+        {isPlaying && mounted && (
+          <div className="absolute inset-0 z-20">
+            {/* Mute button - TOP LEFT */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setMuted(!muted);
+              }}
+              className="absolute top-3 left-3 w-12 h-12 rounded-full bg-black/70 flex items-center justify-center hover:bg-black/90 transition-colors"
+              aria-label={muted ? "Unmute" : "Mute"}
+            >
+              {muted ? (
+                <VolumeX className="w-6 h-6 text-white" />
+              ) : (
+                <Volume2 className="w-6 h-6 text-white" />
+              )}
+            </button>
 
-        {/* Pause indicator */}
-        {isPlaying && (
-          <div className="absolute top-3 right-3 w-12 h-12 rounded-full bg-black/70 flex items-center justify-center z-30 pointer-events-none">
-            <Pause className="w-6 h-6 text-white" />
+            {/* Pause indicator - TOP RIGHT */}
+            <button
+              onClick={onPlay}
+              className="absolute top-3 right-3 w-12 h-12 rounded-full bg-black/70 flex items-center justify-center hover:bg-black/90 transition-colors"
+              aria-label="Pause"
+            >
+              <Pause className="w-6 h-6 text-white" />
+            </button>
+
+            {/* Invisible click area for pause (below buttons) */}
+            <button
+              onClick={onPlay}
+              className="absolute inset-0 -z-10"
+              aria-label="Pause"
+            />
           </div>
         )}
 

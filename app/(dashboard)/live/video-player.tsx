@@ -32,6 +32,13 @@ export function VideoPlayer({ src, isPlaying, muted }: VideoPlayerProps) {
     }
   }, [isPlaying, video]);
 
+  // Sync muted state
+  useEffect(() => {
+    if (video) {
+      video.muted = muted;
+    }
+  }, [muted, video]);
+
   return (
     <>
       <video
