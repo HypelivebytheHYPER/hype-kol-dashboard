@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
-import { Play, Pause, Loader2, Volume2, VolumeX } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Play, Pause, Volume2, VolumeX } from "lucide-react";
 import type { LiveMC } from "@/lib/types/catalog";
 
 interface MCVideoCardProps {
@@ -19,193 +19,103 @@ function generatePlaceholder(handle: string): string {
     "from-green-500 to-emerald-500",
     "from-orange-500 to-amber-500",
     "from-red-500 to-orange-500",
-    "from-teal-500 to-green-500",
-    "from-indigo-500 to-purple-500",
   ];
-  const index = handle.charCodeAt(0) % colors.length;
-  return colors[index];
+  return colors[handle.charCodeAt(0) % colors.length];
 }
 
 export function MCVideoCard({ mc, videoUrl, isPlaying, onPlay }: MCVideoCardProps) {
-  const cardRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [isInViewport, setIsInViewport] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [hasLoaded, setHasLoaded] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
+  const [muted, setMuted] = useState(true);
 
-  // Intersection Observer
-  useEffect(() => {
-    const card = cardRef.current;
-    if (!card) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsInViewport(true);
-          observer.unobserve(card);
-        }
-      },
-      { rootMargin: "50px", threshold: 0 }
-    );
-
-    observer.observe(card);
-    return () => observer.disconnect();
-  }, []);
-
-  // Handle play/pause
+  // Play/pause control
   useEffect(() => {
     const v = videoRef.current;
-    if (!v || !videoUrl) return;
-
+    if (!v) return;
+    
     if (isPlaying) {
-      setIsLoading(true);
-      v.play()
-        .then(() => {
-          setIsLoading(false);
-          setHasLoaded(true);
-        })
-        .catch(() => setIsLoading(false));
+      v.play().catch(() => {});
     } else {
       v.pause();
       v.currentTime = 0;
     }
-  }, [isPlaying, videoUrl]);
+  }, [isPlaying]);
 
-  // Handle mute/unmute
-  useEffect(() => {
-    const v = videoRef.current;
-    if (!v) return;
-    v.muted = isMuted;
-  }, [isMuted]);
-
-  const handlePlayClick = useCallback(() => {
-    if (!videoUrl) return;
-    onPlay();
-  }, [onPlay, videoUrl]);
-
-  const handleMuteClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsMuted(!isMuted);
-  }, [isMuted]);
-
-  const placeholderGradient = generatePlaceholder(mc.handle);
+  const gradient = generatePlaceholder(mc.handle);
   const initials = mc.handle.slice(0, 2).toUpperCase();
-  const showVideo = isInViewport && videoUrl && (isPlaying || hasLoaded);
-  const showPlaceholder = !showVideo;
-  const showPlayButton = !isPlaying;
-  const showControls = isPlaying;
 
   return (
-    <div 
-      ref={cardRef}
-      className="relative rounded-xl overflow-hidden bg-zinc-900 cursor-pointer isolate"
-    >
+    <div className="relative rounded-xl overflow-hidden bg-zinc-900">
+      {/* Video or Placeholder */}
       <div className="relative aspect-[9/16]">
-        
-        {/* Layer 0: Placeholder (always behind) */}
-        <div 
-          className={`absolute inset-0 bg-gradient-to-b ${placeholderGradient} flex flex-col items-center justify-center transition-opacity duration-300 ${
-            showPlaceholder ? "opacity-100 z-0" : "opacity-0 z-0"
-          }`}
-        >
-          <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mb-2">
-            <span className="text-white text-xl font-bold">{initials}</span>
-          </div>
-        </div>
-
-        {/* Layer 1: Video */}
-        {isInViewport && videoUrl && (
+        {isPlaying && videoUrl ? (
           <video
             ref={videoRef}
             src={videoUrl}
-            muted={isMuted}
+            muted={muted}
             playsInline
-            preload="none"
             loop
-            onCanPlay={() => setIsLoading(false)}
-            onWaiting={() => setIsLoading(true)}
-            onPlaying={() => setIsLoading(false)}
-            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
-              showVideo ? "opacity-100 z-10" : "opacity-0 z-0"
-            }`}
+            className="absolute inset-0 w-full h-full object-cover"
           />
-        )}
-
-        {/* Layer 2: Play Button Overlay */}
-        {showPlayButton && (
-          <div 
-            className="absolute inset-0 flex items-center justify-center z-20"
-            onClick={handlePlayClick}
-          >
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
-              videoUrl 
-                ? "bg-black/40 backdrop-blur-sm hover:scale-110" 
-                : "bg-black/20"
-            }`}>
-              {isLoading ? (
-                <Loader2 className="w-5 h-5 text-white animate-spin" />
-              ) : (
-                <Play className={`w-5 h-5 text-white fill-white ml-0.5 ${!videoUrl ? "opacity-40" : ""}`} />
-              )}
-            </div>
+        ) : (
+          <div className={`absolute inset-0 bg-gradient-to-b ${gradient} flex items-center justify-center`}>
+            <span className="text-white text-2xl font-bold">{initials}</span>
           </div>
         )}
 
-        {/* Layer 3: Controls when playing */}
-        {showControls && (
-          <div className="absolute inset-0 z-30" onClick={handlePlayClick}>
-            {/* Loading spinner */}
-            {isLoading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                <Loader2 className="w-8 h-8 text-white animate-spin" />
+        {/* Click overlay */}
+        <div 
+          className="absolute inset-0 cursor-pointer"
+          onClick={onPlay}
+        >
+          {/* Play button */}
+          {!isPlaying && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-full bg-black/50 flex items-center justify-center">
+                <Play className="w-5 h-5 text-white fill-white ml-0.5" />
               </div>
-            )}
-            
-            {/* Mute button - top left */}
-            <button
-              onClick={handleMuteClick}
-              className="absolute top-2 left-2 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center hover:bg-black/70 transition-colors pointer-events-auto"
-              aria-label={isMuted ? "Unmute" : "Mute"}
-            >
-              {isMuted ? (
-                <VolumeX className="w-4 h-4 text-white" />
-              ) : (
-                <Volume2 className="w-4 h-4 text-white" />
-              )}
-            </button>
-
-            {/* Pause indicator - top right */}
-            <div className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center pointer-events-none">
-              <Pause className="w-4 h-4 text-white" />
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Layer 4: Video count badge (static) */}
+          {/* Controls when playing */}
+          {isPlaying && (
+            <>
+              {/* Mute button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMuted(!muted);
+                }}
+                className="absolute top-2 left-2 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center"
+              >
+                {muted ? <VolumeX className="w-4 h-4 text-white" /> : <Volume2 className="w-4 h-4 text-white" />}
+              </button>
+
+              {/* Pause indicator */}
+              <div className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center">
+                <Pause className="w-4 h-4 text-white" />
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Video count */}
         {!isPlaying && mc.videos.length > 1 && (
-          <div className="absolute top-2 right-2 z-20 pointer-events-none">
-            <span className="px-1.5 py-0.5 rounded bg-black/50 text-white text-[10px] font-medium">
-              {mc.videos.length} vid
-            </span>
+          <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-black/50 text-white text-[10px]">
+            {mc.videos.length} vid
           </div>
         )}
 
-        {/* Layer 5: Info overlay at bottom */}
+        {/* Info */}
         {!isPlaying && (
-          <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent z-20 pointer-events-none">
+          <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent">
             <p className="text-white font-semibold text-sm truncate">{mc.handle}</p>
             {mc.brands.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-1">
-                {mc.brands.slice(0, 3).map((brand) => (
-                  <span key={brand} className="px-1.5 py-0.5 rounded bg-white/15 text-white/80 text-[9px]">
-                    {brand}
-                  </span>
+                {mc.brands.slice(0, 3).map((b) => (
+                  <span key={b} className="px-1.5 py-0.5 rounded bg-white/15 text-white/80 text-[9px]">{b}</span>
                 ))}
                 {mc.brands.length > 3 && (
-                  <span className="px-1.5 py-0.5 text-white/50 text-[9px]">
-                    +{mc.brands.length - 3}
-                  </span>
+                  <span className="text-white/50 text-[9px]">+{mc.brands.length - 3}</span>
                 )}
               </div>
             )}
