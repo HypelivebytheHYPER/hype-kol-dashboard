@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Play, Pause, Volume2, VolumeX } from "lucide-react";
 import { VideoPlayer, usePreloadVideo } from "./video-player";
 import type { LiveMC } from "@/lib/types/catalog";
@@ -35,23 +35,14 @@ export function MCVideoCard({
   const [muted, setMuted] = useState(true);
   const [mounted, setMounted] = useState(false);
 
-  // Prevent SSR mismatch - only render video client-side
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Preload next video
   usePreloadVideo(isPlaying && nextVideoUrl ? nextVideoUrl : null);
-
-  const handleMuteClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    setMuted(!muted);
-  }, [muted]);
 
   const gradient = generatePlaceholder(mc.handle);
   const initials = mc.handle.slice(0, 2).toUpperCase();
-
-  // Only show video when mounted (client-side) AND isPlaying
   const showVideo = mounted && isPlaying && videoUrl;
 
   return (
@@ -59,69 +50,74 @@ export function MCVideoCard({
       <div className="relative aspect-[9/16]">
         {/* Video or Placeholder */}
         {showVideo ? (
-          <VideoPlayer
-            src={videoUrl}
-            isPlaying={isPlaying}
-            muted={muted}
-          />
+          <VideoPlayer src={videoUrl} isPlaying={isPlaying} muted={muted} />
         ) : (
           <div className={`absolute inset-0 bg-gradient-to-b ${gradient} flex items-center justify-center`}>
             <span className="text-white text-2xl font-bold">{initials}</span>
           </div>
         )}
 
-        {/* Click overlay */}
-        <div className="absolute inset-0 cursor-pointer" onClick={onPlay}>
-          {/* Play button - show when not playing */}
-          {!isPlaying && (
-            <div className="absolute inset-0 flex items-center justify-center z-20">
-              <div className="w-12 h-12 rounded-full bg-black/50 flex items-center justify-center hover:scale-110 transition-transform">
-                <Play className="w-5 h-5 text-white fill-white ml-0.5" />
-              </div>
+        {/* Play button - only when not playing */}
+        {!isPlaying && (
+          <button 
+            onClick={onPlay}
+            className="absolute inset-0 flex items-center justify-center z-20"
+          >
+            <div className="w-12 h-12 rounded-full bg-black/50 flex items-center justify-center hover:scale-110 transition-transform">
+              <Play className="w-5 h-5 text-white fill-white ml-0.5" />
             </div>
-          )}
+          </button>
+        )}
 
-          {/* Controls - ONLY show when isPlaying */}
-          {isPlaying && mounted && (
-            <>
-              {/* Mute button - TOP LEFT */}
-              <button
-                onClick={handleMuteClick}
-                className="absolute top-2 left-2 w-10 h-10 rounded-full bg-black/60 flex items-center justify-center hover:bg-black/80 transition-colors z-30"
-                aria-label={muted ? "Unmute" : "Mute"}
-              >
-                {muted ? (
-                  <VolumeX className="w-5 h-5 text-white" />
-                ) : (
-                  <Volume2 className="w-5 h-5 text-white" />
-                )}
-              </button>
+        {/* Pause overlay - click to pause */}
+        {isPlaying && (
+          <button 
+            onClick={onPlay}
+            className="absolute inset-0 z-20"
+            aria-label="Pause"
+          />
+        )}
 
-              {/* Pause indicator - TOP RIGHT */}
-              <div className="absolute top-2 right-2 w-10 h-10 rounded-full bg-black/60 flex items-center justify-center z-30">
-                <Pause className="w-5 h-5 text-white" />
-              </div>
-            </>
-          )}
-        </div>
+        {/* Mute button - SEPARATE from pause overlay */}
+        {isPlaying && mounted && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setMuted(!muted);
+            }}
+            className="absolute top-3 left-3 w-12 h-12 rounded-full bg-black/70 flex items-center justify-center hover:bg-black/90 transition-colors z-30"
+            aria-label={muted ? "Unmute" : "Mute"}
+          >
+            {muted ? (
+              <VolumeX className="w-6 h-6 text-white" />
+            ) : (
+              <Volume2 className="w-6 h-6 text-white" />
+            )}
+          </button>
+        )}
 
-        {/* Video count badge */}
+        {/* Pause indicator */}
+        {isPlaying && (
+          <div className="absolute top-3 right-3 w-12 h-12 rounded-full bg-black/70 flex items-center justify-center z-30 pointer-events-none">
+            <Pause className="w-6 h-6 text-white" />
+          </div>
+        )}
+
+        {/* Video count */}
         {!isPlaying && mc.videos.length > 1 && (
           <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-black/50 text-white text-[10px] font-medium z-20">
             {mc.videos.length} vid
           </div>
         )}
 
-        {/* Info at bottom */}
+        {/* Info */}
         {!isPlaying && (
           <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent z-20">
             <p className="text-white font-semibold text-sm truncate">{mc.handle}</p>
             {mc.brands.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-1">
                 {mc.brands.slice(0, 3).map((b) => (
-                  <span key={b} className="px-1.5 py-0.5 rounded bg-white/15 text-white/80 text-[9px]">
-                    {b}
-                  </span>
+                  <span key={b} className="px-1.5 py-0.5 rounded bg-white/15 text-white/80 text-[9px]">{b}</span>
                 ))}
                 {mc.brands.length > 3 && (
                   <span className="text-white/50 text-[9px]">+{mc.brands.length - 3}</span>
