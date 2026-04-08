@@ -1,19 +1,10 @@
 "use client";
 
 import { useQuery, useQueries } from "@tanstack/react-query";
-import { fetchRecords, resolveFileUrl, TABLES, type TableId } from "@/lib/lark-base";
+import { fetchRecords, resolveFileUrl, TABLES } from "@/lib/lark-base";
 import { recordToCreator, recordToLiveMC, recordToTechKOL } from "@/lib/cached-data";
 import { queryClient } from "@/lib/query-client";
-
-// Query keys for cache management
-export const larkKeys = {
-  all: ["lark"] as const,
-  tables: () => [...larkKeys.all, "tables"] as const,
-  table: (tableId: TableId) => [...larkKeys.tables(), tableId] as const,
-  records: (tableId: TableId, filters?: unknown) => 
-    [...larkKeys.table(tableId), "records", filters] as const,
-  fileUrl: (token: string) => [...larkKeys.all, "file", token] as const,
-};
+import { larkKeys } from "@/lib/query-keys";
 
 // Hook for fetching KOLs
 export function useKOLs() {

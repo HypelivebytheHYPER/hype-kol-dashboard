@@ -4,7 +4,7 @@ import { recordToLiveMC } from "@/lib/cached-data";
 import { LiveCatalogClient } from "./live-catalog-client";
 import { HydrationBoundary, dehydrate } from "@tanstack/react-query";
 import { queryClient } from "@/lib/query-client";
-import { larkKeys } from "@/lib/hooks/use-lark-data";
+import { larkKeys } from "@/lib/query-keys";
 import type { LiveMC } from "@/lib/types/catalog";
 
 export const revalidate = 300;
@@ -43,8 +43,8 @@ async function LiveContent() {
   );
 
   const videoUrls: Record<string, string> = {};
-  videoTokens.forEach((token: string) => {
-    const url = queryClient.getQueryData(larkKeys.fileUrl(token));
+  videoTokens.forEach((token) => {
+    const url = queryClient.getQueryData<string>(larkKeys.fileUrl(token));
     if (url) videoUrls[token] = url;
   });
 
