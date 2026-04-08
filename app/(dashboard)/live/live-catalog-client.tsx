@@ -61,15 +61,24 @@ export function LiveCatalogClient({ mcs, videoUrls }: LiveCatalogClientProps) {
       )}
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-        {filtered.map((mc) => (
-          <MCVideoCard
-            key={mc.id}
-            mc={mc}
-            videoUrl={mc.videos[0]?.token ? videoUrls[mc.videos[0].token] : null}
-            isPlaying={playingId === mc.id}
-            onPlay={() => setPlayingId(playingId === mc.id ? null : mc.id)}
-          />
-        ))}
+        {filtered.map((mc, index) => {
+          // Get next video URL for preloading
+          const nextMc = filtered[index + 1];
+          const nextVideoUrl = nextMc?.videos[0]?.token 
+            ? videoUrls[nextMc.videos[0].token] 
+            : null;
+
+          return (
+            <MCVideoCard
+              key={mc.id}
+              mc={mc}
+              videoUrl={mc.videos[0]?.token ? videoUrls[mc.videos[0].token] : null}
+              nextVideoUrl={nextVideoUrl}
+              isPlaying={playingId === mc.id}
+              onPlay={() => setPlayingId(playingId === mc.id ? null : mc.id)}
+            />
+          );
+        })}
       </div>
 
       {filtered.length === 0 && (
