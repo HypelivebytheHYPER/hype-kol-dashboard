@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Play, Pause, Loader2 } from "lucide-react";
+import { Play, Pause, Loader2, Volume2, VolumeX } from "lucide-react";
 import type { LiveMC } from "@/lib/types/catalog";
 
 interface MCVideoCardProps {
@@ -33,6 +33,7 @@ export function MCVideoCard({ mc, videoUrl, isPlaying, onPlay }: MCVideoCardProp
   const [isInViewport, setIsInViewport] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
 
   // Intersection Observer: only activate when card is visible
   useEffect(() => {
@@ -75,6 +76,13 @@ export function MCVideoCard({ mc, videoUrl, isPlaying, onPlay }: MCVideoCardProp
     }
   }, [isPlaying, videoUrl]);
 
+  // Handle mute/unmute
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = isMuted;
+  }, [isMuted]);
+
   const handlePlayClick = useCallback(() => {
     if (!videoUrl) return;
     onPlay();
@@ -96,7 +104,6 @@ export function MCVideoCard({ mc, videoUrl, isPlaying, onPlay }: MCVideoCardProp
           <video
             ref={videoRef}
             src={videoUrl}
-            muted
             playsInline
             preload="none"
             loop
@@ -133,7 +140,7 @@ export function MCVideoCard({ mc, videoUrl, isPlaying, onPlay }: MCVideoCardProp
           </div>
         )}
 
-        {/* Pause indicator when playing */}
+        {/* Pause indicator + Mute toggle when playing */}
         {isPlaying && (
           <>
             {isLoading && (
@@ -141,6 +148,22 @@ export function MCVideoCard({ mc, videoUrl, isPlaying, onPlay }: MCVideoCardProp
                 <Loader2 className="w-8 h-8 text-white animate-spin" />
               </div>
             )}
+            {/* Mute/Unmute button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsMuted(!isMuted);
+              }}
+              className="absolute top-2 left-2 z-20 w-7 h-7 rounded-full bg-black/50 flex items-center justify-center hover:bg-black/70 transition-colors"
+              aria-label={isMuted ? "Unmute" : "Mute"}
+            >
+              {isMuted ? (
+                <VolumeX className="w-3.5 h-3.5 text-white" />
+              ) : (
+                <Volume2 className="w-3.5 h-3.5 text-white" />
+              )}
+            </button>
+            {/* Pause indicator */}
             <div className="absolute top-2 right-2 z-20">
               <div className="w-7 h-7 rounded-full bg-black/50 flex items-center justify-center">
                 <Pause className="w-3.5 h-3.5 text-white" />
