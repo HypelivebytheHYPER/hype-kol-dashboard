@@ -1,17 +1,21 @@
 import { Suspense } from "react";
-import { fetchRecords, TABLES, recordToTechKOL } from "@/lib/cached-data";
+import { fetchRecords, TABLES } from "@/lib/lark-base";
+import { recordToTechKOL } from "@/lib/cached-data";
 import { TechKOLClient } from "./tech-kol-client";
 
 export const revalidate = 300;
 
-export default async function TechKOLPage() {
-  const { data, total } = await fetchRecords(TABLES.KOL_TECH, { tags: ["tech-kols"] });
-
+export default function TechKOLPage() {
   return (
     <Suspense fallback={<PageSkeleton />}>
-      <TechKOLClient kols={data.map(recordToTechKOL)} total={total} />
+      <TechContent />
     </Suspense>
   );
+}
+
+async function TechContent() {
+  const { data } = await fetchRecords(TABLES.KOL_TECH, { tags: ["tech-kols"] });
+  return <TechKOLClient kols={data.map(recordToTechKOL)} />;
 }
 
 function PageSkeleton() {

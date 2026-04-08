@@ -49,11 +49,3 @@ export function normalizeCategory(raw: string): CategoryId | null {
 export function normalizeCategories(raw: string[]): CategoryId[] {
   return raw.map(normalizeCategory).filter((c): c is CategoryId => c !== null);
 }
-
-export function getCategoryLabel(id: string): string {
-  return CATEGORIES.find((c) => c.id === id)?.label ?? id;
-}
-
-export function getCategoryColor(id: string): string {
-  return CATEGORIES.find((c) => c.id === id)?.color ?? "from-gray-500 to-gray-600";
-}

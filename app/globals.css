@@ -1,6 +1,5 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark, .dark *));
 
@@ -94,6 +93,7 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
 /* Custom scrollbar */
@@ -115,132 +115,9 @@ body {
   background: var(--muted-foreground);
 }
 
-/* =========================================================
-   TYPOGRAPHY SCALE
-   Based on 4px grid, Major Third (1.25) ratio
-   Body: 16px, Line-height: 1.5-1.6 for readability
-   ========================================================= */
-
-/* Display - Use sparingly for hero headlines */
-.text-display {
-  font-size: 48px;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  font-weight: 700;
-}
-
-/* Title - Page headers */
-.text-title {
-  font-size: 32px;
-  line-height: 1.2;
-  letter-spacing: -0.02em;
-  font-weight: 700;
-}
-
-/* H2 - Section headers */
-.text-heading {
-  font-size: 24px;
-  line-height: 1.25;
-  letter-spacing: -0.01em;
-  font-weight: 600;
-}
-
-/* Subtitle - Card titles, subsections */
-.text-subtitle {
-  font-size: 18px;
-  line-height: 1.4;
-  letter-spacing: -0.01em;
-  font-weight: 500;
-}
-
-/* Body - Primary text (16px minimum for readability) */
-.text-body {
-  font-size: 16px;
-  line-height: 1.6;
-  font-weight: 400;
-}
-
-/* Small - Secondary text, captions */
-.text-small {
-  font-size: 14px;
-  line-height: 1.5;
-  letter-spacing: 0;
-  font-weight: 400;
-}
-
-/* Micro - Labels, tags, metadata */
-.text-micro {
-  font-size: 12px;
-  line-height: 1.4;
-  letter-spacing: 0.01em;
-  font-weight: 400;
-}
-
-/* =========================================================
-   SPACING SCALE (4px base grid)
-   Use these values for margins, padding, gaps
-   ========================================================= */
-
-:root {
-  --space-0: 0px;
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-  --space-8: 32px;
-  --space-10: 40px;
-  --space-12: 48px;
-  --space-16: 64px;
-  --space-20: 80px;
-  --space-24: 96px;
-}
-
-
 /* Mono font for numbers */
 .font-mono {
   font-family: "JetBrains Mono", "SF Mono", monospace;
-}
-
-/* Live indicator */
-.live-indicator {
-  animation: pulse-live 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-@keyframes pulse-live {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-
-/* Gradient text */
-.gradient-text {
-  background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* Glass effect */
-.glass {
-  background: rgba(20, 20, 20, 0.8);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-
-/* Card hover */
-.card-hover {
-  transition: all 0.2s ease;
-}
-
-.card-hover:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
 }
 
 @layer base {
@@ -289,7 +166,7 @@ body {
   --sidebar-ring: oklch(0.556 0 0);
 }
 
-/* Remove ugly focus rings - use subtle shadow instead */
+/* Focus rings */
 *:focus {
   outline: none !important;
 }
@@ -329,23 +206,6 @@ a,
   -webkit-user-select: none;
 }
 
-/* GPU acceleration for animations */
-.gpu-accelerated {
-  transform: translateZ(0);
-  will-change: transform;
-}
-
-/* Prevent horizontal scroll on mobile */
-body {
-  overflow-x: hidden;
-}
-
-/* Touch action for swipe gestures */
-.swipe-container {
-  touch-action: pan-y;
-  user-select: none;
-}
-
 /* Hide scrollbar utility */
 .scrollbar-hide {
   -ms-overflow-style: none;
@@ -368,17 +228,6 @@ body {
   height: env(safe-area-inset-bottom, 0px);
 }
 
-.pb-safe {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-}
-
-/* Mobile bottom nav height */
-@media (max-width: 1023px) {
-  :root {
-    --bottom-nav-height: calc(64px + env(safe-area-inset-bottom, 0px));
-  }
-}
-
 /* Reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -388,26 +237,5 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
-  }
-}
-
-/* Mobile performance optimizations */
-@media (max-width: 768px) {
-  /* Disable complex hover effects on touch devices */
-  .card-hover:hover {
-    transform: none;
-  }
-
-  /* Faster transitions on mobile */
-  * {
-    transition-duration: 0.15s !important;
-  }
-
-  /* Reduce motion for better performance */
-  @media (prefers-reduced-motion: no-preference) {
-    .motion-reduce-mobile {
-      animation: none !important;
-      transition: none !important;
-    }
   }
 }

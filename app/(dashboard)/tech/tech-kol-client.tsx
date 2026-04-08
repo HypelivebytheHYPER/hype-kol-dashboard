@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatNumber } from "@/lib/utils";
-import type { TechKOL } from "@/lib/cached-data";
+import type { TechKOL } from "@/lib/types/catalog";
 
 type SortKey = "followers" | "views" | "name";
 
@@ -28,10 +28,9 @@ const SORT_OPTIONS: { key: SortKey; label: string }[] = [
 
 interface TechKOLClientProps {
   kols: TechKOL[];
-  total: number;
 }
 
-export function TechKOLClient({ kols, total: _total }: TechKOLClientProps) {
+export function TechKOLClient({ kols }: TechKOLClientProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortKey>("followers");
   const [sortDesc, setSortDesc] = useState(true);

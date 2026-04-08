@@ -1,17 +1,25 @@
 import { Suspense } from "react";
-import { fetchRecords, TABLES, recordToCreator } from "@/lib/cached-data";
+import { fetchRecords, TABLES } from "@/lib/lark-base";
+import { recordToCreator } from "@/lib/cached-data";
 import { KOLsListClient } from "./kols-list-client";
 
 export const revalidate = 300;
 
-export default async function KOLsPage() {
-  const { data, total } = await fetchRecords(TABLES.ALL_KOLS, { pageSize: 50, tags: ["kols"] });
-
+export default function KOLsPage() {
   return (
     <Suspense fallback={<PageSkeleton />}>
-      <KOLsListClient initialKOLs={data.map(recordToCreator)} total={total} />
+      <KOLsContent />
     </Suspense>
   );
+}
+
+async function KOLsContent() {
+  const { data, total } = await fetchRecords(TABLES.ALL_KOLS, {
+    pageSize: 50,
+    tags: ["kols"],
+  });
+
+  return <KOLsListClient initialKOLs={data.map(recordToCreator)} total={total} />;
 }
 
 function PageSkeleton() {

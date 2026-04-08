@@ -68,8 +68,6 @@ export default [
       "node_modules/**",
       "dist/**",
       "build/**",
-      ".open-next/**",
-      ".wrangler/**",
     ],
   },
 ];

@@ -1,22 +1,26 @@
 import { Suspense } from "react";
-import { fetchRecords, TABLES, recordToLiveMC } from "@/lib/cached-data";
-import { resolveFileUrls } from "@/lib/lark-base";
+import { fetchRecords, TABLES, resolveFileUrls } from "@/lib/lark-base";
+import { recordToLiveMC } from "@/lib/cached-data";
 import { LiveCatalogClient } from "./live-catalog-client";
 
 export const revalidate = 300;
 
-export default async function LiveCatalogPage() {
+export default function LiveCatalogPage() {
+  return (
+    <Suspense fallback={<PageSkeleton />}>
+      <LiveContent />
+    </Suspense>
+  );
+}
+
+async function LiveContent() {
   const { data } = await fetchRecords(TABLES.LIVE_MC_LIST, { tags: ["live-mc"] });
   const mcs = data.map(recordToLiveMC);
 
   const videoTokens = mcs.map((mc) => mc.videos[0]?.token).filter(Boolean);
   const videoUrls = await resolveFileUrls(videoTokens);
 
-  return (
-    <Suspense fallback={<PageSkeleton />}>
-      <LiveCatalogClient mcs={mcs} videoUrls={videoUrls} />
-    </Suspense>
-  );
+  return <LiveCatalogClient mcs={mcs} videoUrls={videoUrls} />;
 }
 
 function PageSkeleton() {

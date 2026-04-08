@@ -246,7 +246,3 @@ export function addRecentSearch(query: string) {
   localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
 }
 
-export function clearRecentSearches() {
-  if (typeof window === "undefined") return;
-  localStorage.removeItem(RECENT_SEARCHES_KEY);
-}

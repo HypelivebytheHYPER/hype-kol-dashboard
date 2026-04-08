@@ -17,19 +17,6 @@ export function formatNumber(value: number): string {
   return value.toLocaleString();
 }
 
-export function formatDate(value: string): string {
-  if (!value) return "";
-  try {
-    return new Date(value).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  } catch {
-    return value;
-  }
-}
-
 export function getTierColor(tier: string): string {
   const t = tier.toLowerCase();
   if (t.includes("mega")) return "bg-pink-500";

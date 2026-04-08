@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { fetchRecords, TABLES, recordToCreator } from "@/lib/cached-data";
+import { fetchRecords, TABLES } from "@/lib/lark-base";
+import { recordToCreator } from "@/lib/cached-data";
 import { KOLProfileClient } from "./kol-profile-client";
 
 export const revalidate = 300;
@@ -8,25 +9,24 @@ export const revalidate = 300;
 export default async function KOLProfilePage({ params }: { params: Promise<{ kolId: string }> }) {
   const { kolId } = await params;
 
-  let kolData;
-  try {
-    const { data } = await fetchRecords(TABLES.ALL_KOLS, {
-      filter: { conjunction: "and", conditions: [{ field_name: "Record ID", operator: "is", value: [kolId] }] },
-      pageSize: 1,
-      tags: ["kols"],
-    });
-    kolData = data[0] ? recordToCreator(data[0]) : null;
-  } catch {
-    notFound();
-  }
-
-  if (!kolData) notFound();
-
   return (
     <Suspense fallback={<PageSkeleton />}>
-      <KOLProfileClient kol={kolData} related={{ parent: null, children: [] }} />
+      <ProfileContent kolId={kolId} />
     </Suspense>
   );
+}
+
+async function ProfileContent({ kolId }: { kolId: string }) {
+  const { data } = await fetchRecords(TABLES.ALL_KOLS, {
+    filter: { conjunction: "and", conditions: [{ field_name: "Record ID", operator: "is", value: [kolId] }] },
+    pageSize: 1,
+    tags: ["kols"],
+  });
+
+  const kolData = data[0] ? recordToCreator(data[0]) : null;
+  if (!kolData) notFound();
+
+  return <KOLProfileClient kol={kolData} related={{ parent: null, children: [] }} />;
 }
 
 function PageSkeleton() {

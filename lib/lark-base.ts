@@ -20,8 +20,6 @@ export const KOL_TYPES = {
   CREATOR: "Creator",            // VideoGmv > 0 or default
 } as const;
 
-export type KOLType = (typeof KOL_TYPES)[keyof typeof KOL_TYPES];
-
 export type TableId = (typeof TABLES)[keyof typeof TABLES];
 
 // ============ Types ============
@@ -187,22 +185,59 @@ export function attachments(fields: Record<string, unknown>, key: string): LarkA
 
 // Media download uses same base URL
 
+import { unstable_cache } from "next/cache";
 
 /**
- * Resolve file tokens to Lark CDN temp URLs (24h valid, supports Range/byte-serving)
- * Use for video src — browser can do preload="metadata" with Range requests
+ * Internal: Resolve a single file token to URL (no caching)
  */
-export async function resolveFileUrl(token: string): Promise<string> {
+async function resolveFileUrlInternal(token: string): Promise<string> {
   const res = await fetch(`${LARK_API_URL}/api/image/${token}`);
   if (!res.ok) return "";
   const data = await res.json() as { url: string };
   return data.url || "";
 }
 
+/**
+ * Cached version: Resolve file token to Lark CDN temp URL (23h cache)
+ * Lark URLs are valid for 24h, we cache for 23h to be safe
+ */
+const resolveFileUrlCached = unstable_cache(
+  async (token: string): Promise<string> => {
+    return resolveFileUrlInternal(token);
+  },
+  ["lark-file-url"],
+  { revalidate: 82800 } // 23 hours in seconds
+);
+
+/**
+ * Resolve file tokens to Lark CDN temp URLs (24h valid, supports Range/byte-serving)
+ * Use for video src — browser can do preload="metadata" with Range requests
+ * Results are cached for 23 hours to avoid repeated API calls
+ */
+export async function resolveFileUrl(token: string): Promise<string> {
+  return resolveFileUrlCached(token);
+}
+
+/**
+ * Resolve multiple file tokens to URLs in parallel
+ * Each token is individually cached for 23 hours
+ */
 export async function resolveFileUrls(tokens: string[]): Promise<Record<string, string>> {
   if (tokens.length === 0) return {};
+
+  // Deduplicate tokens to avoid duplicate cache keys
+  const uniqueTokens = [...new Set(tokens)];
+
+  // Fetch all URLs in parallel (each uses its own cached function)
   const entries = await Promise.all(
-    tokens.map(async (t) => [t, await resolveFileUrl(t)] as const)
+    uniqueTokens.map(async (t) => [t, await resolveFileUrlCached(t)] as const)
   );
-  return Object.fromEntries(entries);
+
+  // Build result map for all unique tokens
+  const urlMap = new Map(entries);
+
+  // Return in original token order (preserving duplicates if any)
+  return Object.fromEntries(
+    tokens.map((t) => [t, urlMap.get(t) || ""])
+  );
 }
