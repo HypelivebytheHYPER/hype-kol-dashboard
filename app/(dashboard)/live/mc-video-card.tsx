@@ -69,16 +69,7 @@ export function MCVideoCard({
           </button>
         )}
 
-        {/* Pause overlay - click to pause */}
-        {isPlaying && (
-          <button 
-            onClick={onPlay}
-            className="absolute inset-0 z-20"
-            aria-label="Pause"
-          />
-        )}
-
-        {/* Mute button - SEPARATE from pause overlay */}
+        {/* Mute button */}
         {isPlaying && mounted && (
           <button
             onClick={(e) => {
@@ -94,6 +85,16 @@ export function MCVideoCard({
               <Volume2 className="w-6 h-6 text-white" />
             )}
           </button>
+        )}
+
+        {/* Pause overlay - click to pause (excludes mute button area) */}
+        {isPlaying && (
+          <button 
+            onClick={onPlay}
+            className="absolute inset-0 z-20"
+            style={{ clipPath: 'polygon(0 0, 100% 0, 100% 100%, 60px 100%, 60px 60px, 0 60px)' }}
+            aria-label="Pause"
+          />
         )}
 
         {/* Pause indicator */}
