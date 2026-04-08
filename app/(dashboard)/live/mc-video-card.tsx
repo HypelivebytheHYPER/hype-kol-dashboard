@@ -119,6 +119,7 @@ export function MCVideoCard({ mc, videoUrl, isPlaying, onPlay }: MCVideoCardProp
           <video
             ref={videoRef}
             src={videoUrl}
+            muted={isMuted}
             playsInline
             preload="none"
             loop
