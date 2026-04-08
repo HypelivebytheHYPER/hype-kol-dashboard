@@ -4,6 +4,7 @@ import "./globals.css";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { I18nProvider } from "@/lib/i18n-context";
+import { QueryProvider } from "@/components/query-provider";
 import { cn } from "@/lib/utils";
 import { Toaster } from "sonner";
 import enMessages from "@/locales/en.json";
@@ -38,8 +39,10 @@ export default function RootLayout({
       <body className={`${geist.variable} font-sans antialiased`}>
         <ThemeProvider>
           <I18nProvider initialMessages={enMessages}>
+            <QueryProvider>
               {children}
               <Toaster position="bottom-right" richColors />
+            </QueryProvider>
           </I18nProvider>
         </ThemeProvider>
       </body>
