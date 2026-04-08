@@ -11,7 +11,6 @@ interface MCVideoCardProps {
   onPlay: () => void;
 }
 
-// Generate a gradient placeholder based on the MC name
 function generatePlaceholder(handle: string): string {
   const colors = [
     "from-pink-500 to-rose-500",
@@ -35,7 +34,7 @@ export function MCVideoCard({ mc, videoUrl, isPlaying, onPlay }: MCVideoCardProp
   const [hasLoaded, setHasLoaded] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
 
-  // Intersection Observer: only activate when card is visible
+  // Intersection Observer
   useEffect(() => {
     const card = cardRef.current;
     if (!card) return;
@@ -47,10 +46,7 @@ export function MCVideoCard({ mc, videoUrl, isPlaying, onPlay }: MCVideoCardProp
           observer.unobserve(card);
         }
       },
-      { 
-        rootMargin: "50px",
-        threshold: 0 
-      }
+      { rootMargin: "50px", threshold: 0 }
     );
 
     observer.observe(card);
@@ -88,19 +84,38 @@ export function MCVideoCard({ mc, videoUrl, isPlaying, onPlay }: MCVideoCardProp
     onPlay();
   }, [onPlay, videoUrl]);
 
+  const handleMuteClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsMuted(!isMuted);
+  }, [isMuted]);
+
   const placeholderGradient = generatePlaceholder(mc.handle);
   const initials = mc.handle.slice(0, 2).toUpperCase();
   const showVideo = isInViewport && videoUrl && (isPlaying || hasLoaded);
+  const showPlaceholder = !showVideo;
+  const showPlayButton = !isPlaying;
+  const showControls = isPlaying;
 
   return (
     <div 
       ref={cardRef}
-      className="relative rounded-xl overflow-hidden bg-zinc-900 cursor-pointer"
-      onClick={handlePlayClick}
+      className="relative rounded-xl overflow-hidden bg-zinc-900 cursor-pointer isolate"
     >
       <div className="relative aspect-[9/16]">
-        {/* Video - only render when in viewport AND playing/loaded */}
-        {showVideo && (
+        
+        {/* Layer 0: Placeholder (always behind) */}
+        <div 
+          className={`absolute inset-0 bg-gradient-to-b ${placeholderGradient} flex flex-col items-center justify-center transition-opacity duration-300 ${
+            showPlaceholder ? "opacity-100 z-0" : "opacity-0 z-0"
+          }`}
+        >
+          <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mb-2">
+            <span className="text-white text-xl font-bold">{initials}</span>
+          </div>
+        </div>
+
+        {/* Layer 1: Video */}
+        {isInViewport && videoUrl && (
           <video
             ref={videoRef}
             src={videoUrl}
@@ -110,22 +125,18 @@ export function MCVideoCard({ mc, videoUrl, isPlaying, onPlay }: MCVideoCardProp
             onCanPlay={() => setIsLoading(false)}
             onWaiting={() => setIsLoading(true)}
             onPlaying={() => setIsLoading(false)}
-            className="absolute inset-0 w-full h-full object-cover"
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
+              showVideo ? "opacity-100 z-10" : "opacity-0 z-0"
+            }`}
           />
         )}
 
-        {/* Placeholder - shown when video not playing */}
-        {(!showVideo) && (
-          <div className={`absolute inset-0 bg-gradient-to-b ${placeholderGradient} flex flex-col items-center justify-center`}>
-            <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mb-2">
-              <span className="text-white text-xl font-bold">{initials}</span>
-            </div>
-          </div>
-        )}
-
-        {/* Play/Pause Overlay */}
-        {!isPlaying && (
-          <div className="absolute inset-0 flex items-center justify-center z-10">
+        {/* Layer 2: Play Button Overlay */}
+        {showPlayButton && (
+          <div 
+            className="absolute inset-0 flex items-center justify-center z-20"
+            onClick={handlePlayClick}
+          >
             <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
               videoUrl 
                 ? "bg-black/40 backdrop-blur-sm hover:scale-110" 
@@ -140,50 +151,48 @@ export function MCVideoCard({ mc, videoUrl, isPlaying, onPlay }: MCVideoCardProp
           </div>
         )}
 
-        {/* Pause indicator + Mute toggle when playing */}
-        {isPlaying && (
-          <>
+        {/* Layer 3: Controls when playing */}
+        {showControls && (
+          <div className="absolute inset-0 z-30" onClick={handlePlayClick}>
+            {/* Loading spinner */}
             {isLoading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/30 z-10">
+              <div className="absolute inset-0 flex items-center justify-center bg-black/30">
                 <Loader2 className="w-8 h-8 text-white animate-spin" />
               </div>
             )}
-            {/* Mute/Unmute button */}
+            
+            {/* Mute button - top left */}
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsMuted(!isMuted);
-              }}
-              className="absolute top-2 left-2 z-20 w-7 h-7 rounded-full bg-black/50 flex items-center justify-center hover:bg-black/70 transition-colors"
+              onClick={handleMuteClick}
+              className="absolute top-2 left-2 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center hover:bg-black/70 transition-colors pointer-events-auto"
               aria-label={isMuted ? "Unmute" : "Mute"}
             >
               {isMuted ? (
-                <VolumeX className="w-3.5 h-3.5 text-white" />
+                <VolumeX className="w-4 h-4 text-white" />
               ) : (
-                <Volume2 className="w-3.5 h-3.5 text-white" />
+                <Volume2 className="w-4 h-4 text-white" />
               )}
             </button>
-            {/* Pause indicator */}
-            <div className="absolute top-2 right-2 z-20">
-              <div className="w-7 h-7 rounded-full bg-black/50 flex items-center justify-center">
-                <Pause className="w-3.5 h-3.5 text-white" />
-              </div>
+
+            {/* Pause indicator - top right */}
+            <div className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center pointer-events-none">
+              <Pause className="w-4 h-4 text-white" />
             </div>
-          </>
+          </div>
         )}
 
-        {/* Video count badge */}
+        {/* Layer 4: Video count badge (static) */}
         {!isPlaying && mc.videos.length > 1 && (
-          <div className="absolute top-2 right-2 z-10">
+          <div className="absolute top-2 right-2 z-20 pointer-events-none">
             <span className="px-1.5 py-0.5 rounded bg-black/50 text-white text-[10px] font-medium">
               {mc.videos.length} vid
             </span>
           </div>
         )}
 
-        {/* Info overlay at bottom */}
+        {/* Layer 5: Info overlay at bottom */}
         {!isPlaying && (
-          <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent z-10">
+          <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent z-20 pointer-events-none">
             <p className="text-white font-semibold text-sm truncate">{mc.handle}</p>
             {mc.brands.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-1">
