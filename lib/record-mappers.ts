@@ -2,7 +2,7 @@
 // collapse multi-row creators down to one entry per KOL.
 
 import { unstable_cache } from "next/cache";
-import { str, num, arr, url, attachments, buildMediaUrl, fetchAllRecords, fetchRecordsByHandle, TABLES, type LarkRecord, type LarkAttachment } from "./lark-base";
+import { str, num, arr, url, attachments, buildMediaUrl, fetchAllRecords, TABLES, type LarkRecord, type LarkAttachment } from "./lark-base";
 import {
   normalizeCategories,
   CATEGORY_FIELD,
@@ -116,15 +116,11 @@ export const loadKOLCatalog = unstable_cache(
   { revalidate: 300, tags: ["kols"] }
 );
 
-/** Load a single KOL profile by handle.
- *  Fetches only the rows for that specific creator (~3–8 rows),
- *  maps them to Creators, and deduplicates. Much lighter than
- *  loading the full catalog for every profile page. */
-export async function loadKOLProfileByHandle(handle: string) {
-  const result = await fetchRecordsByHandle(TABLES.ALL_KOLS, handle);
-  if (!result.data.length) return null;
-  const { creators } = parseKOLRecords(result.data);
-  return creators[0] ?? null;
+/** Load a single KOL profile by record_id.
+ *  Uses the cached catalog lookup — ~1ms after the first catalog load. */
+export async function loadKOLProfile(kolId: string) {
+  const { byId } = await loadKOLCatalog();
+  return byId[kolId] ?? null;
 }
 
 /* ── Live MC Record Parsing ─────────────────────────────────────────── */

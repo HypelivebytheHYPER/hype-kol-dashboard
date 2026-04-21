@@ -70,7 +70,7 @@ export function KOLFeedCard({ kol }: KOLFeedCardProps) {
   return (
     <div className="group relative flex flex-col rounded-xl overflow-hidden border border-border/20 bg-card hover:border-border/50 hover:-translate-y-0.5 transition-all duration-300 ease-out">
       <Link
-        href={kolProfilePath(kol.handle)}
+        href={kolProfilePath(kol.id)}
         className="relative block overflow-hidden aspect-[4/5] sm:aspect-[4/5] bg-muted"
       >
         {kol.image ? (
@@ -271,7 +271,7 @@ export function KOLFeedCard({ kol }: KOLFeedCardProps) {
         </div>
 
         <div className="flex gap-2 pt-1">
-          <Link href={kolProfilePath(kol.handle)} className="flex-1 min-w-0">
+          <Link href={kolProfilePath(kol.id)} className="flex-1 min-w-0">
             <Button
               variant="outline"
               size="sm"

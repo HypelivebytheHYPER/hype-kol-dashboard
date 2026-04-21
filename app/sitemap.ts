@@ -13,10 +13,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/live`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.7 },
   ];
 
-  // Dynamic KOL profile routes
+  // Dynamic KOL profile routes (by record_id)
   const { creators } = await loadKOLCatalog();
   const kolRoutes: MetadataRoute.Sitemap = creators.map((kol) => ({
-    url: `${base}/kols/${encodeURIComponent(kol.handle)}`,
+    url: `${base}/kols/${kol.id}`,
     lastModified: new Date(),
     changeFrequency: "weekly",
     priority: 0.8,

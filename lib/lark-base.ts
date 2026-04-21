@@ -131,23 +131,6 @@ export async function fetchRecords(
  *
  * Cost: N / 500 sequential HTTP round-trips. For 1,439 records = 3 requests.
  */
-/** Fetch rows matching a specific Handle (case-insensitive exact match).
- *  Used by profile pages to fetch only the ~3–8 rows for one creator
- *  instead of the full ~1,000-row catalog. */
-export async function fetchRecordsByHandle(
-  tableId: TableId,
-  handle: string
-): Promise<FetchResult> {
-  return fetchRecords(tableId, {
-    filter: {
-      conjunction: "and",
-      conditions: [
-        { fieldName: "Handle", operator: "is", value: [handle] },
-      ],
-    },
-  });
-}
-
 export async function fetchAllRecords(
   tableId: TableId,
   opts: Omit<FetchOptions, "pageSize" | "pageToken"> = {}

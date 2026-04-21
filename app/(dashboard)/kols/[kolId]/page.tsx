@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { notFound } from "next/navigation";
-import { loadKOLProfileByHandle } from "@/lib/record-mappers";
+import { loadKOLProfile } from "@/lib/record-mappers";
 
 // Dynamically load KOL profile (ships recharts) only on this route.
 // Keeps recharts out of the shared vendor chunk consumed by /kols and /live.
@@ -15,10 +15,10 @@ export const revalidate = 300;
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ handle: string }>;
+  params: Promise<{ kolId: string }>;
 }): Promise<Metadata> {
-  const { handle } = await params;
-  const kol = await loadKOLProfileByHandle(handle);
+  const { kolId } = await params;
+  const kol = await loadKOLProfile(kolId);
   if (!kol) return { title: "Not Found" };
 
   const title = `${kol.name} (@${kol.handle})`;
@@ -26,7 +26,7 @@ export async function generateMetadata({
     kol.bio?.en ||
     kol.bio?.th ||
     `${kol.name} is a ${kol.tier} ${kol.platform} creator with ${kol.followers.toLocaleString()} followers. View performance metrics, rate card, and contact details.`;
-  const url = `https://hype-kol-dashboard.vercel.app/kols/${encodeURIComponent(kol.handle)}`;
+  const url = `https://hype-kol-dashboard.vercel.app/kols/${kol.id}`;
 
   return {
     title,
@@ -51,10 +51,10 @@ export async function generateMetadata({
 export default async function KOLProfilePage({
   params,
 }: {
-  params: Promise<{ handle: string }>;
+  params: Promise<{ kolId: string }>;
 }) {
-  const { handle } = await params;
-  const kol = await loadKOLProfileByHandle(handle);
+  const { kolId } = await params;
+  const kol = await loadKOLProfile(kolId);
   if (!kol) notFound();
 
   return <KOLProfileClient kol={kol} />;

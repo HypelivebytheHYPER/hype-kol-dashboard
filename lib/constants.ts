@@ -37,6 +37,6 @@ export const ROUTES = {
   LIVE: "/live",
 } as const;
 
-export function kolProfilePath(handle: string): string {
-  return `${ROUTES.KOLS}/${encodeURIComponent(handle)}`;
+export function kolProfilePath(id: string): string {
+  return `${ROUTES.KOLS}/${id}`;
 }
