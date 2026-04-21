@@ -7,29 +7,38 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useI18n } from "@/lib/i18n-context";
+import { Button } from "@/components/ui/button";
+import { useI18n } from "@/contexts/i18n-context";
 import { localeLabels, localeFlags, type Locale } from "@/i18n/config";
+import { cn } from "@/lib/cn";
 
 export function LanguageSwitcher() {
-  const { locale, setLocale } = useI18n();
+  const { locale, setLocale, t } = useI18n();
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-        title="Switch language"
-      >
-        <Globe className="w-4 h-4" />
-        <span className="sr-only">Switch language</span>
-      </DropdownMenuTrigger>
+        render={
+          <Button
+            variant="outline"
+            size="icon-lg"
+            className="rounded-md hover:bg-accent hover:text-accent-foreground"
+            title={t("header.language")}
+          >
+            <Globe />
+            <span className="sr-only">{t("header.language")}</span>
+          </Button>
+        }
+      />
       <DropdownMenuContent align="end" className="min-w-[140px]">
         {(Object.keys(localeLabels) as Locale[]).map((loc) => (
           <DropdownMenuItem
             key={loc}
             onClick={() => setLocale(loc)}
-            className={`flex items-center gap-2 cursor-pointer ${
-              locale === loc ? "bg-accent" : ""
-            }`}
+            className={cn(
+              "gap-2 cursor-pointer",
+              locale === loc && "bg-accent"
+            )}
           >
             <span className="text-base">{localeFlags[loc]}</span>
             <span className="flex-1">{localeLabels[loc]}</span>

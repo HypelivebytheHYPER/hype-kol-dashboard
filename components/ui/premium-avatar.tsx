@@ -1,9 +1,7 @@
 "use client";
 
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
-import { getCreatorImageUrl } from "@/lib/utils";
-import { useMemo } from "react";
+import { cn } from "@/lib/cn";
 
 // Premium gradient combinations for different name initials
 // Each combination is carefully selected for aesthetic appeal and accessibility
@@ -49,7 +47,7 @@ function getInitials(name: string): string {
 }
 
 interface PremiumAvatarProps {
-  src?: string;
+  src?: string | undefined;
   name: string;
   className?: string;
   fallbackClassName?: string;
@@ -96,58 +94,5 @@ export function PremiumAvatar({
       </AvatarFallback>
     </Avatar>
   );
-}
-
-// Specialized variant for KOL avatars that uses getCreatorImageUrl
-interface KOLAvatarProps {
-  kol: {
-    id?: string;
-    name: string;
-    imageUrl?: string;
-    avatar?: string;
-    handle?: string;
-    platform?: string;
-    computedImageUrl?: string;
-  };
-  className?: string;
-  size?: "xs" | "sm" | "md" | "lg" | "xl";
-  ring?: boolean;
-  ringColor?: string;
-}
-
-export function KOLAvatar({ kol, className, size = "md", ring, ringColor }: KOLAvatarProps) {
-  // computedImageUrl from worker is /api/image/TOKEN — must be resolved via getCreatorImageUrl
-  const src = useMemo(
-    () =>
-      getCreatorImageUrl({
-        handle: kol.handle,
-        platform: kol.platform,
-      }),
-    [kol.handle, kol.platform]
-  );
-
-  return (
-    <PremiumAvatar
-      src={src}
-      name={kol.name}
-      className={className}
-      size={size}
-      ring={ring}
-      ringColor={ringColor}
-    />
-  );
-}
-
-// User avatar with different styling
-interface UserAvatarProps {
-  src?: string;
-  name: string;
-  email?: string;
-  className?: string;
-  size?: "xs" | "sm" | "md" | "lg" | "xl";
-}
-
-export function UserAvatar({ src, name, className, size = "md" }: UserAvatarProps) {
-  return <PremiumAvatar src={src} name={name} className={className} size={size} ring={false} />;
 }
 

@@ -1,6 +1,18 @@
-// Types matching Lark Base table schemas — single source of truth
+// Types matching Lark Base table schemas — single source of truth.
+// Also hosts app-level shared types like ErrorProps (Next.js error boundary).
+
+// ============ App-level shared types ============
+
+export interface ErrorProps {
+  error: Error & { digest?: string };
+  reset: () => void;
+}
+
+// ============ Lark Base table schemas ============
 
 // ALL_KOLS (tbl5864QVOiEokTQ)
+// Note: Lark stores one row per fee package, so a single creator can span
+// multiple rows. `fees` aggregates the package range after dedupe().
 export interface Creator {
   id: string;
   kolId: string;
@@ -31,8 +43,10 @@ export interface Creator {
   scope: string;
   sourceUrl: string;
   channel: string;
+  fees: { min: number; max: number; count: number } | null;
   accountType?: string;
-  parentKOL?: string | null;
+  /** Profile image URL — populated from image attachments when available */
+  image?: string;
 }
 
 // LIVE_MC_LIST (tblozhTWBHelXqRR)
@@ -41,30 +55,6 @@ export interface LiveMC {
   handle: string;
   brands: string[];
   categories: string[];
-  videos: { token: string; name: string; size: number }[];
-}
-
-// KOL_Tech (tbl8rJWSTEemTeJh)
-export interface TechKOL {
-  id: string;
-  name: string;
-  handle: string;
-  followers: number;
-  specialization: string[];
-  categories: string[];
-  products: string[];
-  location: string[];
-  liveGmv: number;
-  videoGmv: number;
-  views: number;
-  liveNum: number;
-  videoNum: number;
-  urls: { tiktok: string; instagram: string; facebook: string; youtube: string; x: string };
-  contact: { email: string; phone: string };
-  bio: string;
-  profileImage: string;
-  collaborationStage: string;
-  mcnAgency: string;
-  detailedInfo: string;
-  sourceUrl: string;
+  contentCategories: string[];
+  videos: { token: string; name: string }[];
 }

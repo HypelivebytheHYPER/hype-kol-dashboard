@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-import { ThemeProvider } from "@/components/theme-provider";
-import { I18nProvider } from "@/lib/i18n-context";
-import { QueryProvider } from "@/components/query-provider";
-import { cn } from "@/lib/utils";
+import { ThemeProvider } from "@/contexts/theme-provider";
+import { I18nProvider } from "@/contexts/i18n-context";
+import { BRAND } from "@/lib/brand";
+import { SERVICES } from "@/lib/external-services";
 import { Toaster } from "sonner";
-import enMessages from "@/locales/en.json";
 
 const geist = Geist({
   subsets: ["latin"],
@@ -15,34 +14,32 @@ const geist = Geist({
   display: "swap",
 });
 
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "HypeCreators Dashboard",
+  title: `${BRAND.name} Dashboard`,
   description: "Discover and manage creators, live sellers, and tech talent",
-  other: {
-    "http-equiv": "x-dns-prefetch-control",
-    content: "on",
-  },
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={cn("font-sans", geist.variable)} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${geist.variable} ${geistMono.variable} font-sans`}
+      suppressHydrationWarning
+    >
       <head>
-        <link rel="preconnect" href="https://unavatar.io" />
-        <link rel="dns-prefetch" href="https://unavatar.io" />
-        <link rel="preconnect" href="https://lark-http-hype.hypelive.workers.dev" />
+        <link rel="preconnect" href={SERVICES.larkWorker} />
       </head>
-      <body className={`${geist.variable} font-sans antialiased`}>
+      <body>
         <ThemeProvider>
-          <I18nProvider initialMessages={enMessages}>
-            <QueryProvider>
-              {children}
-              <Toaster position="bottom-right" richColors />
-            </QueryProvider>
+          <I18nProvider>
+            {children}
+            <Toaster position="bottom-right" richColors />
           </I18nProvider>
         </ThemeProvider>
       </body>

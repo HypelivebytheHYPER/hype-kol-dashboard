@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+
 import {
   Search,
   SlidersHorizontal,
@@ -17,7 +17,9 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { KOLFeedCard } from "@/components/kol/kol-feed-card";
 import { Pagination } from "@/components/ui/pagination";
-import { formatNumber, formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatNumber } from "@/lib/format";
+import { ITEMS_PER_PAGE } from "@/lib/constants";
+import { TIER_ORDER } from "@/lib/tier";
 import type { Creator } from "@/lib/types/catalog";
 import {
   parseSmartSearch,
@@ -26,15 +28,11 @@ import {
   getRecentSearches,
   addRecentSearch,
 } from "@/lib/smart-search";
-// No client-side pre-computation needed
-
-const ITEMS_PER_PAGE = 6;
 
 type SortKey = "followers" | "gmv" | "engagement" | "revenue" | "views" | "quality";
 type TypeTab = "all" | "Live Creator" | "Live Seller" | "Creator";
 
-const TIERS = ["Mega KOL", "Macro KOL", "Micro KOL", "Nano KOL"];
-const PLATFORMS = ["TikTok", "Instagram", "YouTube", "Facebook"];
+
 
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: "revenue", label: "Revenue" },
@@ -50,13 +48,13 @@ function getSortValue(kol: Creator, key: SortKey): number {
     case "followers":
       return kol.followers;
     case "gmv":
-      return kol.avgGMV || kol.avgLiveGMV || 0;
+      return kol.avgGMV || kol.avgLiveGMV;
     case "engagement":
       return kol.engagementRate;
     case "revenue":
-      return kol.stats?.revenue || 0;
+      return kol.stats.revenue;
     case "views":
-      return kol.stats?.views || 0;
+      return kol.stats.views;
     case "quality":
       return kol.qualityScore;
   }
@@ -86,6 +84,19 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
     return initialKOLs.filter((k) => k.kolType === typeTab);
   }, [initialKOLs, typeTab]);
 
+  // Derive filter option lists from the loaded data so the UI automatically
+  // tracks the real Lark option sets (including future additions).
+  const tiers = useMemo(() => {
+    const present = new Set(initialKOLs.map((k) => k.tier).filter(Boolean));
+    return TIER_ORDER.filter((t) => present.has(t));
+  }, [initialKOLs]);
+
+  const platforms = useMemo(
+    () =>
+      [...new Set(initialKOLs.map((k) => k.platform).filter(Boolean))].sort(),
+    [initialKOLs]
+  );
+
   // Parse smart search filters
   const smartFilters = useMemo(() => parseSmartSearch(searchQuery), [searchQuery]);
 
@@ -97,17 +108,17 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
       result = applySmartFilters(result, smartFilters);
     }
 
-    // Apply UI filter toggles (if different from smart search)
-    if (selectedTiers.length > 0 && !smartFilters.tier) {
+    // UI filter toggles
+    if (selectedTiers.length > 0) {
       result = result.filter((k) => selectedTiers.includes(k.tier));
     }
-    if (selectedPlatforms.length > 0 && !smartFilters.platform) {
+    if (selectedPlatforms.length > 0) {
       result = result.filter((k) =>
         selectedPlatforms.some((p) => k.platform?.toLowerCase().includes(p.toLowerCase()))
       );
     }
     return result;
-  }, [allKOLs, smartFilters, selectedTiers, selectedPlatforms]);
+  }, [allKOLs, smartFilters, selectedTiers, selectedPlatforms, searchQuery]);
 
   const sorted = useMemo(() => {
     return [...filtered].sort((a, b) => {
@@ -130,7 +141,7 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
   }, [filtered]);
 
   const toggleFilter = useCallback(
-    (_list: string[], setter: React.Dispatch<React.SetStateAction<string[]>>, value: string) => {
+    (setter: React.Dispatch<React.SetStateAction<string[]>>, value: string) => {
       setter((prev) => (prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]));
       setCurrentPage(1);
     },
@@ -146,10 +157,6 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
   };
 
   // Load recent searches on mount
-  useEffect(() => {
-    setRecentSearches(getRecentSearches());
-  }, []);
-
   // Update suggestions as user types
   useEffect(() => {
     if (searchQuery.trim().length >= 2) {
@@ -191,12 +198,11 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
             Discover, filter and shortlist creators
           </p>
         </div>
-        <div className="flex items-baseline gap-4 sm:text-right">
-          <Stat
-            label="Database"
-            value={formatNumber(total)}
-          />
+        <div className="flex items-baseline gap-5 sm:text-right">
+          <Stat label="Database" value={formatNumber(total)} />
+          <div className="w-px h-8 bg-border/30 hidden sm:block" />
           <Stat label="Reach" value={formatNumber(stats.totalFollowers)} />
+          <div className="w-px h-8 bg-border/30 hidden sm:block" />
           <Stat label="Revenue" value={formatCurrency(stats.totalRevenue)} />
         </div>
       </div>
@@ -212,7 +218,7 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
               setCurrentPage(1);
             }}
           >
-            <TabsList className="h-9">
+            <TabsList className="h-9 bg-muted/30 border border-border/20">
               <TabsTrigger value="all" className="text-xs px-3">
                 All
               </TabsTrigger>
@@ -231,7 +237,6 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
           <div className="flex-1 relative min-w-0" ref={suggestionsRef}>
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Try: beauty micro bangkok or >100k followers or live creator..."
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
@@ -243,12 +248,12 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
               onFocus={() => {
                 if (suggestions.length > 0 || recentSearches.length > 0) setShowSuggestions(true);
               }}
-              className="pl-9 h-10 rounded-xl"
+              className="pl-9 h-10 rounded-xl bg-muted/20 border-border/20 hover:border-border/40 focus:border-border/60 transition-colors"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -256,18 +261,18 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
 
             {/* Autocomplete suggestions */}
             {showSuggestions && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-card border rounded-xl shadow-lg z-50 py-2">
+              <div className="absolute top-full left-0 right-0 mt-1 bg-card/95 backdrop-blur-xl border border-border/20 rounded-xl shadow-2xl z-50 py-2">
                 {/* Recent searches */}
                 {!searchQuery && recentSearches.length > 0 && (
                   <div className="px-3 py-2">
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2 font-medium">
                       Recent Searches
                     </p>
                     {recentSearches.map((search, i) => (
                       <button
                         key={i}
                         onClick={() => handleSearchSubmit(search)}
-                        className="w-full text-left px-2 py-1.5 text-sm hover:bg-muted rounded-md flex items-center gap-2"
+                        className="w-full text-left px-2 py-1.5 text-sm hover:bg-muted/40 rounded-md flex items-center gap-2 transition-colors"
                       >
                         <Clock className="w-3.5 h-3.5 text-muted-foreground" />
                         {search}
@@ -279,14 +284,14 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
                 {/* Smart suggestions */}
                 {searchQuery && suggestions.length > 0 && (
                   <div className="px-3 py-2">
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2 font-medium">
                       Suggestions
                     </p>
                     {suggestions.map((suggestion, i) => (
                       <button
                         key={i}
                         onClick={() => handleSearchSubmit(suggestion)}
-                        className="w-full text-left px-2 py-1.5 text-sm hover:bg-muted rounded-md flex items-center gap-2"
+                        className="w-full text-left px-2 py-1.5 text-sm hover:bg-muted/40 rounded-md flex items-center gap-2 transition-colors"
                       >
                         <Search className="w-3.5 h-3.5 text-muted-foreground" />
                         {suggestion}
@@ -295,15 +300,15 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
                   </div>
                 )}
 
-                {/* Smart search tips */}
+                {/* Smart search tips — keep examples aligned with parseSmartSearch */}
                 {searchQuery && suggestions.length === 0 && (
                   <div className="px-3 py-2 text-muted-foreground">
-                    <p className="text-[10px] uppercase tracking-wider mb-2">Smart Search Tips</p>
+                    <p className="text-[10px] uppercase tracking-wider mb-2 font-medium">Smart Search Tips</p>
                     <div className="text-xs space-y-1">
-                      <p>• &quot;beauty micro bangkok&quot; - category + tier + location</p>
-                      <p>• &quot;&gt;100k followers&quot; - follower threshold</p>
-                      <p>• &quot;live creator&quot; - content type</p>
-                      <p>• &quot;tiktok nano&quot; - platform + tier</p>
+                      <p>• &quot;beauty bangkok&quot; — category + location</p>
+                      <p>• &quot;&gt;100k followers&quot; — follower threshold</p>
+                      <p>• &quot;&gt;3% engagement&quot; — engagement threshold</p>
+                      <p>• &quot;has line&quot; — require contact on file</p>
                     </div>
                   </div>
                 )}
@@ -329,41 +334,41 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
 
         {/* Filters panel */}
         {showFilters && (
-          <div className="rounded-xl border border-dashed border-border p-3 sm:p-4 bg-muted/30 space-y-4">
+          <div className="rounded-xl border border-dashed border-border/30 p-3 sm:p-4 bg-muted/20 space-y-4 animate-fade-in">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               <FilterGroup
                 label="Tier"
-                items={TIERS}
+                items={tiers}
                 selected={selectedTiers}
-                onToggle={(v) => toggleFilter(selectedTiers, setSelectedTiers, v)}
+                onToggle={(v) => toggleFilter(setSelectedTiers, v)}
                 displayFn={(v) => v.replace(" KOL", "")}
               />
               <FilterGroup
                 label="Platform"
-                items={PLATFORMS}
+                items={platforms}
                 selected={selectedPlatforms}
-                onToggle={(v) => toggleFilter(selectedPlatforms, setSelectedPlatforms, v)}
+                onToggle={(v) => toggleFilter(setSelectedPlatforms, v)}
               />
             </div>
             {activeFilterCount > 0 && (
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-3 border-t border-border/40 gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-3 border-t border-border/20 gap-3">
                 <div className="flex flex-wrap gap-1.5">
                   {[...selectedTiers, ...selectedPlatforms].map((v) => (
-                    <Badge key={v} variant="secondary" className="gap-1 text-xs rounded-full">
+                    <Badge key={v} variant="secondary" className="gap-1 text-xs rounded-full border-border/20">
                       {v}
                       <button
                         onClick={() => {
                           setSelectedTiers((p) => p.filter((x) => x !== v));
                           setSelectedPlatforms((p) => p.filter((x) => x !== v));
                         }}
-                        className="hover:text-destructive"
+                        className="hover:text-destructive transition-colors"
                       >
                         <X className="w-3 h-3" />
                       </button>
                     </Badge>
                   ))}
                 </div>
-                <Button variant="ghost" size="sm" onClick={clearAllFilters} className="text-xs">
+                <Button variant="link" size="sm" onClick={clearAllFilters} className="text-xs">
                   Clear all
                 </Button>
               </div>
@@ -374,7 +379,7 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
         {/* Row 2: Count + Sort */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <p className="text-sm text-muted-foreground">
-            <span className="font-mono font-bold text-foreground">{filtered.length}</span>{" "}
+            <span className="font-mono font-bold text-foreground tabular-nums">{filtered.length}</span>{" "}
             results
           </p>
           <div className="flex items-center gap-1 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
@@ -389,16 +394,16 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
                     setSortDesc(true);
                   }
                 }}
-                className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
                   sortBy === opt.key
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
                 }`}
               >
                 {opt.label}
                 {sortBy === opt.key && (
                   <ChevronDown
-                    className={`w-3 h-3 ml-0.5 inline transition-transform ${!sortDesc ? "rotate-180" : ""}`}
+                    className={`w-3 h-3 ml-0.5 inline transition-transform duration-200 ${!sortDesc ? "rotate-180" : ""}`}
                   />
                 )}
               </button>
@@ -408,25 +413,16 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
       </div>
 
       {/* === CARD GRID === */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentPage}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.2 }}
-          className="flex md:grid overflow-x-auto md:overflow-visible snap-x md:snap-none scroll-smooth scrollbar-hide gap-4 md:gap-5 md:grid-cols-2 xl:grid-cols-3 -mx-4 px-4 md:mx-0 md:px-0 pb-2 md:pb-0"
-        >
-          {paginated.map((kol, index) => (
-            <div
-              key={kol.id}
-              className="flex-shrink-0 snap-start w-[78vw] sm:w-[46vw] md:w-full"
-            >
-              <KOLFeedCard kol={kol} index={index} priority={index === 0} />
-            </div>
-          ))}
-        </motion.div>
-      </AnimatePresence>
+      <div className="flex md:grid overflow-x-auto md:overflow-visible snap-x md:snap-none scroll-smooth scrollbar-hide gap-4 md:gap-5 md:grid-cols-2 xl:grid-cols-3 -mx-4 px-4 md:mx-0 md:px-0 pb-2 md:pb-0">
+        {paginated.map((kol) => (
+          <div
+            key={kol.id}
+            className="flex-shrink-0 snap-start w-[78vw] sm:w-[46vw] md:w-full"
+          >
+            <KOLFeedCard kol={kol} />
+          </div>
+        ))}
+      </div>
       {/* Mobile swipe hint */}
       <p className="flex md:hidden items-center justify-center gap-1.5 text-xs text-muted-foreground/60 -mt-1">
         <span>&larr;</span> swipe to browse <span>&rarr;</span>
@@ -441,14 +437,14 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
       />
 
       {sorted.length === 0 && (
-        <div className="text-center py-20">
+        <div className="text-center py-20 animate-fade-in">
           <div className="text-4xl mb-3 opacity-30">
             <Users className="w-12 h-12 mx-auto" />
           </div>
           <p className="text-lg font-medium text-muted-foreground">
             No creators match your filters
           </p>
-          <Button variant="ghost" onClick={clearAllFilters} className="mt-3">
+          <Button variant="link" onClick={clearAllFilters} className="mt-3">
             Clear all filters
           </Button>
         </div>
@@ -459,13 +455,12 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
 
 /* === Sub-components === */
 
-function Stat({ label, value, suffix }: { label: string; value: string; suffix?: string }) {
+function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
-      <p className="text-xs uppercase tracking-wider text-muted-foreground truncate">{label}</p>
-      <p className="text-base sm:text-lg font-mono font-bold leading-tight truncate">
+      <p className="text-[10px] uppercase tracking-wider text-muted-foreground truncate font-medium">{label}</p>
+      <p className="text-base sm:text-lg font-mono font-bold leading-tight truncate tabular-nums tracking-tight text-foreground">
         {value}
-        {suffix && <span className="text-muted-foreground text-sm">{suffix}</span>}
       </p>
     </div>
   );
@@ -494,10 +489,10 @@ function FilterGroup({
           <button
             key={item}
             onClick={() => onToggle(item)}
-            className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors border ${
+            className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-200 border ${
               selected.includes(item)
-                ? "bg-primary text-primary-foreground border-primary"
-                : "bg-transparent text-muted-foreground border-border hover:border-foreground/30 hover:text-foreground"
+                ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                : "bg-transparent text-muted-foreground border-border/30 hover:border-border/60 hover:text-foreground"
             }`}
           >
             {displayFn ? displayFn(item) : item}

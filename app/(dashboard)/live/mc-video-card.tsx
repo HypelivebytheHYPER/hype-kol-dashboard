@@ -1,74 +1,75 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Play, Pause, Volume2, VolumeX } from "lucide-react";
-import { VideoPlayer, usePreloadVideo } from "./video-player";
+import { useState, useEffect, useRef } from "react";
+import { Play, Pause, Volume2, VolumeX, Loader2 } from "lucide-react";
+import { CONTENT_CATEGORIES } from "@/lib/taxonomy";
 import type { LiveMC } from "@/lib/types/catalog";
 
 interface MCVideoCardProps {
   mc: LiveMC;
   videoUrl: string | null;
-  nextVideoUrl?: string | null;
   isPlaying: boolean;
   onPlay: () => void;
 }
 
-function generatePlaceholder(handle: string): string {
-  const colors = [
-    "from-pink-500 to-rose-500",
-    "from-purple-500 to-indigo-500", 
-    "from-blue-500 to-cyan-500",
-    "from-green-500 to-emerald-500",
-    "from-orange-500 to-amber-500",
-    "from-red-500 to-orange-500",
-  ];
-  return colors[handle.charCodeAt(0) % colors.length];
-}
-
-export function MCVideoCard({ 
-  mc, 
-  videoUrl, 
-  nextVideoUrl, 
-  isPlaying, 
-  onPlay 
-}: MCVideoCardProps) {
-  const [muted, setMuted] = useState(true); // Start muted for autoplay
-  const [mounted, setMounted] = useState(false);
+export function MCVideoCard({ mc, videoUrl, isPlaying, onPlay }: MCVideoCardProps) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [muted, setMuted] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = muted;
+  }, [muted]);
 
-  // Reset mute when video stops
   useEffect(() => {
-    if (!isPlaying) {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (isPlaying) {
+      setLoading(video.readyState < 3);
+      video.play().catch(() => {
+        video.muted = true;
+        setMuted(true);
+        video.play().catch(() => {});
+      });
+    } else {
+      video.pause();
+      video.currentTime = 0;
       setMuted(true);
     }
   }, [isPlaying]);
 
-  usePreloadVideo(isPlaying && nextVideoUrl ? nextVideoUrl : null);
-
-  const gradient = generatePlaceholder(mc.handle);
-  const initials = mc.handle.slice(0, 2).toUpperCase();
-  const showVideo = mounted && isPlaying && videoUrl;
-
   return (
     <div className="relative rounded-xl overflow-hidden bg-zinc-900">
       <div className="relative aspect-[9/16]">
-        {/* Video or Placeholder */}
-        {showVideo ? (
-          <VideoPlayer src={videoUrl} isPlaying={isPlaying} muted={muted} />
+        {videoUrl ? (
+          <video
+            ref={videoRef}
+            src={`${videoUrl}#t=0.1`}
+            preload="metadata"
+            playsInline
+            loop
+            muted
+            onLoadedData={() => setLoading(false)}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
         ) : (
-          <div className={`absolute inset-0 bg-gradient-to-b ${gradient} flex items-center justify-center`}>
-            <span className="text-white text-2xl font-bold">{initials}</span>
+          <div className="absolute inset-0 bg-zinc-800" />
+        )}
+
+        {isPlaying && loading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/30 z-20">
+            <Loader2 className="w-8 h-8 text-white animate-spin" />
           </div>
         )}
 
-        {/* Play button - only when not playing */}
         {!isPlaying && (
-          <button 
+          <button
             onClick={onPlay}
             className="absolute inset-0 flex items-center justify-center z-20"
+            aria-label={`Play ${mc.handle}`}
           >
             <div className="w-12 h-12 rounded-full bg-black/50 flex items-center justify-center hover:scale-110 transition-transform">
               <Play className="w-5 h-5 text-white fill-white ml-0.5" />
@@ -76,26 +77,15 @@ export function MCVideoCard({
           </button>
         )}
 
-        {/* Controls container - only when playing */}
-        {isPlaying && mounted && (
+        {isPlaying && (
           <div className="absolute inset-0 z-20">
-            {/* Mute button - TOP LEFT */}
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setMuted(!muted);
-              }}
+              onClick={(e) => { e.stopPropagation(); setMuted((m) => !m); }}
               className="absolute top-3 left-3 w-12 h-12 rounded-full bg-black/70 flex items-center justify-center hover:bg-black/90 transition-colors"
               aria-label={muted ? "Unmute" : "Mute"}
             >
-              {muted ? (
-                <VolumeX className="w-6 h-6 text-white" />
-              ) : (
-                <Volume2 className="w-6 h-6 text-white" />
-              )}
+              {muted ? <VolumeX className="w-6 h-6 text-white" /> : <Volume2 className="w-6 h-6 text-white" />}
             </button>
-
-            {/* Pause indicator - TOP RIGHT */}
             <button
               onClick={onPlay}
               className="absolute top-3 right-3 w-12 h-12 rounded-full bg-black/70 flex items-center justify-center hover:bg-black/90 transition-colors"
@@ -103,27 +93,24 @@ export function MCVideoCard({
             >
               <Pause className="w-6 h-6 text-white" />
             </button>
-
-            {/* Invisible click area for pause (below buttons) */}
-            <button
-              onClick={onPlay}
-              className="absolute inset-0 -z-10"
-              aria-label="Pause"
-            />
+            <button onClick={onPlay} className="absolute inset-0 -z-10" aria-label="Pause" />
           </div>
         )}
 
-        {/* Video count */}
-        {!isPlaying && mc.videos.length > 1 && (
-          <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-black/50 text-white text-[10px] font-medium z-20">
-            {mc.videos.length} vid
-          </div>
-        )}
-
-        {/* Info */}
         {!isPlaying && (
           <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent z-20">
             <p className="text-white font-semibold text-sm truncate">{mc.handle}</p>
+            {mc.contentCategories.length > 0 && (
+              <div className="flex gap-1 mt-1">
+                {mc.contentCategories.map((catId) => {
+                  const cat = CONTENT_CATEGORIES.find((c) => c.id === catId);
+                  if (!cat) return null;
+                  return (
+                    <span key={catId} className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} title={cat.label} />
+                  );
+                })}
+              </div>
+            )}
             {mc.brands.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-1">
                 {mc.brands.slice(0, 3).map((b) => (

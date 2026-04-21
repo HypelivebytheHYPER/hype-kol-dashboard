@@ -3,11 +3,7 @@
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, RefreshCw } from "lucide-react";
-
-interface ErrorProps {
-  error: Error & { digest?: string };
-  reset: () => void;
-}
+import type { ErrorProps } from "@/lib/types/catalog";
 
 export default function GlobalError({ error, reset }: ErrorProps) {
   useEffect(() => {

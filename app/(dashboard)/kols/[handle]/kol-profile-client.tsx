@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { KOLAvatar } from "@/components/ui/premium-avatar";
+import { PremiumAvatar } from "@/components/ui/premium-avatar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   ChartContainer,
@@ -12,8 +12,6 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 import {
-  AreaChart,
-  Area,
   BarChart,
   Bar,
   RadarChart,
@@ -24,7 +22,9 @@ import {
   YAxis,
   CartesianGrid,
 } from "recharts";
-import { formatCurrency, formatNumber, getTierColor } from "@/lib/utils";
+import { formatCurrency, formatFeeRange, formatNumber, formatEngagement, numOrDash } from "@/lib/format";
+import { ROUTES, RADAR_CEILINGS, ENGAGEMENT_COUNT_THRESHOLD } from "@/lib/constants";
+import { getTierColor } from "@/lib/tier";
 import {
   ExternalLink,
   Mail,
@@ -43,10 +43,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import Link from "next/link";
 import type { Creator } from "@/lib/types/catalog";
 
-const areaConfig = {
-  value: { label: "Value", color: "var(--chart-1)" },
-} satisfies ChartConfig;
-
 const radarConfig = {
   score: { label: "Score", color: "var(--chart-1)" },
 } satisfies ChartConfig;
@@ -55,51 +51,32 @@ const barConfig = {
   value: { label: "Amount", color: "var(--chart-1)" },
 } satisfies ChartConfig;
 
-/** Normalise engagement: if raw value > 100 it's a count, not a % */
-function fmtEngagement(rate: number): string {
-  if (rate > 100) return formatNumber(rate);
-  return `${rate.toFixed(2)}%`;
-}
 
-/** Build a 6-point simulated trend from a single total — evenly distributed with slight curve */
-function buildTrend(total: number, points = 6) {
-  if (total <= 0) return [];
-  const base = total / points;
-  const weights = [0.55, 0.7, 0.8, 0.9, 1.05, 1.0];
-  return weights.map((w, i) => ({
-    month: `M${i + 1}`,
-    value: Math.round(base * w),
-  }));
-}
 
 interface KOLProfileClientProps {
   kol: Creator;
-  related: { parent: Creator | null; children: Creator[] };
 }
 
-export function KOLProfileClient({ kol, related }: KOLProfileClientProps) {
-  // Trend charts
-  const revenueTrend = buildTrend(kol.stats.revenue);
-  const viewsTrend = buildTrend(kol.stats.views);
-
+export function KOLProfileClient({ kol }: KOLProfileClientProps) {
   // Performance radar (normalised 0–100)
-  const maxFollowers = 5_000_000;
   const radarData = [
-    { axis: "Followers", value: Math.min(100, (kol.followers / maxFollowers) * 100) },
+    { axis: "Followers", value: Math.min(100, (kol.followers / RADAR_CEILINGS.followers) * 100) },
     {
       axis: "Engagement",
       value: Math.min(
         100,
-        kol.engagementRate > 100 ? Math.min(kol.engagementRate / 100, 100) : kol.engagementRate * 10
+        kol.engagementRate > ENGAGEMENT_COUNT_THRESHOLD
+          ? Math.min(kol.engagementRate / ENGAGEMENT_COUNT_THRESHOLD, 100)
+          : kol.engagementRate * 10
       ),
     },
-    { axis: "GMV", value: Math.min(100, ((kol.avgGMV || kol.avgLiveGMV) / 5_000_000) * 100) },
-    { axis: "Quality", value: (kol.qualityScore / 5) * 100 },
+    { axis: "GMV", value: Math.min(100, ((kol.avgGMV || kol.avgLiveGMV) / RADAR_CEILINGS.gmv) * 100) },
+    { axis: "Quality", value: (kol.qualityScore / RADAR_CEILINGS.quality) * 100 },
     {
       axis: "Content",
-      value: Math.min(100, ((kol.stats.liveNum + kol.stats.videoNum) / 50) * 100),
+      value: Math.min(100, ((kol.stats.liveNum + kol.stats.videoNum) / RADAR_CEILINGS.content) * 100),
     },
-    { axis: "Revenue", value: Math.min(100, (kol.stats.revenue / 30_000_000) * 100) },
+    { axis: "Revenue", value: Math.min(100, (kol.stats.revenue / RADAR_CEILINGS.revenue) * 100) },
   ];
 
   // GMV breakdown bar
@@ -110,14 +87,11 @@ export function KOLProfileClient({ kol, related }: KOLProfileClientProps) {
     { label: "Video GMV", value: kol.stats.videoGmv || 0 },
   ].filter((d) => d.value > 0);
 
-  const parentKol = related?.parent;
-  const childKols = related?.children || [];
-
   return (
     <div className="space-y-6 pb-8">
       {/* Back */}
       <Link
-        href="/kols"
+        href={ROUTES.KOLS}
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
@@ -133,8 +107,9 @@ export function KOLProfileClient({ kol, related }: KOLProfileClientProps) {
         <CardContent className="px-6 pb-6 -mt-12 relative">
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div className="flex items-end gap-4">
-              <KOLAvatar
-                kol={kol}
+              <PremiumAvatar
+                src={kol.image}
+                name={kol.name}
                 size="xl"
                 className="border-4 border-card shadow-xl w-24 h-24 text-2xl"
               />
@@ -221,9 +196,9 @@ export function KOLProfileClient({ kol, related }: KOLProfileClientProps) {
               <KpiTile
                 icon={<TrendingUp className="w-4 h-4" />}
                 label="Engagement"
-                value={fmtEngagement(kol.engagementRate)}
+                value={formatEngagement(kol.engagementRate)}
                 hint={
-                  kol.engagementRate > 100
+                  kol.engagementRate > ENGAGEMENT_COUNT_THRESHOLD
                     ? "Total engagement interactions (likes + comments + shares). Shown as count because the raw rate exceeds 100."
                     : "Engagement rate = total interactions / followers. Industry avg is 1-3% for large accounts."
                 }
@@ -231,13 +206,13 @@ export function KOLProfileClient({ kol, related }: KOLProfileClientProps) {
               <KpiTile
                 icon={<ShoppingBag className="w-4 h-4" />}
                 label="Avg GMV"
-                value={kol.avgGMV > 0 ? formatCurrency(kol.avgGMV) : "---"}
+                value={numOrDash(kol.avgGMV, formatCurrency)}
                 hint="Average Gross Merchandise Value generated per month across all content types."
               />
               <KpiTile
                 icon={<Star className="w-4 h-4" />}
                 label="Quality Score"
-                value={kol.qualityScore > 0 ? `${kol.qualityScore.toFixed(1)} / 5` : "---"}
+                value={kol.qualityScore > 0 ? `${kol.qualityScore.toFixed(1)} / 5` : "—"}
                 hint={`Composite score out of 5 based on engagement consistency, GMV performance, and content output. ${
                   kol.qualityScore >= 4
                     ? "Excellent -- top tier performer."
@@ -251,7 +226,7 @@ export function KOLProfileClient({ kol, related }: KOLProfileClientProps) {
               <KpiTile
                 icon={<Eye className="w-4 h-4" />}
                 label="Total Views"
-                value={kol.stats.views > 0 ? formatNumber(kol.stats.views) : "---"}
+                value={numOrDash(kol.stats.views)}
                 hint="Cumulative video/live views across all tracked content in the database."
               />
               <KpiTile
@@ -259,12 +234,27 @@ export function KOLProfileClient({ kol, related }: KOLProfileClientProps) {
                 label="Content Output"
                 value={
                   `${kol.stats.liveNum > 0 ? `${kol.stats.liveNum} Live` : ""}${kol.stats.liveNum > 0 && kol.stats.videoNum > 0 ? " \u00b7 " : ""}${kol.stats.videoNum > 0 ? `${kol.stats.videoNum} Videos` : ""}` ||
-                  "---"
+                  "—"
                 }
                 hint={`L = Live sessions recorded. V = Short/long-form videos posted.${kol.stats.liveNum > 0 ? ` ${kol.stats.liveNum} live streams` : ""}${kol.stats.videoNum > 0 ? ` \u00b7 ${kol.stats.videoNum} video posts` : ""} tracked in this period.`}
               />
             </div>
           </TooltipProvider>
+
+          {/* Rate-card band (Lark `Fee` field, aggregated across packages) */}
+          {kol.fees && (
+            <div className="mt-5 pt-4 border-t border-border flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+              <span className="text-xs uppercase tracking-wider text-muted-foreground">
+                Rate Card
+              </span>
+              <span className="font-mono font-bold text-chart-4 tabular-nums">
+                {formatFeeRange(kol.fees, " – ")}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {kol.fees.count} {kol.fees.count === 1 ? "package" : "packages"}
+              </span>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -277,112 +267,28 @@ export function KOLProfileClient({ kol, related }: KOLProfileClientProps) {
 
         {/* ── ANALYTICS ── */}
         <TabsContent value="analytics" className="mt-5 space-y-5">
-          {/* Row 1: Revenue trend + Views trend */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          {/* Row 1: Totals (Lark doesn't expose time-series — no trend charts) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-semibold">Revenue Distribution</CardTitle>
-                <p className="text-xs text-muted-foreground">Estimated period trend</p>
+                <CardTitle className="text-sm font-semibold">Total Revenue</CardTitle>
+                <p className="text-xs text-muted-foreground">Lifetime aggregate</p>
               </CardHeader>
-              <CardContent>
-                {revenueTrend.length > 0 ? (
-                  <ChartContainer config={areaConfig} className="h-44 w-full">
-                    <AreaChart data={revenueTrend}>
-                      <defs>
-                        <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="var(--chart-1)" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="var(--chart-1)" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis
-                        dataKey="month"
-                        fontSize={10}
-                        tick={{ fill: "hsl(var(--muted-foreground))" }}
-                      />
-                      <YAxis
-                        fontSize={10}
-                        tickFormatter={(v) => formatCurrency(v)}
-                        width={65}
-                        tick={{ fill: "hsl(var(--muted-foreground))" }}
-                      />
-                      <ChartTooltip
-                        content={
-                          <ChartTooltipContent formatter={(v) => formatCurrency(Number(v))} />
-                        }
-                      />
-                      <Area
-                        dataKey="value"
-                        stroke="var(--chart-1)"
-                        fill="url(#revGrad)"
-                        strokeWidth={2}
-                        dot={false}
-                      />
-                    </AreaChart>
-                  </ChartContainer>
-                ) : (
-                  <EmptyChart label="No revenue data" />
-                )}
-                <div className="flex justify-between text-xs mt-2 px-1">
-                  <span className="text-muted-foreground">Total Revenue</span>
-                  <span className="font-mono font-bold">
-                    {kol.stats.revenue > 0 ? formatCurrency(kol.stats.revenue) : "---"}
-                  </span>
-                </div>
+              <CardContent className="pt-2">
+                <p className="text-3xl font-mono font-bold">
+                  {numOrDash(kol.stats.revenue, formatCurrency)}
+                </p>
               </CardContent>
             </Card>
-
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-semibold">Views Trend</CardTitle>
-                <p className="text-xs text-muted-foreground">Estimated period trend</p>
+                <CardTitle className="text-sm font-semibold">Total Views</CardTitle>
+                <p className="text-xs text-muted-foreground">Lifetime aggregate</p>
               </CardHeader>
-              <CardContent>
-                {viewsTrend.length > 0 ? (
-                  <ChartContainer
-                    config={{ value: { label: "Views", color: "var(--chart-2)" } }}
-                    className="h-44 w-full"
-                  >
-                    <AreaChart data={viewsTrend}>
-                      <defs>
-                        <linearGradient id="viewGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="var(--chart-2)" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="var(--chart-2)" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis
-                        dataKey="month"
-                        fontSize={10}
-                        tick={{ fill: "hsl(var(--muted-foreground))" }}
-                      />
-                      <YAxis
-                        fontSize={10}
-                        tickFormatter={(v) => formatNumber(v)}
-                        width={55}
-                        tick={{ fill: "hsl(var(--muted-foreground))" }}
-                      />
-                      <ChartTooltip
-                        content={<ChartTooltipContent formatter={(v) => formatNumber(Number(v))} />}
-                      />
-                      <Area
-                        dataKey="value"
-                        stroke="var(--chart-2)"
-                        fill="url(#viewGrad)"
-                        strokeWidth={2}
-                        dot={false}
-                      />
-                    </AreaChart>
-                  </ChartContainer>
-                ) : (
-                  <EmptyChart label="No views data" />
-                )}
-                <div className="flex justify-between text-xs mt-2 px-1">
-                  <span className="text-muted-foreground">Total Views</span>
-                  <span className="font-mono font-bold">
-                    {kol.stats.views > 0 ? formatNumber(kol.stats.views) : "---"}
-                  </span>
-                </div>
+              <CardContent className="pt-2">
+                <p className="text-3xl font-mono font-bold">
+                  {numOrDash(kol.stats.views)}
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -400,20 +306,20 @@ export function KOLProfileClient({ kol, related }: KOLProfileClientProps) {
                       <CartesianGrid
                         horizontal={false}
                         strokeDasharray="3 3"
-                        stroke="hsl(var(--border))"
+                        stroke="var(--border)"
                       />
                       <XAxis
                         type="number"
                         fontSize={10}
                         tickFormatter={(v) => formatCurrency(v)}
-                        tick={{ fill: "hsl(var(--muted-foreground))" }}
+                        tick={{ fill: "var(--muted-foreground)" }}
                       />
                       <YAxis
                         type="category"
                         dataKey="label"
                         width={80}
                         fontSize={11}
-                        tick={{ fill: "hsl(var(--muted-foreground))" }}
+                        tick={{ fill: "var(--muted-foreground)" }}
                       />
                       <ChartTooltip
                         content={
@@ -442,10 +348,10 @@ export function KOLProfileClient({ kol, related }: KOLProfileClientProps) {
               <CardContent>
                 <ChartContainer config={radarConfig} className="h-44 sm:h-56 w-full">
                   <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="65%">
-                    <PolarGrid stroke="hsl(var(--border))" />
+                    <PolarGrid stroke="var(--border)" />
                     <PolarAngleAxis
                       dataKey="axis"
-                      tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                      tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
                     />
                     <Radar
                       dataKey="value"
@@ -470,35 +376,35 @@ export function KOLProfileClient({ kol, related }: KOLProfileClientProps) {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <StatTile
                   label="Total Revenue"
-                  value={kol.stats.revenue > 0 ? formatCurrency(kol.stats.revenue) : "---"}
+                  value={numOrDash(kol.stats.revenue, formatCurrency)}
                 />
                 <StatTile
                   label="Live GMV"
-                  value={kol.stats.liveGmv > 0 ? formatCurrency(kol.stats.liveGmv) : "---"}
+                  value={numOrDash(kol.stats.liveGmv, formatCurrency)}
                 />
                 <StatTile
                   label="Video GMV"
-                  value={kol.stats.videoGmv > 0 ? formatCurrency(kol.stats.videoGmv) : "---"}
+                  value={numOrDash(kol.stats.videoGmv, formatCurrency)}
                 />
                 <StatTile
                   label="Avg Monthly GMV"
-                  value={kol.avgGMV > 0 ? formatCurrency(kol.avgGMV) : "---"}
+                  value={numOrDash(kol.avgGMV, formatCurrency)}
                 />
                 <StatTile
                   label="Total Views"
-                  value={kol.stats.views > 0 ? formatNumber(kol.stats.views) : "---"}
+                  value={numOrDash(kol.stats.views)}
                 />
                 <StatTile
                   label="Products Promoted"
-                  value={kol.stats.productCount > 0 ? String(kol.stats.productCount) : "---"}
+                  value={numOrDash(kol.stats.productCount, String)}
                 />
                 <StatTile
                   label="Live Sessions"
-                  value={kol.stats.liveNum > 0 ? String(kol.stats.liveNum) : "---"}
+                  value={numOrDash(kol.stats.liveNum, String)}
                 />
                 <StatTile
                   label="Videos"
-                  value={kol.stats.videoNum > 0 ? String(kol.stats.videoNum) : "---"}
+                  value={numOrDash(kol.stats.videoNum, String)}
                 />
               </div>
               {kol.bio?.th && (
@@ -511,8 +417,6 @@ export function KOLProfileClient({ kol, related }: KOLProfileClientProps) {
             </CardContent>
           </Card>
 
-          {/* Linked Accounts */}
-          <LinkedAccountsSection parentKol={parentKol} childKols={childKols} />
         </TabsContent>
 
         {/* ── CONTACT ── */}
@@ -551,14 +455,7 @@ export function KOLProfileClient({ kol, related }: KOLProfileClientProps) {
                   isLink
                 />
               )}
-              {kol.sourceUrl && (
-                <ContactRow
-                  icon={<ExternalLink className="w-4 h-4" />}
-                  label="Source"
-                  value={kol.sourceUrl}
-                  isLink
-                />
-              )}
+
               {!kol.contact.lineId?.trim() &&
                 !kol.contact.phone?.trim() &&
                 !kol.contact.email?.trim() &&
@@ -659,75 +556,4 @@ function ContactRow({
   );
 }
 
-function LinkedAccountsSection({
-  parentKol,
-  childKols,
-}: {
-  parentKol: Creator | null;
-  childKols: Creator[];
-}) {
-  // Don't show section if no relationships
-  if (!parentKol && childKols.length === 0) return null;
-
-  return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold flex items-center gap-2">
-          <Users className="w-4 h-4" />
-          Linked Accounts
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          {/* Show parent if this is a child account */}
-          {parentKol && (
-            <div className="p-3 rounded-xl bg-muted/30">
-              <p className="text-xs text-muted-foreground mb-2">Parent Account</p>
-              <Link
-                href={`/kols/${parentKol.id}`}
-                className="flex items-center gap-3 hover:bg-muted/50 p-2 rounded-lg transition-colors"
-              >
-                <KOLAvatar kol={parentKol} size="md" />
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm truncate">{parentKol.name}</p>
-                  <p className="text-xs text-muted-foreground">@{parentKol.handle}</p>
-                </div>
-                <Badge variant="default" className="text-xs flex items-center gap-1">
-                  <Star className="w-3 h-3 fill-current" /> Main
-                </Badge>
-              </Link>
-            </div>
-          )}
-
-          {/* Show children if this is a main account */}
-          {childKols.length > 0 && (
-            <div className="p-3 rounded-xl bg-muted/30">
-              <p className="text-xs text-muted-foreground mb-2">
-                Secondary Accounts ({childKols.length})
-              </p>
-              <div className="space-y-2">
-                {childKols.map((child: Creator) => (
-                  <Link
-                    key={child.id}
-                    href={`/kols/${child.id}`}
-                    className="flex items-center gap-3 hover:bg-muted/50 p-2 rounded-lg transition-colors"
-                  >
-                    <KOLAvatar kol={child} size="md" />
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{child.name}</p>
-                      <p className="text-xs text-muted-foreground">@{child.handle}</p>
-                    </div>
-                    <Badge variant="secondary" className="text-xs">
-                      {child.accountType || "Linked"}
-                    </Badge>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
 

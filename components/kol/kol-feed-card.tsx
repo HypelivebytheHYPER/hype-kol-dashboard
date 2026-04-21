@@ -1,146 +1,125 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { MapPin, Eye, Video, BarChart3, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { formatNumber, formatCurrency, getTierColor } from "@/lib/utils";
-import { useI18n } from "@/lib/i18n-context";
+import { formatCurrency, formatFeeRange, formatNumber } from "@/lib/format";
+import { getTierColor } from "@/lib/tier";
+import { kolProfilePath } from "@/lib/constants";
+import { cn } from "@/lib/cn";
+import { useI18n } from "@/contexts/i18n-context";
 import { ScoreGauge } from "@/components/ui/score-gauge";
 import type { Creator } from "@/lib/types/catalog";
-import { getCreatorImageUrl } from "@/lib/utils";
 
-const TIER_BASE_RATE: Record<string, number> = {
-  "Nano KOL": 5000,
-  "Micro KOL": 25000,
-  "Mid-tier": 80000,
-  "Macro KOL": 250000,
-  "Mega KOL": 800000,
+const PLATFORM_GRADIENTS: Record<string, string> = {
+  tiktok: "from-zinc-800 to-zinc-600",
+  instagram: "from-purple-900 via-pink-800 to-orange-600",
+  youtube: "from-red-900 to-red-700",
+  facebook: "from-blue-900 to-blue-700",
 };
 
-function getPlatformGradient(p: string) {
-  const pl = p.toLowerCase();
-  if (pl.includes("tiktok")) return "from-zinc-900 to-zinc-700";
-  if (pl.includes("instagram")) return "from-purple-800 via-pink-700 to-orange-500";
-  if (pl.includes("youtube")) return "from-red-900 to-red-700";
-  if (pl.includes("facebook")) return "from-blue-900 to-blue-700";
-  return "from-slate-900 to-slate-700";
+function getPlatformGradient(platform: string) {
+  return PLATFORM_GRADIENTS[platform.toLowerCase()] ?? "from-slate-800 to-slate-600";
 }
+
+const TYPE_ICON_COLORS = {
+  live: "text-red-400",
+  video: "text-blue-400",
+  default: "text-violet-400",
+};
 
 interface KOLFeedCardProps {
   kol: Creator;
-  index?: number;
-  priority?: boolean;
 }
 
-export function KOLFeedCard({ kol, index = 0, priority = false }: KOLFeedCardProps) {
-  const [imgErr, setImgErr] = useState(false);
-  const [imgLoaded, setImgLoaded] = useState(false);
-  const { t, locale } = useI18n();
-  const imageUrl = getCreatorImageUrl({
-    handle: kol.handle,
-    platform: kol.platform,
-  });
-  const hasImage = !!imageUrl && !imgErr;
-  const rate = TIER_BASE_RATE[kol.tier] || 0;
+export function KOLFeedCard({ kol }: KOLFeedCardProps) {
+  const { t } = useI18n();
 
-  const typeIcon = kol.kolType?.toLowerCase().includes("live") ? (
-    <Video className="w-3 h-3 text-red-400" />
-  ) : kol.kolType?.toLowerCase().includes("video") ? (
-    <Video className="w-3 h-3 text-blue-400" />
-  ) : (
-    <BarChart3 className="w-3 h-3 text-violet-400" />
-  );
+  const typeKey = kol.kolType?.toLowerCase().includes("live")
+    ? "live"
+    : kol.kolType?.toLowerCase().includes("video")
+      ? "video"
+      : "default";
+
+  const typeIcon =
+    typeKey === "live" ? (
+      <Video className={cn("w-3 h-3", TYPE_ICON_COLORS.live)} />
+    ) : typeKey === "video" ? (
+      <Video className={cn("w-3 h-3", TYPE_ICON_COLORS.video)} />
+    ) : (
+      <BarChart3 className={cn("w-3 h-3", TYPE_ICON_COLORS.default)} />
+    );
 
   const primaryValue =
     kol.stats?.revenue > 0
       ? formatCurrency(kol.stats.revenue)
       : formatCurrency(kol.avgGMV || kol.avgLiveGMV);
-  const primaryLabel =
-    kol.stats?.revenue > 0 ? t("kol.metrics.revenue.label") : t("kol.metrics.gmv.label");
+
+  const isRevenue = kol.stats?.revenue > 0;
+  const primaryLabel = isRevenue
+    ? t("kol.metrics.revenue.label")
+    : t("kol.metrics.gmv.label");
+  const primaryTooltip = isRevenue
+    ? t("kol.metrics.revenue.tooltip")
+    : t("kol.metrics.gmv.tooltip");
+
   const viewsValue = kol.stats?.views > 0 ? formatNumber(kol.stats.views) : null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.2, delay: Math.min(index * 0.015, 0.08) }}
-      className="group relative flex flex-col rounded-2xl overflow-hidden border border-border/40 bg-card hover:border-border hover:shadow-xl transition-all duration-300"
-    >
-      {/* ══ IMAGE SECTION ══ */}
+    <div className="group relative flex flex-col rounded-xl overflow-hidden border border-border/20 bg-card hover:border-border/50 hover:-translate-y-0.5 transition-all duration-300 ease-out">
       <Link
-        href={`/kols/${kol.id}`}
+        href={kolProfilePath(kol.handle)}
         className="relative block overflow-hidden aspect-[4/5] sm:aspect-[4/5] bg-muted"
       >
-        {hasImage ? (
-          <>
-            {/* Skeleton placeholder - shown until image loads */}
-            {!imgLoaded && (
-              <div
-                className={`absolute inset-0 bg-gradient-to-br ${getPlatformGradient(kol.platform)} animate-pulse`}
-              >
-                <span className="absolute inset-0 flex items-center justify-center text-[48px] sm:text-[72px] font-black text-white/30 select-none">
-                  {kol.name?.[0]?.toUpperCase() ?? "?"}
-                </span>
-              </div>
-            )}
-            <div className="absolute inset-0 group-hover:scale-[1.02] transition-transform duration-500">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={imageUrl}
-                alt={kol.name}
-                width={400}
-                height={500}
-                loading={priority ? "eager" : "lazy"}
-                decoding={priority ? "sync" : "async"}
-                fetchPriority={priority ? "high" : "auto"}
-                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 300px"
-                className={`w-full h-full object-cover object-top transition-opacity duration-300 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
-                onError={() => setImgErr(true)}
-                onLoad={() => setImgLoaded(true)}
-              />
-            </div>
-          </>
+        {kol.image ? (
+          <img
+            src={kol.image}
+            alt={kol.name || kol.handle}
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+            loading="lazy"
+          />
         ) : (
           <div
-            className={`absolute inset-0 bg-gradient-to-br ${getPlatformGradient(kol.platform)}`}
+            className={cn(
+              "absolute inset-0 bg-gradient-to-br",
+              getPlatformGradient(kol.platform)
+            )}
           >
-            <span className="absolute inset-0 flex items-center justify-center text-[48px] sm:text-[72px] font-black text-white/30 select-none">
+            <span className="absolute inset-0 flex items-center justify-center text-5xl sm:text-7xl font-black text-white/20 select-none">
               {kol.name?.[0]?.toUpperCase() ?? "?"}
             </span>
           </div>
         )}
 
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/10 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
 
-        {/* Top badges */}
         <div className="absolute top-3 left-3 right-3 flex justify-between items-start z-10">
-          <span className="px-2.5 py-1 rounded-full bg-black/70 text-white/90 text-[10px] font-semibold tracking-wide">
+          <span className="px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md border border-white/10 text-white/90 text-[10px] font-semibold tracking-wide uppercase">
             {kol.platform}
           </span>
           <Badge
-            className={`${getTierColor(kol.tier)} text-white text-[10px] px-2 py-0.5 border-0 font-semibold`}
+            className={cn(
+              getTierColor(kol.tier),
+              "text-white text-[10px] px-2 py-0.5 border-0 font-semibold shadow-lg"
+            )}
           >
             {kol.tier}
           </Badge>
         </div>
 
-        {/* Name overlay */}
         <div className="absolute bottom-3 left-3 right-3 z-10">
-          <p className="text-white font-bold text-[15px] leading-tight truncate drop-shadow-lg">
+          <p className="text-white font-semibold text-[15px] leading-tight truncate drop-shadow-lg">
             {kol.name || kol.handle}
           </p>
-          <p className="text-white/60 text-[12px] leading-tight truncate">@{kol.handle}</p>
+          <p className="text-white/50 text-xs leading-tight truncate font-mono">
+            @{kol.handle}
+          </p>
         </div>
       </Link>
 
-      {/* ══ DETAILS SECTION ══ */}
       <div className="flex flex-col flex-1 justify-between px-3 py-3 gap-2.5">
-        {/* Type · Location · Rate */}
         <div className="flex items-center justify-between gap-2 min-h-[20px]">
           <div className="flex items-center gap-1.5 text-muted-foreground overflow-hidden">
             {typeIcon}
@@ -154,16 +133,15 @@ export function KOLFeedCard({ kol, index = 0, priority = false }: KOLFeedCardPro
               </span>
             )}
           </div>
-          {rate > 0 && (
-            <span className="text-[11px] font-mono font-bold text-emerald-500 shrink-0 tabular-nums">
-              ~{formatCurrency(rate)}
+          {kol.fees && (
+            <span className="text-[11px] font-mono font-bold text-chart-4 shrink-0 tabular-nums">
+              {formatFeeRange(kol.fees)}
             </span>
           )}
         </div>
 
-        {/* 3-col metrics - responsive text sizes */}
         <TooltipProvider>
-          <div className="grid grid-cols-3 divide-x divide-border/50 rounded-xl bg-muted/30 py-2.5 sm:py-3">
+          <div className="grid grid-cols-3 divide-x divide-border/20 rounded-xl bg-muted/20 border border-border/10 py-2.5 sm:py-3">
             <MetricCol
               label={t("kol.metrics.followers.label")}
               value={formatNumber(kol.followers)}
@@ -173,11 +151,7 @@ export function KOLFeedCard({ kol, index = 0, priority = false }: KOLFeedCardPro
               label={primaryLabel}
               value={primaryValue}
               highlight
-              tooltip={
-                primaryLabel === "Revenue"
-                  ? t("kol.metrics.revenue.tooltip")
-                  : t("kol.metrics.gmv.tooltip")
-              }
+              tooltip={primaryTooltip}
             />
             <MetricCol
               label={t("kol.metrics.engagement.label")}
@@ -195,15 +169,13 @@ export function KOLFeedCard({ kol, index = 0, priority = false }: KOLFeedCardPro
           </div>
         </TooltipProvider>
 
-        {/* Secondary metrics row - always 4 columns for alignment */}
         <div className="grid grid-cols-4 items-start gap-1">
-          {/* Views */}
           <div className="flex justify-center">
             {viewsValue ? (
               <Tooltip>
                 <TooltipTrigger>
                   <div className="flex flex-col items-center cursor-help min-w-[40px] sm:min-w-[50px] pt-1">
-                    <div className="h-[28px] sm:h-[32px] flex items-center justify-center">
+                    <div className="h-7 sm:h-8 flex items-center justify-center">
                       <span className="text-[11px] sm:text-[13px] font-mono font-bold tabular-nums leading-none truncate max-w-full px-1 text-foreground">
                         {viewsValue}
                       </span>
@@ -218,17 +190,16 @@ export function KOLFeedCard({ kol, index = 0, priority = false }: KOLFeedCardPro
                 </TooltipContent>
               </Tooltip>
             ) : (
-              <div className="h-[44px] sm:h-[52px] min-w-[40px] sm:min-w-[50px]" />
+              <div className="h-11 sm:h-[52px] min-w-[40px] sm:min-w-[50px]" />
             )}
           </div>
 
-          {/* Quality Score */}
           <div className="flex justify-center">
             {kol.qualityScore > 0 ? (
               <Tooltip>
                 <TooltipTrigger>
                   <div className="flex flex-col items-center cursor-help min-w-[40px] sm:min-w-[50px] pt-1">
-                    <div className="h-[28px] sm:h-[32px] flex items-center justify-center">
+                    <div className="h-7 sm:h-8 flex items-center justify-center">
                       <ScoreGauge score={kol.qualityScore} size={28} />
                     </div>
                     <span className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5">
@@ -250,25 +221,22 @@ export function KOLFeedCard({ kol, index = 0, priority = false }: KOLFeedCardPro
                 </TooltipContent>
               </Tooltip>
             ) : (
-              <div className="h-[44px] sm:h-[52px] min-w-[40px] sm:min-w-[50px]" />
+              <div className="h-11 sm:h-[52px] min-w-[40px] sm:min-w-[50px]" />
             )}
           </div>
 
-          {/* Content Count */}
           <div className="flex justify-center">
             {kol.stats?.liveNum > 0 || kol.stats?.videoNum > 0 ? (
               <Tooltip>
                 <TooltipTrigger>
                   <div className="flex flex-col items-center cursor-help min-w-[40px] sm:min-w-[50px] pt-1">
-                    <div className="h-[28px] sm:h-[32px] flex items-center justify-center">
+                    <div className="h-7 sm:h-8 flex items-center justify-center">
                       <span className="text-[11px] sm:text-[13px] font-mono font-bold tabular-nums leading-none text-foreground">
                         {kol.stats?.liveNum || 0}·{kol.stats?.videoNum || 0}
                       </span>
                     </div>
                     <span className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5">
-                      {locale === "th"
-                        ? `${t("kol.metrics.contentOutput.live")}·${t("kol.metrics.contentOutput.video")}`
-                        : "Content"}
+                      {`${t("kol.metrics.contentOutput.live")}·${t("kol.metrics.contentOutput.video")}`}
                     </span>
                   </div>
                 </TooltipTrigger>
@@ -280,36 +248,34 @@ export function KOLFeedCard({ kol, index = 0, priority = false }: KOLFeedCardPro
                 </TooltipContent>
               </Tooltip>
             ) : (
-              <div className="h-[44px] sm:h-[52px] min-w-[40px] sm:min-w-[50px]" />
+              <div className="h-11 sm:h-[52px] min-w-[40px] sm:min-w-[50px]" />
             )}
           </div>
 
-          {/* Category */}
           <div className="flex justify-center">
             {kol.categories?.[0] ? (
-              <div className="h-[44px] sm:h-[52px] min-w-[40px] sm:min-w-[50px] pt-1">
-                <div className="h-[28px] sm:h-[32px] flex items-center justify-center">
+              <div className="h-11 sm:h-[52px] min-w-[40px] sm:min-w-[50px] pt-1">
+                <div className="h-7 sm:h-8 flex items-center justify-center">
                   <Badge
                     variant="secondary"
-                    className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 rounded-full truncate font-normal max-w-[60px] sm:max-w-[80px]"
+                    className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 rounded-full truncate font-normal max-w-[60px] sm:max-w-[80px] border-border/20"
                   >
                     {kol.categories[0]}
                   </Badge>
                 </div>
               </div>
             ) : (
-              <div className="h-[44px] sm:h-[52px] min-w-[40px] sm:min-w-[50px]" />
+              <div className="h-11 sm:h-[52px] min-w-[40px] sm:min-w-[50px]" />
             )}
           </div>
         </div>
 
-        {/* Actions */}
         <div className="flex gap-2 pt-1">
-          <Link href={`/kols/${kol.id}`} className="flex-1 min-w-0">
+          <Link href={kolProfilePath(kol.handle)} className="flex-1 min-w-0">
             <Button
               variant="outline"
               size="sm"
-              className="w-full h-9 rounded-xl text-xs font-medium gap-1.5 hover:bg-muted"
+              className="w-full h-9 rounded-xl text-xs font-medium gap-1.5 hover:bg-muted/50 transition-all duration-200"
             >
               <Eye className="w-3.5 h-3.5 shrink-0" />
               <span className="truncate hidden xs:inline">{t("kol.actions.viewProfile")}</span>
@@ -318,11 +284,9 @@ export function KOLFeedCard({ kol, index = 0, priority = false }: KOLFeedCardPro
           </Link>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
-
-/* ── Sub-components ── */
 
 function MetricCol({
   label,
@@ -340,9 +304,10 @@ function MetricCol({
       <TooltipTrigger>
         <div className="text-center px-1 sm:px-2 min-w-0 cursor-help py-1">
           <p
-            className={`text-[11px] sm:text-[13px] font-mono font-bold leading-tight truncate tabular-nums ${
-              highlight ? "text-foreground" : "text-foreground opacity-80"
-            }`}
+            className={cn(
+              "text-[11px] sm:text-[13px] font-mono font-bold leading-tight truncate tabular-nums tracking-tight",
+              highlight ? "text-foreground" : "text-foreground/80"
+            )}
           >
             {value}
           </p>

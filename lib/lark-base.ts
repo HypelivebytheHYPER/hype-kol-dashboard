@@ -1,8 +1,10 @@
 // Lark Base data layer — generic fetcher for all tables
 // All queries use POST /records/search — single protocol
 
-export const LARK_API_URL = process.env.NEXT_PUBLIC_LARK_API_URL || "https://lark-http-hype.hypelive.workers.dev";
-const LARK_API_KEY = process.env.LARK_API_KEY;
+import { SERVICES } from "./external-services";
+
+const LARK_API_URL = SERVICES.larkWorker;
+const LARK_API_KEY = process.env["LARK_API_KEY"];
 const APP_TOKEN = "H2GQbZBFqaUW2usqPswlczYggWg";
 
 // ============ Lark Base Table Registry ============
@@ -10,17 +12,9 @@ const APP_TOKEN = "H2GQbZBFqaUW2usqPswlczYggWg";
 export const TABLES = {
   ALL_KOLS:    "tbl5864QVOiEokTQ",  // Main table — filter by KOLs Type or Inferred Categories
   LIVE_MC_LIST:"tblozhTWBHelXqRR",  // Live MC portfolio with video refs
-  KOL_TECH:    "tbl8rJWSTEemTeJh",  // Tech creators (different schema)
 } as const;
 
-// KOLs Type field values (Formula: based on LiveGmv + VideoGmv)
-export const KOL_TYPES = {
-  LIVE_CREATOR: "Live Creator",  // LiveGmv > 0 AND VideoGmv > 0
-  LIVE_SELLER: "Live Seller",    // LiveGmv > 0 only
-  CREATOR: "Creator",            // VideoGmv > 0 or default
-} as const;
-
-export type TableId = (typeof TABLES)[keyof typeof TABLES];
+type TableId = (typeof TABLES)[keyof typeof TABLES];
 
 // ============ Types ============
 
@@ -41,7 +35,7 @@ export interface LarkAttachment {
 interface SearchFilter {
   conjunction: "and" | "or";
   conditions: Array<{
-    field_name: string;
+    fieldName: string;
     operator: "is" | "isNot" | "contains" | "doesNotContain" | "isEmpty" | "isNotEmpty" | "isGreater" | "isLess";
     value: string[];
   }>;
@@ -52,31 +46,28 @@ interface FetchOptions {
   pageToken?: string;
   filter?: SearchFilter;
   fieldNames?: string[];
-  sort?: Array<{ field_name: string; desc?: boolean }>;
+  sort?: Array<{ fieldName: string; desc?: boolean }>;
   tags?: string[];
 }
 
 interface FetchResult {
   data: LarkRecord[];
   total: number;
-  has_more: boolean;
-  page_token?: string;
+  hasMore: boolean;
+  pageToken?: string;
 }
 
-// ============ Request Deduplication ============
-
-const inflight = new Map<string, Promise<unknown>>();
-
-function dedup<T>(key: string, fn: () => Promise<T>): Promise<T> {
-  if (inflight.has(key)) return inflight.get(key) as Promise<T>;
-  const p = fn().finally(() => inflight.delete(key));
-  inflight.set(key, p);
-  return p;
+// Lark API response shape (snake_case wire format).
+interface LarkSearchResponse {
+  data?: LarkRecord[];
+  total?: number;
+  has_more?: boolean;
+  page_token?: string;
 }
 
 // ============ Auth Headers ============
 
-export function authHeaders(): Record<string, string> {
+function authHeaders(): Record<string, string> {
   const h: Record<string, string> = {};
   if (LARK_API_KEY) h["Authorization"] = `Bearer ${LARK_API_KEY}`;
   return h;
@@ -89,35 +80,91 @@ export async function fetchRecords(
   opts: FetchOptions = {}
 ): Promise<FetchResult> {
   const { pageSize = 100, filter, fieldNames, sort, tags = [] } = opts;
-  const cacheKey = `lark:${tableId}:${JSON.stringify({ pageSize, filter, fieldNames, sort })}`;
 
-  return dedup(cacheKey, async () => {
-    // Always POST /records/search — single protocol for all queries
-    const res = await fetch(`${LARK_API_URL}/records/search`, {
-      method: "POST",
-      headers: { ...authHeaders(), "Content-Type": "application/json" },
-      body: JSON.stringify({
-        app_token: APP_TOKEN,
-        table_id: tableId,
-        page_size: pageSize,
-        ...(opts.pageToken && { page_token: opts.pageToken }),
-        ...(filter && { filter }),
-        ...(fieldNames && { field_names: fieldNames }),
-        ...(sort && { sort }),
-      }),
-      next: { tags: ["lark", ...tags] },
-    });
+  // Translate camelCase consumer API → snake_case Lark wire format at the boundary.
+  const wireFilter = filter && {
+    conjunction: filter.conjunction,
+    conditions: filter.conditions.map((c) => ({
+      field_name: c.fieldName,
+      operator: c.operator,
+      value: c.value,
+    })),
+  };
+  const wireSort = sort?.map((s) => ({ field_name: s.fieldName, desc: s.desc }));
 
-    if (!res.ok) return { data: [], total: 0, has_more: false };
-
-    const json = await res.json() as FetchResult;
-    return {
-      data: Array.isArray(json.data) ? json.data : [],
-      total: json.total ?? 0,
-      has_more: json.has_more ?? false,
-      page_token: json.page_token,
-    };
+  const res = await fetch(`${LARK_API_URL}/records/search`, {
+    method: "POST",
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify({
+      app_token: APP_TOKEN,
+      table_id: tableId,
+      page_size: pageSize,
+      ...(opts.pageToken && { page_token: opts.pageToken }),
+      ...(wireFilter && { filter: wireFilter }),
+      ...(fieldNames && { field_names: fieldNames }),
+      ...(wireSort && { sort: wireSort }),
+    }),
+    next: { tags: ["lark", ...tags] },
   });
+
+  if (!res.ok) return { data: [], total: 0, hasMore: false };
+
+  const json = (await res.json()) as LarkSearchResponse;
+  // `exactOptionalPropertyTypes`: omit the key entirely when undefined rather
+  // than writing `pageToken: undefined` (which would violate the optional type).
+  const result: FetchResult = {
+    data: Array.isArray(json.data) ? json.data : [],
+    total: json.total ?? 0,
+    hasMore: json.has_more ?? false,
+  };
+  if (json.page_token) result.pageToken = json.page_token;
+  return result;
+}
+
+// ============ Fetch All (paginate until exhausted) ============
+
+/**
+ * Fetch every record in a table by looping through pages until `hasMore` is
+ * false. Uses POST `/records/search` (not GET `/records/:app/:table`) because
+ * only the search endpoint enriches select/formula fields with human labels;
+ * GET returns raw option IDs like `optHMhw7yb`.
+ *
+ * Cost: N / 500 sequential HTTP round-trips. For 1,439 records = 3 requests.
+ */
+/** Fetch rows matching a specific Handle (case-insensitive exact match).
+ *  Used by profile pages to fetch only the ~3–8 rows for one creator
+ *  instead of the full ~1,000-row catalog. */
+export async function fetchRecordsByHandle(
+  tableId: TableId,
+  handle: string
+): Promise<FetchResult> {
+  return fetchRecords(tableId, {
+    filter: {
+      conjunction: "and",
+      conditions: [
+        { fieldName: "Handle", operator: "is", value: [handle] },
+      ],
+    },
+  });
+}
+
+export async function fetchAllRecords(
+  tableId: TableId,
+  opts: Omit<FetchOptions, "pageSize" | "pageToken"> = {}
+): Promise<LarkRecord[]> {
+  const all: LarkRecord[] = [];
+  let pageToken: string | undefined;
+  for (let page = 0; page < 20; page++) {
+    const res = await fetchRecords(tableId, {
+      ...opts,
+      pageSize: 500,
+      ...(pageToken && { pageToken }),
+    });
+    all.push(...res.data);
+    if (!res.hasMore || !res.pageToken) break;
+    pageToken = res.pageToken;
+  }
+  return all;
 }
 
 // ============ Field Helpers (POST /records/search format) ============
@@ -183,61 +230,23 @@ export function attachments(fields: Record<string, unknown>, key: string): LarkA
 
 // ============ Media URL ============
 
-// Media download uses same base URL
-
-import { unstable_cache } from "next/cache";
-
 /**
- * Internal: Resolve a single file token to URL (no caching)
+ * Build a direct URL for bitable attachment media (video/image).
+ * lark-http-hype /api/image/ endpoint is open (no auth needed)
+ * and streams raw bytes when ?tableId= is provided.
  */
-async function resolveFileUrlInternal(token: string): Promise<string> {
-  const res = await fetch(`${LARK_API_URL}/api/image/${token}`);
-  if (!res.ok) return "";
-  const data = await res.json() as { url: string };
-  return data.url || "";
+export function buildMediaUrl(token: string, tableId: TableId): string {
+  return `${LARK_API_URL}/api/image/${token}?tableId=${tableId}`;
 }
 
 /**
- * Cached version: Resolve file token to Lark CDN temp URL (23h cache)
- * Lark URLs are valid for 24h, we cache for 23h to be safe
+ * Build media URLs for multiple tokens (same table).
  */
-const resolveFileUrlCached = unstable_cache(
-  async (token: string): Promise<string> => {
-    return resolveFileUrlInternal(token);
-  },
-  ["lark-file-url"],
-  { revalidate: 82800 } // 23 hours in seconds
-);
-
-/**
- * Resolve file tokens to Lark CDN temp URLs (24h valid, supports Range/byte-serving)
- * Use for video src — browser can do preload="metadata" with Range requests
- * Results are cached for 23 hours to avoid repeated API calls
- */
-export async function resolveFileUrl(token: string): Promise<string> {
-  return resolveFileUrlCached(token);
-}
-
-/**
- * Resolve multiple file tokens to URLs in parallel
- * Each token is individually cached for 23 hours
- */
-export async function resolveFileUrls(tokens: string[]): Promise<Record<string, string>> {
-  if (tokens.length === 0) return {};
-
-  // Deduplicate tokens to avoid duplicate cache keys
-  const uniqueTokens = [...new Set(tokens)];
-
-  // Fetch all URLs in parallel (each uses its own cached function)
-  const entries = await Promise.all(
-    uniqueTokens.map(async (t) => [t, await resolveFileUrlCached(t)] as const)
-  );
-
-  // Build result map for all unique tokens
-  const urlMap = new Map(entries);
-
-  // Return in original token order (preserving duplicates if any)
+export function buildMediaUrls(
+  tokens: string[],
+  tableId: TableId
+): Record<string, string> {
   return Object.fromEntries(
-    tokens.map((t) => [t, urlMap.get(t) || ""])
+    tokens.map((t) => [t, buildMediaUrl(t, tableId)])
   );
 }

@@ -12,12 +12,8 @@ import {
   CommandSeparator,
   CommandShortcut,
 } from "@/components/ui/command";
-import {
-  Users,
-  Sparkles,
-  Video,
-  Cpu,
-} from "lucide-react";
+import { Users, Sparkles, Video } from "lucide-react";
+import { ROUTES } from "@/lib/constants";
 
 interface CommandPaletteProps {
   open: boolean;
@@ -25,9 +21,8 @@ interface CommandPaletteProps {
 }
 
 const navigation = [
-  { name: "Creators", href: "/kols", icon: Users, shortcut: "⌘K" },
-  { name: "Tech Creators", href: "/tech", icon: Cpu, shortcut: "⌘T" },
-  { name: "Live Catalog", href: "/live", icon: Video, shortcut: "⌘L" },
+  { name: "Creators", href: ROUTES.KOLS, icon: Users, shortcut: "⌘K" },
+  { name: "Live Catalog", href: ROUTES.LIVE, icon: Video, shortcut: "⌘L" },
 ];
 
 const smartSearchExamples = [
@@ -57,7 +52,6 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange}>
       <CommandInput
-        placeholder="Search creators, navigate..."
         value={search}
         onValueChange={setSearch}
       />

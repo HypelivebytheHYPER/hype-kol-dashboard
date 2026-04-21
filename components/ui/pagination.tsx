@@ -1,8 +1,9 @@
 "use client";
 
-import { motion } from "framer-motion";
+
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/cn";
 
 interface PaginationProps {
   currentPage: number;
@@ -44,7 +45,7 @@ export function Pagination({
           disabled={currentPage === 1}
           className="h-9 w-9 rounded-full"
         >
-          <ChevronLeft className="w-4 h-4" />
+          <ChevronLeft />
         </Button>
 
         <div className="flex items-center gap-1">
@@ -54,18 +55,16 @@ export function Pagination({
                 …
               </span>
             ) : (
-              <motion.button
+              <button
                 key={page}
                 onClick={() => onPageChange(page)}
-                className={`
-                  relative h-9 w-9 rounded-full text-sm font-medium transition-colors
-                  ${currentPage === page ? "bg-primary text-primary-foreground" : "hover:bg-muted"}
-                `}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                className={cn(
+                  "relative h-9 w-9 rounded-full text-sm font-medium transition-all hover:scale-105 active:scale-95",
+                  currentPage === page ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+                )}
               >
                 {page}
-              </motion.button>
+              </button>
             )
           )}
         </div>
@@ -77,7 +76,7 @@ export function Pagination({
           disabled={currentPage === totalPages}
           className="h-9 w-9 rounded-full"
         >
-          <ChevronRight className="w-4 h-4" />
+          <ChevronRight />
         </Button>
       </div>
     </div>

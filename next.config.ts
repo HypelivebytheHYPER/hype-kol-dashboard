@@ -1,4 +1,9 @@
 import type { NextConfig } from "next";
+import { SERVICES, hostOf } from "./lib/external-services";
+
+// Pre-compute hosts once — used in both remotePatterns and CSP directives.
+const LARK_WORKER_HOST = hostOf(SERVICES.larkWorker);
+const R2_BRAND_HOST = hostOf(SERVICES.r2Brand);
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -11,20 +16,19 @@ const nextConfig: NextConfig = {
   },
   images: {
     remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "unavatar.io",
-        pathname: "/**",
-      },
-      {
-        protocol: "https",
-        hostname: "pub-816814216dff403d8cc6955bb0ad1fec.r2.dev",
-        pathname: "/**",
-      },
+      { protocol: "https", hostname: R2_BRAND_HOST, pathname: "/**" },
     ],
     formats: ["image/webp", "image/avif"],
     deviceSizes: [640, 750, 828, 1080, 1200],
     minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
+  },
+  // Rewrite `/` → `/kols` at the edge. No redirect, no extra round-trip;
+  // user's browser sees the URL stay `/` and receives the creators-list page
+  // directly from Vercel's cache. Replaces the old SSR `redirect()` that cost ~150ms.
+  async rewrites() {
+    return [
+      { source: "/", destination: "/kols" },
+    ];
   },
   async headers() {
     return [
@@ -65,13 +69,13 @@ const nextConfig: NextConfig = {
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline'",
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' blob: data: https: lark-http-hype.hypelive.workers.dev pub-816814216dff403d8cc6955bb0ad1fec.r2.dev unavatar.io",
-              "media-src 'self' lark-http-hype.hypelive.workers.dev *.larksuite.com",
-              "connect-src 'self' lark-http-hype.hypelive.workers.dev *.larksuite.com",
+              `img-src 'self' blob: data: https: ${LARK_WORKER_HOST} ${R2_BRAND_HOST}`,
+              `media-src 'self' ${LARK_WORKER_HOST} ${SERVICES.larkCDNHost}`,
+              `connect-src 'self' ${LARK_WORKER_HOST} ${SERVICES.larkCDNHost}`,
               "font-src 'self'",
               "object-src 'none'",
               "child-src 'none'",
-              "frame-ancestors 'self'",
+              "frame-ancestors 'self' https://www.hypelive.io https://hypelive.io https://hypelive-rate-card.vercel.app",
               "base-uri 'self'",
               "form-action 'self'",
               "upgrade-insecure-requests",

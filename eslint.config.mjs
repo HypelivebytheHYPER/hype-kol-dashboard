@@ -2,6 +2,7 @@ import js from "@eslint/js";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 import nextPlugin from "@next/eslint-plugin-next";
+import reactHooks from "eslint-plugin-react-hooks";
 
 /** @type {import('eslint').Linter.FlatConfig[]} */
 export default [
@@ -11,6 +12,7 @@ export default [
     files: ["**/*.{js,jsx,ts,tsx}"],
     plugins: {
       "@next/next": nextPlugin,
+      "react-hooks": reactHooks,
     },
     languageOptions: {
       ecmaVersion: 2022,
@@ -56,6 +58,10 @@ export default [
         "warn",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
       ],
+
+      // React hooks
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "warn",
 
       // General
       "no-console": ["warn", { allow: ["warn", "error"] }],

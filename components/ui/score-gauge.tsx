@@ -23,14 +23,15 @@ export function ScoreGauge({ score, size = 48 }: ScoreGaugeProps) {
       style={{ width: size, height: size }}
     >
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
-        {/* Background circle */}
+        {/* Background circle — dark mode compatible */}
         <circle
           cx={center}
           cy={center}
           r={radius}
           fill="none"
-          stroke="#e5e7eb"
+          stroke="currentColor"
           strokeWidth={strokeWidth}
+          className="text-muted-foreground/15"
         />
         {/* Progress circle */}
         <circle
@@ -44,7 +45,7 @@ export function ScoreGauge({ score, size = 48 }: ScoreGaugeProps) {
           strokeDasharray={circumference}
           strokeDashoffset={strokeDashoffset}
           style={{
-            transition: "stroke-dashoffset 0.3s ease-out",
+            transition: "stroke-dashoffset 0.5s cubic-bezier(0.16, 1, 0.3, 1)",
           }}
         />
       </svg>
