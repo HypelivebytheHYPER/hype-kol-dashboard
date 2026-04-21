@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { notFound } from "next/navigation";
 import { loadKOLProfileByHandle } from "@/lib/record-mappers";
-import { BRAND } from "@/lib/brand";
 
 // Dynamically load KOL profile (ships recharts) only on this route.
 // Keeps recharts out of the shared vendor chunk consumed by /kols and /live.
@@ -22,7 +21,7 @@ export async function generateMetadata({
   const kol = await loadKOLProfileByHandle(handle);
   if (!kol) return { title: "Not Found" };
 
-  const title = `${kol.name} (@${kol.handle}) — ${BRAND.name}`;
+  const title = `${kol.name} (@${kol.handle})`;
   const description =
     kol.bio?.en ||
     kol.bio?.th ||
