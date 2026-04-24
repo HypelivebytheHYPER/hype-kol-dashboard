@@ -35,6 +35,16 @@ export const CATEGORY_STYLES: Record<ContentCategoryId, {
   filterActiveBg: string;
   filterActiveBorder: string;
   filterActiveShadow: string;
+  /** Play button background (list item, thumbnail) */
+  playButtonBg: string;
+  /** Play button icon color */
+  playButtonText: string;
+  /** Glow behind large play button */
+  playGlow: string;
+  /** Border for active/selected rows and media */
+  activeBorder: string;
+  /** Hover border for media thumbnails */
+  mediaHoverBorder: string;
 }> = {
   cosmetics: {
     dot: "bg-chart-5",
@@ -47,6 +57,11 @@ export const CATEGORY_STYLES: Record<ContentCategoryId, {
     filterActiveBg: "bg-chart-5/15",
     filterActiveBorder: "border-chart-5/30",
     filterActiveShadow: "shadow-chart-5/10",
+    playButtonBg: "bg-chart-5/15",
+    playButtonText: "text-chart-5",
+    playGlow: "bg-chart-5/30",
+    activeBorder: "border-chart-5/20",
+    mediaHoverBorder: "hover:border-chart-5/40",
   },
   health: {
     dot: "bg-chart-2",
@@ -59,6 +74,11 @@ export const CATEGORY_STYLES: Record<ContentCategoryId, {
     filterActiveBg: "bg-chart-2/15",
     filterActiveBorder: "border-chart-2/30",
     filterActiveShadow: "shadow-chart-2/10",
+    playButtonBg: "bg-chart-2/15",
+    playButtonText: "text-chart-2",
+    playGlow: "bg-chart-2/30",
+    activeBorder: "border-chart-2/20",
+    mediaHoverBorder: "hover:border-chart-2/40",
   },
   food: {
     dot: "bg-chart-1",
@@ -71,6 +91,11 @@ export const CATEGORY_STYLES: Record<ContentCategoryId, {
     filterActiveBg: "bg-chart-1/15",
     filterActiveBorder: "border-chart-1/30",
     filterActiveShadow: "shadow-chart-1/10",
+    playButtonBg: "bg-chart-1/15",
+    playButtonText: "text-chart-1",
+    playGlow: "bg-chart-1/30",
+    activeBorder: "border-chart-1/20",
+    mediaHoverBorder: "hover:border-chart-1/40",
   },
   home: {
     dot: "bg-chart-3",
@@ -83,6 +108,11 @@ export const CATEGORY_STYLES: Record<ContentCategoryId, {
     filterActiveBg: "bg-chart-3/15",
     filterActiveBorder: "border-chart-3/30",
     filterActiveShadow: "shadow-chart-3/10",
+    playButtonBg: "bg-chart-3/15",
+    playButtonText: "text-chart-3",
+    playGlow: "bg-chart-3/30",
+    activeBorder: "border-chart-3/20",
+    mediaHoverBorder: "hover:border-chart-3/40",
   },
   fashion: {
     dot: "bg-chart-4",
@@ -95,6 +125,11 @@ export const CATEGORY_STYLES: Record<ContentCategoryId, {
     filterActiveBg: "bg-chart-4/15",
     filterActiveBorder: "border-chart-4/30",
     filterActiveShadow: "shadow-chart-4/10",
+    playButtonBg: "bg-chart-4/15",
+    playButtonText: "text-chart-4",
+    playGlow: "bg-chart-4/30",
+    activeBorder: "border-chart-4/20",
+    mediaHoverBorder: "hover:border-chart-4/40",
   },
   "personal-care": {
     dot: "bg-primary",
@@ -107,6 +142,11 @@ export const CATEGORY_STYLES: Record<ContentCategoryId, {
     filterActiveBg: "bg-primary/15",
     filterActiveBorder: "border-primary/30",
     filterActiveShadow: "shadow-primary/10",
+    playButtonBg: "bg-primary/15",
+    playButtonText: "text-primary",
+    playGlow: "bg-primary/30",
+    activeBorder: "border-primary/20",
+    mediaHoverBorder: "hover:border-primary/40",
   },
 };
 

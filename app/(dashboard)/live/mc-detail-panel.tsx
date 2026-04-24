@@ -168,7 +168,7 @@ export function MCDetailPanel({
               aria-label={`Play ${mc.handle}`}
             >
               <div className="relative flex items-center justify-center transition-all duration-300 ease-out scale-100 group-hover/play:scale-110">
-                <div className="absolute inset-0 rounded-full blur-xl scale-150 opacity-0 group-hover/play:opacity-50 transition-opacity duration-300 bg-primary/30" />
+                <div className={cn("absolute inset-0 rounded-full blur-xl scale-150 opacity-0 group-hover/play:opacity-50 transition-opacity duration-300", catStyle?.playGlow ?? "bg-primary/30")} />
                 <div className="relative size-14 rounded-full bg-background/60 backdrop-blur-md border border-foreground/20 flex items-center justify-center hover:bg-background/80 transition-colors">
                   <Play className="size-6 text-foreground fill-foreground ml-0.5" />
                 </div>
@@ -361,7 +361,7 @@ export function MCDetailPanel({
                   href={img.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="relative shrink-0 size-16 rounded-lg border overflow-hidden hover:border-primary/40 transition-colors"
+                  className={cn("relative shrink-0 size-16 rounded-lg border overflow-hidden transition-colors", catStyle?.mediaHoverBorder ?? "hover:border-primary/40")}
                 >
                   <img
                     src={img.url}
@@ -395,7 +395,7 @@ export function MCDetailPanel({
                   className={cn(
                     "flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all text-left",
                     activeVideoIndex === i
-                      ? "bg-muted text-foreground border border-primary/20"
+                      ? cn("bg-muted text-foreground border", catStyle?.activeBorder ?? "border-primary/20")
                       : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                   )}
                 >

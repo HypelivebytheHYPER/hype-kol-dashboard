@@ -111,7 +111,7 @@ export function MCListItem({
               className={cn(
                 "shrink-0 size-6 rounded-full flex items-center justify-center transition-colors",
                 isPlaying
-                  ? "bg-chart-2/15 text-chart-2"
+                  ? cn(catStyle?.playButtonBg, catStyle?.playButtonText)
                   : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"
               )}
               aria-label={isPlaying ? "Pause video" : "Play video"}

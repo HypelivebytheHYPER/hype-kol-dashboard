@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   },
 };
 
-export const revalidate = 300; // = REVALIDATE_SECONDS
+export const dynamic = "force-dynamic";
 
 // Route-level fallback lives in `./loading.tsx` — no Suspense wrapper here.
 export default async function LiveCatalogPage() {
