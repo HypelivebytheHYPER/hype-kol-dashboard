@@ -22,17 +22,25 @@ export function TikTokProfileEmbed({ handle, name }: TikTokProfileEmbedProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const scriptInjected = useRef(false);
 
-  /* ── 1. Fetch oEmbed JSON from TikTok ── */
+  /* ── 1. Fetch oEmbed JSON ── */
   useEffect(() => {
     if (!handle) return;
+    let stale = false;
     setLoading(true);
     fetch(`/api/tiktok-oembed?handle=${encodeURIComponent(handle)}`)
       .then((r) => r.json())
       .then((json: OEmbedData) => {
-        setData(json);
-        setLoading(false);
+        if (!stale) {
+          setData(json);
+          setLoading(false);
+        }
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        if (!stale) setLoading(false);
+      });
+    return () => {
+      stale = true;
+    };
   }, [handle]);
 
   /* ── 2. Render embed once HTML is in the DOM ── */
@@ -48,7 +56,8 @@ export function TikTokProfileEmbed({ handle, name }: TikTokProfileEmbedProps) {
 
     const existing = document.querySelector(
       'script[src="https://www.tiktok.com/embed.js"]'
-    );
+    ) as HTMLScriptElement | null;
+
     if (!existing && !scriptInjected.current) {
       const script = document.createElement("script");
       script.src = "https://www.tiktok.com/embed.js";
@@ -60,7 +69,15 @@ export function TikTokProfileEmbed({ handle, name }: TikTokProfileEmbedProps) {
         script.onload = null;
       };
     }
-    // Script already loaded — trigger render for this container
+
+    if (existing && !(window as any).tiktokEmbedLibrary) {
+      // Script tag exists but library hasn't loaded yet — wait for it
+      const onLoad = () => renderEmbed();
+      existing.addEventListener("load", onLoad);
+      return () => existing.removeEventListener("load", onLoad);
+    }
+
+    // Script already loaded — render immediately
     renderEmbed();
     return undefined;
   }, [data]);
@@ -94,7 +111,7 @@ export function TikTokProfileEmbed({ handle, name }: TikTokProfileEmbedProps) {
     );
   }
 
-  /* ── Strip the <script> tag from oEmbed HTML (we inject it ourselves) ── */
+  /* ── Strip the <script> tag from oEmbed HTML ── */
   const blockquoteHtml = data.html.replace(
     /<script[\s\S]*?<\/script>/gi,
     ""
