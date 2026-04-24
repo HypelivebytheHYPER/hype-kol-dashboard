@@ -138,7 +138,8 @@ export function recordToLiveMC(r: LarkRecord): LiveMC {
   const f = r.fields;
   const refs = attachments(f, "LIVE Reference");
   const brandList = arr(f, "Brand");
-  return {
+  const img = refs.find((a: LarkAttachment) => a.type?.startsWith("image/"));
+  const mc: LiveMC = {
     id: r.record_id,
     handle: str(f, "Handle"),
     brands: brandList,
@@ -148,6 +149,8 @@ export function recordToLiveMC(r: LarkRecord): LiveMC {
       .filter((a: LarkAttachment) => a.type?.startsWith("video/"))
       .map((v: LarkAttachment) => ({ token: v.file_token, name: v.name })),
   };
+  if (img) mc.image = buildMediaUrl(img.file_token, TABLES.LIVE_MC_LIST);
+  return mc;
 }
 
 /* ── Dashboard Summary Record Parsing ───────────────────────────────── */
