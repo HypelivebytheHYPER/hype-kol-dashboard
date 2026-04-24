@@ -283,6 +283,38 @@ export const SECTION_HEADER = {
 export const STAT_LABEL = "text-2xs uppercase tracking-widest font-semibold" as const;
 
 // ═════════════════════════════════════════════════════════════════
+//  LAYOUT & SPACING TOKENS
+// ═════════════════════════════════════════════════════════════════
+
+/** Section layout — horizontal padding, container width, vertical spacing.
+ *  @example `<section className={cn(SECTION.paddingX, SECTION.py)}>` */
+export const SECTION = {
+  paddingX: "px-6 md:px-12 lg:px-20",
+  container: "max-w-7xl mx-auto",
+  py: "py-20 md:py-32",
+  pyLg: "py-24 md:py-40",
+} as const;
+
+// ═════════════════════════════════════════════════════════════════
+//  TYPOGRAPHY TOKENS
+// ═════════════════════════════════════════════════════════════════
+
+/** Heading scale — consistent hierarchy across pages.
+ *  @example `<h2 className={HEADING.section}>Title</h2>` */
+export const HEADING = {
+  hero: "text-[clamp(3.5rem,10vw,8rem)] font-black tracking-[-0.05em] leading-[0.82]",
+  section: "text-4xl md:text-6xl font-black tracking-tight",
+  sectionLg: "text-4xl md:text-6xl lg:text-7xl font-black tracking-tight leading-[0.9]",
+  card: "text-2xl md:text-3xl font-black tracking-tight leading-tight",
+} as const;
+
+/** Micro label — uppercase eyebrow text above headings.
+ *  @example `<span className={LABEL.micro}>What We Do</span>` */
+export const LABEL = {
+  micro: "text-xs uppercase tracking-widest text-muted-foreground font-medium",
+} as const;
+
+// ═════════════════════════════════════════════════════════════════
 //  ANIMATION & MOTION TOKENS
 // ═════════════════════════════════════════════════════════════════
 
@@ -303,6 +335,8 @@ export const DURATION = {
   slow: "duration-500",
   slower: "duration-700",
   slowest: "duration-1000",
+  heroFade: "duration-[2000ms]",
+  heroZoom: "duration-[8000ms]",
 } as const;
 
 /** Reusable animation class combinations.
@@ -310,6 +344,41 @@ export const DURATION = {
 export const FADE_IN_UP = "animate-fade-in-up" as const;
 export const FADE_IN = "animate-fade-in" as const;
 export const SCALE_IN = "animate-scale-in" as const;
+
+/** Background overlay opacity presets.
+ *  @example `<div className={cn("absolute inset-0", OVERLAY.medium)} />` */
+export const OVERLAY = {
+  subtle: "bg-background/30",
+  light: "bg-background/40",
+  medium: "bg-background/50",
+  heavy: "bg-background/60",
+  solid: "bg-background/80",
+} as const;
+
+/** Text opacity presets for foreground color.
+ *  @example `<span className={cn(TEXT_OPACITY.muted)}>Subtitle</span>` */
+export const TEXT_OPACITY = {
+  dim: "text-foreground/50",
+  muted: "text-foreground/60",
+  normal: "text-foreground/90",
+} as const;
+
+/** Border opacity presets.
+ *  @example `<div className={cn("border", BORDER_OPACITY.medium)} />` */
+export const BORDER_OPACITY = {
+  subtle: "border-border/20",
+  light: "border-border/30",
+  medium: "border-border/40",
+} as const;
+
+/** Foreground opacity presets for bg/text on dark/light surfaces.
+ *  @example `<div className={cn("bg-foreground", FG_OPACITY.solid)} />` */
+export const FG_OPACITY = {
+  subtle: "bg-foreground/10",
+  light: "bg-foreground/20",
+  medium: "bg-foreground/50",
+  heavy: "bg-foreground/90",
+} as const;
 
 // ═════════════════════════════════════════════════════════════════
 //  SHADOW & ELEVATION TOKENS
@@ -338,6 +407,7 @@ export const GRADIENT = {
   bottomFade: "bg-gradient-to-t from-black/60 via-transparent to-transparent",
   topFade: "bg-gradient-to-b from-black/40 via-transparent to-transparent",
   cta: "bg-gradient-to-br from-muted/50 via-background to-muted/30",
+  featuredRight: "bg-gradient-to-r from-transparent via-transparent to-background/60",
 } as const;
 
 // ═════════════════════════════════════════════════════════════════
