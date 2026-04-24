@@ -6,7 +6,7 @@ const OG_IMAGE =
   "https://pub-6b552d9c3c0f4ef0ba8e32adfb058578.r2.dev/Hypestudio01.jpg";
 
 export const metadata: Metadata = {
-  title: "HypeStudio — HypeCreators",
+  title: "HypeStudio",
   description:
     "The creative engine behind HypeCreators. Full-service studio for TikTok-native content, live commerce production, and creator brand partnerships.",
   alternates: {
