@@ -266,9 +266,9 @@ function Capabilities() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-border/30 rounded-3xl overflow-hidden">
           {CAPABILITIES.map((cap, i) => (
             <Reveal key={cap.title} delay={i * 80}>
-              <div className="bg-background p-8 md:p-10 h-full group hover:bg-muted/30 transition-colors duration-500">
+              <div className={`bg-background p-8 md:p-10 h-full group hover:bg-muted/30 transition-colors ${DURATION.slow}`}>
                 <div className={cn(
-                  "mb-6 inline-flex size-12 items-center justify-center rounded-2xl border transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3",
+                  `mb-6 inline-flex size-12 items-center justify-center rounded-2xl border transition-transform ${DURATION.slow} group-hover:scale-110 group-hover:rotate-3`,
                   STUDIO.bgSubtle,
                   STUDIO.borderSubtle,
                   STUDIO.text
@@ -340,7 +340,7 @@ function StudioCard({ studio }: { studio: Studio }) {
             src={leadImage}
             alt={studio.name}
             fill
-            className="object-cover transition-transform duration-700 group-hover:scale-105"
+            className={`object-cover transition-transform ${DURATION.slower} group-hover:scale-105`}
             sizes="(max-width: 640px) 280px, (max-width: 768px) 300px, 340px"
             loading="lazy"
           />
@@ -615,7 +615,7 @@ function VideoCard({
               size="icon"
               aria-label={playing ? "Pause video" : "Play video"}
               onClick={toggle}
-              className={cn("size-16 rounded-full text-background hover:bg-foreground hover:scale-110 transition-all duration-300 backdrop-blur-sm", FG_OPACITY.heavy)}
+              className={cn(`size-16 rounded-full text-background hover:bg-foreground hover:scale-110 transition-all ${DURATION.normal} backdrop-blur-sm`, FG_OPACITY.heavy)}
             >
               <Play className="size-7" fill="currentColor" aria-hidden="true" />
             </Button>

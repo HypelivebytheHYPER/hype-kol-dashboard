@@ -25,6 +25,7 @@ import type { Creator } from "@/lib/types/catalog";
 import { parseSmartSearch, applySmartFilters } from "@/lib/smart-search";
 import { KOLFeedCard } from "@/components/kol/kol-feed-card";
 import { cn } from "@/lib/cn";
+import { DURATION, EASING, OVERLAY } from "@/lib/design-tokens";
 
 type SortKey = "followers" | "gmv" | "engagement" | "revenue" | "views" | "quality";
 type TypeTab = "all" | "Live Creator" | "Live Seller" | "Creator";
@@ -120,11 +121,19 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
   const pageKey = paginated.map((k) => k.id).join(",");
 
   useEffect(() => {
+    const isExpiredTikTokCdn = (url: string): boolean => {
+      if (!url.includes("tiktokcdn")) return false;
+      const match = url.match(/[?&]x-expires=(\d+)/);
+      if (!match) return false;
+      const expiresAt = parseInt(match[1], 10) * 1000;
+      return expiresAt < Date.now() + 60 * 60 * 1000; // expire within 1 hour
+    };
+
     const needFetch = paginated
       .filter((k) => {
         const img = k.image;
         if (!img) return false;
-        return img.includes("tiktokcdn") && img.includes("x-signature");
+        return isExpiredTikTokCdn(img);
       })
       .map((k) => ({
         id: k.id,
@@ -185,7 +194,7 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
           <SlidersHorizontal className="size-4" />
           Filters
           {activeFilterCount > 0 && (
-            <span className="ml-0.5 px-1.5 py-0.5 text-[10px] bg-primary text-primary-foreground rounded-full min-w-[18px] inline-flex items-center justify-center">
+            <span className="ml-0.5 px-1.5 py-0.5 text-2xs bg-primary text-primary-foreground rounded-full min-w-[18px] inline-flex items-center justify-center">
               {activeFilterCount}
             </span>
           )}
@@ -197,13 +206,31 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
         )}
       </div>
 
+      {/* ── Mobile Filter Overlay ── */}
+      {showSidebar && (
+        <div
+          className={cn("fixed inset-0 backdrop-blur-sm z-40 lg:hidden", OVERLAY.solid)}
+          onClick={() => setShowSidebar(false)}
+        />
+      )}
+
       {/* ── Sidebar Filters ── */}
       <aside
         className={cn(
           "lg:w-64 shrink-0 flex-col gap-6",
-          showSidebar ? "flex" : "hidden lg:flex"
+          showSidebar
+            ? `fixed inset-y-0 left-0 z-50 w-72 bg-background border-r border-border p-4 pt-6 flex lg:static lg:w-64 lg:bg-transparent lg:border-none lg:p-0 transition-transform ${DURATION.normal} ${EASING.default}`
+            : "hidden lg:flex"
         )}
       >
+        {/* Mobile close button */}
+        <div className="flex items-center justify-between lg:hidden">
+          <p className="text-sm font-semibold">Filters</p>
+          <Button variant="ghost" size="icon-sm" onClick={() => setShowSidebar(false)}>
+            <X className="size-4" />
+          </Button>
+        </div>
+
         {/* Type Tabs */}
         <div className="flex flex-col gap-2" role="tablist" aria-label="Creator type">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Type</p>
@@ -223,7 +250,7 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
                     setCurrentPage(1);
                   }}
                   className={cn(
-                    "group relative text-left px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 ease-out active:scale-[0.98] overflow-hidden",
+                    `group relative text-left px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${DURATION.normal} ${EASING.default} active:scale-[0.98] overflow-hidden`,
                     isActive
                       ? "text-primary translate-x-0.5"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
@@ -232,25 +259,25 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
                   {/* Sliding background pill */}
                   <span
                     className={cn(
-                      "absolute inset-0 rounded-xl transition-all duration-300 ease-out",
+                      `absolute inset-0 rounded-xl transition-all ${DURATION.normal} ${EASING.default}`,
                       isActive ? "bg-primary/10 opacity-100" : "bg-transparent opacity-0"
                     )}
                   />
                   {/* Left accent indicator */}
                   <span
                     className={cn(
-                      "absolute left-0 top-2 bottom-2 w-1 rounded-full bg-primary transition-all duration-300 ease-out",
+                      `absolute left-0 top-2 bottom-2 w-1 rounded-full bg-primary transition-all ${DURATION.normal} ${EASING.default}`,
                       isActive ? "opacity-100 scale-y-100" : "opacity-0 scale-y-0"
                     )}
                   />
                   {/* Content */}
                   <span className="relative flex items-center justify-between">
-                    <span className={cn("transition-colors duration-300", isActive && "font-semibold")}>
+                    <span className={cn(`transition-colors ${DURATION.normal}`, isActive && "font-semibold")}>
                       {tab.label}
                     </span>
                     <span
                       className={cn(
-                        "text-xs transition-all duration-300",
+                        `text-xs transition-all ${DURATION.normal}`,
                         isActive
                           ? "text-primary/70 bg-primary/10 px-2 py-0.5 rounded-full font-mono"
                           : "text-muted-foreground group-hover:text-foreground"
@@ -308,7 +335,7 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
               setCurrentPage(1);
             }}
             className={cn(
-              "flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150 active:scale-[0.98]",
+              `flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all ${DURATION.fast} active:scale-[0.98]`,
               hidePlaceholders
                 ? "bg-primary/10 text-primary"
                 : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
@@ -419,7 +446,7 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
 
         {/* Card Grid */}
         {paginated.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
             {paginated.map((kol) => (
               <KOLFeedCard key={kol.id} kol={kol} freshPhoto={freshPhotos[kol.id]} />
             ))}
@@ -439,25 +466,11 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2 pt-4">
-            <button
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="px-4 py-2 rounded-xl text-sm font-medium border border-border/40 hover:bg-muted/50 disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition-all"
-            >
-              Previous
-            </button>
-            <span className="text-sm text-muted-foreground px-2">
-              Page {currentPage} of {totalPages}
-            </span>
-            <button
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="px-4 py-2 rounded-xl text-sm font-medium border border-border/40 hover:bg-muted/50 disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition-all"
-            >
-              Next
-            </button>
-          </div>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
         )}
       </div>
     </div>
@@ -465,6 +478,76 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
 }
 
 /* ── Sub-components ── */
+
+function Pagination({
+  currentPage,
+  totalPages,
+  onPageChange,
+}: {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) {
+  const getPages = () => {
+    const pages: (number | string)[] = [];
+    const showEllipsis = totalPages > 7;
+
+    if (!showEllipsis) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+      return pages;
+    }
+
+    pages.push(1);
+    if (currentPage > 3) pages.push("...");
+
+    const start = Math.max(2, currentPage - 1);
+    const end = Math.min(totalPages - 1, currentPage + 1);
+    for (let i = start; i <= end; i++) pages.push(i);
+
+    if (currentPage < totalPages - 2) pages.push("...");
+    pages.push(totalPages);
+    return pages;
+  };
+
+  return (
+    <div className="flex items-center justify-center gap-1.5 pt-4 flex-wrap">
+      <button
+        onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+        disabled={currentPage === 1}
+        className="px-3 py-2 rounded-xl text-sm font-medium border border-border/40 hover:bg-muted/50 disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition-all"
+      >
+        Previous
+      </button>
+
+      {getPages().map((page, idx) =>
+        page === "..." ? (
+          <span key={`ellipsis-${idx}`} className="px-2 text-muted-foreground text-sm">...</span>
+        ) : (
+          <button
+            key={page}
+            onClick={() => onPageChange(page as number)}
+            className={cn(
+              "size-9 rounded-xl text-sm font-medium transition-all active:scale-95",
+              currentPage === page
+                ? "bg-primary text-primary-foreground"
+                : "border border-border/40 hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {page}
+          </button>
+        )
+      )}
+
+      <button
+        onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+        disabled={currentPage === totalPages}
+        className="px-3 py-2 rounded-xl text-sm font-medium border border-border/40 hover:bg-muted/50 disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition-all"
+      >
+        Next
+      </button>
+    </div>
+  );
+}
 
 function FilterChip({
   label,
@@ -479,7 +562,7 @@ function FilterChip({
     <button
       onClick={onClick}
       className={cn(
-        "px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-150 border min-h-[32px] active:scale-95 touch-manipulation",
+        `px-3 py-1.5 rounded-full text-xs font-medium transition-all ${DURATION.fast} border min-h-9 active:scale-95 touch-manipulation`,
         active
           ? "bg-primary text-primary-foreground border-primary shadow-sm"
           : "bg-transparent text-muted-foreground border-border/40 hover:border-border/70 hover:text-foreground hover:bg-muted/30"

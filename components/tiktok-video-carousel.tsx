@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Play, ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { DURATION, OVERLAY } from "@/lib/design-tokens";
 
 /* ── iframe embed helper ─────────────────────────────────────────────── */
 
@@ -220,7 +221,7 @@ export function TikTokVideoCarousel({ handle }: TikTokVideoCarouselProps) {
                   <img
                     src={video.thumbnail}
                     alt={video.title || "TikTok video"}
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    className={`absolute inset-0 w-full h-full object-cover transition-transform ${DURATION.slow} group-hover:scale-105`}
                     loading="lazy"
                   />
                 ) : (
@@ -232,7 +233,7 @@ export function TikTokVideoCarousel({ handle }: TikTokVideoCarouselProps) {
                 <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
 
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="size-12 rounded-full bg-foreground/20 backdrop-blur-sm border border-foreground/30 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
+                  <div className={`size-12 rounded-full bg-foreground/20 backdrop-blur-sm border border-foreground/30 flex items-center justify-center transition-transform ${DURATION.normal} group-hover:scale-110`}>
                     <Play className="size-5 text-foreground fill-foreground ml-0.5" />
                   </div>
                 </div>
@@ -246,7 +247,7 @@ export function TikTokVideoCarousel({ handle }: TikTokVideoCarouselProps) {
                 )}
 
                 <div className="absolute top-2 left-2">
-                  <span className="text-[10px] font-bold text-foreground bg-background/40 backdrop-blur-sm px-1.5 py-0.5 rounded">
+                  <span className={`text-2xs font-bold text-foreground ${OVERLAY.light} backdrop-blur-sm px-1.5 py-0.5 rounded`}>
                     TikTok
                   </span>
                 </div>

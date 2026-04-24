@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { useI18n } from "@/contexts/i18n-context";
 import { ThemeToggle } from "./theme-toggle";
+import { OVERLAY } from "@/lib/design-tokens";
 import { NotificationButton } from "./notification-button";
 
 const CommandPalette = dynamic(
@@ -28,7 +29,7 @@ export function Header() {
 
   return (
     <>
-      <header className="hidden lg:flex h-16 border-b border-border/40 bg-background/60 backdrop-blur-xl items-center justify-between px-6">
+      <header className={`hidden lg:flex h-16 border-b border-border/40 ${OVERLAY.heavy} backdrop-blur-xl items-center justify-between px-6`}>
         <div className="flex items-center gap-4 flex-1 min-w-0">
           <Button
             variant="outline"
@@ -39,7 +40,7 @@ export function Header() {
               <Search className="shrink-0 size-4" />
               <span className="text-sm truncate">{t("header.searchPlaceholder")}</span>
             </div>
-            <kbd className="hidden md:inline-flex h-5 items-center gap-1 rounded border border-border/40 bg-muted/30 px-1.5 font-mono text-[10px] font-medium shrink-0">
+            <kbd className="hidden md:inline-flex h-5 items-center gap-1 rounded border border-border/40 bg-muted/30 px-1.5 font-mono text-2xs font-medium shrink-0">
               <Command className="size-3" />K
             </kbd>
           </Button>

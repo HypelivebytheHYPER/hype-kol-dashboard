@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 
 import { cn } from "@/lib/cn";
 import { CONTENT_CATEGORIES, getBrandsInCategory, type ContentCategoryId } from "@/lib/taxonomy";
-import { CATEGORY_STYLES } from "@/lib/design-tokens";
+import { CATEGORY_STYLES, DURATION, OVERLAY } from "@/lib/design-tokens";
 import { MCCard } from "./mc-card";
 import { MCListItem } from "./mc-list-item";
 import { MCDetailPanel } from "./mc-detail-panel";
@@ -364,7 +364,7 @@ export function LiveCatalogClient({ mcs }: LiveCatalogClientProps) {
       <div className="flex gap-0 overflow-hidden">
         {/* Main content */}
         <div className={cn(
-          "flex-1 min-w-0 transition-all duration-300",
+          "flex-1 min-w-0 transition-all", DURATION.normal,
           showDetail ? "hidden lg:block" : "block"
         )}>
           {view === "wiremap" ? (
@@ -420,7 +420,7 @@ export function LiveCatalogClient({ mcs }: LiveCatalogClientProps) {
 
         {/* Inline Detail Panel */}
         <div className={cn(
-          "shrink-0 border-l border-border bg-background overflow-y-auto transition-all duration-300 ease-out",
+          "shrink-0 border-l border-border bg-background overflow-y-auto transition-all ease-out", DURATION.normal,
           showDetail ? "w-full lg:w-[480px]" : "w-0"
         )}>
           {showDetail && selectedMC && (
@@ -480,7 +480,7 @@ export function LiveCatalogClient({ mcs }: LiveCatalogClientProps) {
             role="button"
             aria-label="Close request form"
             tabIndex={0}
-            className="fixed inset-0 bg-background/40 backdrop-blur-sm z-40 animate-fade-in"
+            className={cn("fixed inset-0 backdrop-blur-sm z-40 animate-fade-in", OVERLAY.light)}
             onClick={() => setShowRequestForm(false)}
             onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setShowRequestForm(false); }}
           />

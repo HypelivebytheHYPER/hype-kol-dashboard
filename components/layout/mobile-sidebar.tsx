@@ -8,13 +8,14 @@ import { BrandLogo } from "./brand-logo";
 import { NavLinks } from "./nav-links";
 import { ThemeToggle } from "./theme-toggle";
 import { NotificationButton } from "./notification-button";
+import { OVERLAY } from "@/lib/design-tokens";
 
 export function MobileSidebar() {
   const [open, setOpen] = useState(false);
   const { t } = useI18n();
 
   return (
-    <header className="h-14 border-b border-border/40 bg-background/60 backdrop-blur-xl flex items-center justify-between px-4 shrink-0">
+    <header className={`h-14 border-b border-border/40 ${OVERLAY.heavy} backdrop-blur-xl flex items-center justify-between px-4 shrink-0`}>
       <div className="flex items-center gap-3">
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger aria-label="Open navigation menu" className="size-10 inline-flex items-center justify-center rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">

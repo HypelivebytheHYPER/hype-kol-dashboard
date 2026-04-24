@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { cn } from "@/lib/cn";
 import { CONTENT_CATEGORIES, type ContentCategoryId } from "@/lib/taxonomy";
-import { CATEGORY_STYLES, UNCATEGORIZED_STYLE, GLASS, CHIP, AVATAR } from "@/lib/design-tokens";
+import { CATEGORY_STYLES, UNCATEGORIZED_STYLE, GLASS, CHIP, AVATAR, DURATION, OVERLAY } from "@/lib/design-tokens";
 import type { LiveMC } from "@/lib/types/catalog";
 import {
   Play,
@@ -115,7 +115,7 @@ export function MCDetailPanel({
 
           {/* Loading overlay */}
           {isPlaying && loading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-background/40 z-40 backdrop-blur-sm">
+            <div className={cn("absolute inset-0 flex items-center justify-center z-40 backdrop-blur-sm", OVERLAY.light)}>
               <Loader2 className="size-8 text-foreground animate-spin" />
             </div>
           )}
@@ -127,8 +127,8 @@ export function MCDetailPanel({
               className="absolute inset-0 flex items-center justify-center z-20 group/play"
               aria-label={`Play ${mc.handle}`}
             >
-              <div className="relative flex items-center justify-center transition-all duration-300 ease-out scale-100 group-hover/play:scale-110">
-                <div className={cn("absolute inset-0 rounded-full blur-xl scale-150 opacity-40 group-hover/play:opacity-70 transition-opacity duration-300", catStyle.playGlow)} />
+              <div className={`relative flex items-center justify-center transition-all ${DURATION.normal} ease-out scale-100 group-hover/play:scale-110`}>
+                <div className={cn("absolute inset-0 rounded-full blur-xl scale-150 opacity-40 group-hover/play:opacity-70 transition-opacity", DURATION.normal, catStyle.playGlow)} />
                 <div className={cn("size-16 rounded-full flex items-center justify-center shadow-lg", GLASS.base, GLASS.hover)}>
                   <Play className="size-7 text-foreground fill-foreground ml-0.5" />
                 </div>

@@ -84,7 +84,7 @@ export function MobileBottomNav() {
                       isActive && !item.isAction && "scale-110"
                     )}
                   />
-                  <span className={cn("text-[10px] font-medium", item.isAction && "sr-only")}>
+                  <span className={cn("text-2xs font-medium", item.isAction && "sr-only")}>
                     {item.name}
                   </span>
                 </Link>

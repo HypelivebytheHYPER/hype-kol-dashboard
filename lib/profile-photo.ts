@@ -35,9 +35,16 @@ export function getProfilePageUrl(kol: Creator): string | null {
   return null;
 }
 
-/** Check if a URL is a TikTok CDN URL that likely expired. */
+/** Check if a TikTok CDN URL has expired.
+ *  TikTok CDN URLs contain x-expires (unix timestamp) and x-signature.
+ *  We consider a URL expired if x-expires is within 1 hour of now. */
 function isExpiredTikTokCdn(url: string): boolean {
-  return /tiktokcdn[\w-]*\.com.*[?&]x-signature=/.test(url);
+  if (!/tiktokcdn[\w-]*\.com/.test(url)) return false;
+  const expiresMatch = url.match(/[?&]x-expires=(\d+)/);
+  if (!expiresMatch) return false; // no expiry = not a signed URL, probably still valid
+  const expiresAt = parseInt(expiresMatch[1], 10) * 1000;
+  const oneHour = 60 * 60 * 1000;
+  return expiresAt < Date.now() + oneHour;
 }
 
 async function fetchPhoto(profileUrl: string): Promise<string | null> {

@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/cn";
-import { CATEGORY_STYLES, UNCATEGORIZED_STYLE } from "@/lib/design-tokens";
+import { CATEGORY_STYLES, UNCATEGORIZED_STYLE, DURATION, OVERLAY, TEXT_OPACITY } from "@/lib/design-tokens";
 import { CONTENT_CATEGORIES, type ContentCategoryId } from "@/lib/taxonomy";
 import type { LiveMC } from "@/lib/types/catalog";
 import { Play, Briefcase, Check } from "lucide-react";
@@ -50,7 +50,7 @@ export function MCCard({ mc, isSelected, isPlaying, isSelectionMode = false, isC
             "absolute top-3 left-3 z-20 size-6 rounded-full border-2 flex items-center justify-center transition-all",
             isChecked
               ? "bg-primary border-primary text-primary-foreground"
-              : "bg-background/40 border-foreground/50 text-foreground/70 hover:bg-background/60"
+              : `${OVERLAY.light} border-foreground/50 text-foreground/70 hover:bg-background/60`
           )}
         >
           {isChecked && <Check className="size-3.5" />}
@@ -66,7 +66,7 @@ export function MCCard({ mc, isSelected, isPlaying, isSelectionMode = false, isC
             preload="metadata"
             muted
             playsInline
-            className="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+            className={`absolute inset-0 size-full object-cover transition-transform ${DURATION.slow} group-hover:scale-[1.04]`}
             onLoadedMetadata={(e) => {
               const v = e.currentTarget;
               if (v.duration > 0) v.currentTime = Math.min(0.5, v.duration * 0.1);
@@ -76,7 +76,7 @@ export function MCCard({ mc, isSelected, isPlaying, isSelectionMode = false, isC
           <img
             src={mc.profilePhoto}
             alt={mc.handle}
-            className="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+            className={`absolute inset-0 size-full object-cover transition-transform ${DURATION.slow} group-hover:scale-[1.04]`}
             loading="lazy"
             onError={() => setImgError(true)}
           />
@@ -87,7 +87,7 @@ export function MCCard({ mc, isSelected, isPlaying, isSelectionMode = false, isC
 
         {/* Play button — visible on hover or when playing */}
         {!isSelectionMode && (isPlaying || !isSelected) && hasVideo && (
-          <div className="absolute inset-0 flex items-center justify-center z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <div className={`absolute inset-0 flex items-center justify-center z-10 opacity-0 group-hover:opacity-100 transition-opacity ${DURATION.normal}`}>
             <div
               role="button"
               tabIndex={0}
@@ -105,7 +105,7 @@ export function MCCard({ mc, isSelected, isPlaying, isSelectionMode = false, isC
                 "size-12 rounded-full flex items-center justify-center backdrop-blur-md border transition-transform active:scale-90 cursor-pointer",
                 isPlaying
                   ? "bg-primary/80 border-primary/30 text-primary-foreground"
-                  : "bg-background/40 border-foreground/20 text-foreground"
+                  : `${OVERLAY.light} border-foreground/20 text-foreground`
               )}
               aria-label={isPlaying ? "Pause video" : "Play video"}
             >
@@ -117,7 +117,7 @@ export function MCCard({ mc, isSelected, isPlaying, isSelectionMode = false, isC
         {/* Top-right: brand count */}
         {mc.brands.length > 0 && (
           <div className="absolute top-3 right-3 z-10">
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-background/40 backdrop-blur-md text-foreground/80 text-[10px] font-semibold border border-foreground/10">
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full ${OVERLAY.light} backdrop-blur-md text-foreground/80 text-2xs font-semibold border border-foreground/10`}>
               <Briefcase className="size-2.5" />
               {mc.brands.length}
             </span>
@@ -139,7 +139,7 @@ export function MCCard({ mc, isSelected, isPlaying, isSelectionMode = false, isC
                 <span
                   key={catId}
                   className={cn(
-                    "px-1.5 py-0.5 rounded-md text-[10px] font-medium",
+                    "px-1.5 py-0.5 rounded-md text-2xs font-medium",
                     s.chipBg, s.chipText
                   )}
                 >
@@ -148,7 +148,7 @@ export function MCCard({ mc, isSelected, isPlaying, isSelectionMode = false, isC
               );
             })}
             {mc.contentCategories.length > 2 && (
-              <span className="text-[10px] text-foreground/50 px-1">+{mc.contentCategories.length - 2}</span>
+              <span className={`text-2xs ${TEXT_OPACITY.dim} px-1`}>+{mc.contentCategories.length - 2}</span>
             )}
           </div>
         </div>

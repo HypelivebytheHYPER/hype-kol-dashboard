@@ -455,7 +455,7 @@ export function WireMap({ mcs, selectedCategory }: WireMapProps) {
             {mcs.length} MCs · {new Set(mcs.flatMap((mc) => mc.contentCategories)).size} Categories · {new Set(mcs.flatMap((mc) => mc.brands)).size} Brands
           </p>
         </div>
-        <div className="flex gap-3 text-[10px] text-muted-foreground">
+        <div className="flex gap-3 text-2xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
             <span className="size-2.5 rounded-full inline-block bg-gradient-to-br from-chart-3 to-chart-4" /> MC
           </span>

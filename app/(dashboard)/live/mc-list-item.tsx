@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { cn } from "@/lib/cn";
 import { type ContentCategoryId } from "@/lib/taxonomy";
-import { CATEGORY_STYLES, UNCATEGORIZED_STYLE } from "@/lib/design-tokens";
+import { CATEGORY_STYLES, UNCATEGORIZED_STYLE, DURATION, OVERLAY, TEXT_OPACITY } from "@/lib/design-tokens";
 import type { LiveMC } from "@/lib/types/catalog";
 import { Play, Briefcase } from "lucide-react";
 
@@ -71,7 +71,7 @@ export function MCListItem({
             "absolute top-2 left-2 z-20 size-6 rounded-full border-2 flex items-center justify-center transition-all",
             isChecked
               ? "bg-primary border-primary text-primary-foreground"
-              : "bg-background/50 border-foreground/40 text-foreground/70 hover:bg-background/70"
+              : `${OVERLAY.medium} border-foreground/40 text-foreground/70 hover:bg-background/70`
           )}
         >
           {isChecked && (
@@ -87,7 +87,7 @@ export function MCListItem({
         <img
           src={previewUrl}
           alt={mc.handle}
-          className="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+          className={`absolute inset-0 size-full object-cover transition-transform ${DURATION.slow} group-hover:scale-[1.04]`}
           loading="lazy"
           onError={() => setImgError(true)}
         />
@@ -110,7 +110,7 @@ export function MCListItem({
       {/* Play button */}
       {!isSelectionMode && hasVideo && (
         <div
-          className="absolute inset-0 flex items-center justify-center z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          className={`absolute inset-0 flex items-center justify-center z-10 opacity-0 group-hover:opacity-100 transition-opacity ${DURATION.normal}`}
           onClick={(e) => {
             e.stopPropagation();
             onPlay();
@@ -121,7 +121,7 @@ export function MCListItem({
               "size-10 rounded-full flex items-center justify-center backdrop-blur-md border transition-transform active:scale-90",
               isPlaying
                 ? "bg-primary/80 border-primary/30 text-primary-foreground"
-                : "bg-background/40 border-foreground/20 text-foreground"
+                : `${OVERLAY.light} border-foreground/20 text-foreground`
             )}
             aria-label={isPlaying ? "Pause video" : "Play video"}
           >
@@ -140,7 +140,7 @@ export function MCListItem({
       {/* Brand count badge */}
       {mc.brands.length > 0 && (
         <div className="absolute top-2 right-8 z-10">
-          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-background/50 backdrop-blur-sm text-foreground/80 text-[10px] font-semibold border border-foreground/10">
+          <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full ${OVERLAY.medium} backdrop-blur-sm text-foreground/80 text-2xs font-semibold border border-foreground/10`}>
             <Briefcase className="size-2" />
             {mc.brands.length}
           </span>
@@ -156,13 +156,13 @@ export function MCListItem({
           {mc.brands.slice(0, 2).map((brand) => (
             <span
               key={brand}
-              className="px-1.5 py-0.5 rounded-md bg-background/60 backdrop-blur-sm text-[10px] text-foreground/80 font-medium truncate max-w-[80px]"
+              className={`px-1.5 py-0.5 rounded-md ${OVERLAY.heavy} backdrop-blur-sm text-2xs text-foreground/80 font-medium truncate max-w-[80px]`}
             >
               {brand}
             </span>
           ))}
           {mc.brands.length > 2 && (
-            <span className="text-[10px] text-foreground/50 px-1">+{mc.brands.length - 2}</span>
+            <span className={`text-2xs ${TEXT_OPACITY.dim} px-1`}>+{mc.brands.length - 2}</span>
           )}
         </div>
       </div>

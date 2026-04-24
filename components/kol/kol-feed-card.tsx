@@ -7,6 +7,7 @@ import { formatCurrency, formatFeeRange, formatNumber } from "@/lib/format";
 import { getTierColor } from "@/lib/tier";
 import { kolProfilePath } from "@/lib/constants";
 import { cn } from "@/lib/cn";
+import { DURATION, OVERLAY, TEXT_OPACITY, FG_OPACITY } from "@/lib/design-tokens";
 import { useProfilePhoto } from "@/lib/profile-photo";
 import type { Creator } from "@/lib/types/catalog";
 
@@ -53,7 +54,7 @@ export function KOLFeedCard({ kol, priority = false, freshPhoto }: KOLFeedCardPr
         <img
           src={imageUrl}
           alt={kol.name || kol.handle || "Creator"}
-          className="absolute inset-0 size-full object-cover transition-transform duration-500 ease-out motion-safe:group-hover:scale-[1.04]"
+          className={`absolute inset-0 size-full object-cover transition-transform ${DURATION.slow} ease-out motion-safe:group-hover:scale-[1.04]`}
           loading={priority ? "eager" : "lazy"}
           fetchPriority={priority ? "high" : "auto"}
           decoding="async"
@@ -69,7 +70,7 @@ export function KOLFeedCard({ kol, priority = false, freshPhoto }: KOLFeedCardPr
           <div
             className="absolute inset-0 opacity-[0.06] bg-[radial-gradient(circle,hsl(var(--foreground))_1px,transparent_1px)] bg-[length:20px_20px]"
           />
-          <div className="size-14 rounded-full bg-foreground/10 border border-foreground/15 flex items-center justify-center text-xl font-bold text-foreground/60">
+          <div className={`size-14 rounded-full ${FG_OPACITY.subtle} border border-foreground/15 flex items-center justify-center text-xl font-bold ${TEXT_OPACITY.muted}`}>
             {initial}
           </div>
         </div>
@@ -80,7 +81,7 @@ export function KOLFeedCard({ kol, priority = false, freshPhoto }: KOLFeedCardPr
 
       {/* Top badges */}
       <div className="absolute top-3 left-3 right-3 flex justify-between items-start z-10">
-        <span className="px-2 py-0.5 rounded-full bg-background/40 backdrop-blur-md text-foreground/80 text-2xs font-semibold tracking-wide uppercase border border-foreground/10">
+        <span className={`px-2 py-0.5 rounded-full ${OVERLAY.light} backdrop-blur-md text-foreground/80 text-2xs font-semibold tracking-wide uppercase border border-foreground/10`}>
           {kol.platform}
         </span>
         <span
@@ -98,7 +99,7 @@ export function KOLFeedCard({ kol, priority = false, freshPhoto }: KOLFeedCardPr
         <p className="text-foreground font-semibold text-sm leading-tight truncate drop-shadow-lg">
           {kol.name || kol.handle}
         </p>
-        <p className="text-foreground/50 text-xs leading-tight truncate font-mono">
+        <p className={`${TEXT_OPACITY.dim} text-xs leading-tight truncate font-mono`}>
           @{kol.handle}
         </p>
         {kol.location && (
@@ -112,27 +113,30 @@ export function KOLFeedCard({ kol, priority = false, freshPhoto }: KOLFeedCardPr
       {/* Hover overlay — stats */}
       <div
         className={cn(
-          "absolute inset-0 bg-background/60 backdrop-blur-sm flex flex-col items-center justify-center gap-3 z-20 transition-opacity duration-300 motion-safe:duration-300",
+          "absolute inset-0 backdrop-blur-sm flex flex-col items-center justify-center gap-3 z-20 transition-opacity",
+          OVERLAY.heavy,
+          DURATION.normal,
+          "motion-safe:duration-300",
           isHovered ? "opacity-100" : "opacity-0 pointer-events-none",
           "group-focus-visible:opacity-100 group-focus-visible:pointer-events-auto"
         )}
       >
         <div className="text-center">
-          <p className="text-foreground/50 text-2xs uppercase tracking-wider font-medium">Followers</p>
+          <p className={`${TEXT_OPACITY.dim} text-2xs uppercase tracking-wider font-medium`}>Followers</p>
           <p className="text-foreground font-bold text-lg font-mono tabular-nums">{formatNumber(kol.followers)}</p>
         </div>
         <div className="text-center">
-          <p className="text-foreground/50 text-2xs uppercase tracking-wider font-medium">Revenue</p>
+          <p className={`${TEXT_OPACITY.dim} text-2xs uppercase tracking-wider font-medium`}>Revenue</p>
           <p className="text-foreground font-bold text-lg font-mono tabular-nums">{primaryValue}</p>
         </div>
         <div className="text-center">
-          <p className="text-foreground/50 text-2xs uppercase tracking-wider font-medium">Engagement</p>
+          <p className={`${TEXT_OPACITY.dim} text-2xs uppercase tracking-wider font-medium`}>Engagement</p>
           <p className="text-foreground font-bold text-lg font-mono tabular-nums">
             {kol.engagementRate > 100 ? formatNumber(kol.engagementRate) : `${kol.engagementRate.toFixed(1)}%`}
           </p>
         </div>
         {kol.fees && (
-          <p className="text-foreground/60 text-xs font-mono mt-1">
+          <p className={`${TEXT_OPACITY.muted} text-xs font-mono mt-1`}>
             {formatFeeRange(kol.fees)}
           </p>
         )}
