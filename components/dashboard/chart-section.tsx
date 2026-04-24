@@ -22,9 +22,9 @@ import {
 import { Button } from "@/components/ui/button";
 
 const TREND_COLORS = {
-  up: "hsl(var(--chart-2))",
-  down: "hsl(var(--destructive))",
-  neutral: "hsl(var(--chart-5))",
+  up: "var(--chart-2)",
+  down: "var(--destructive)",
+  neutral: "var(--chart-5)",
 };
 
 interface ChartSectionProps {
@@ -85,8 +85,8 @@ export function ChartSection({ history }: ChartSectionProps) {
       acc[key] = {
         label: metric?.metricLabel ?? key,
         theme: {
-          light: `hsl(var(--chart-${(i % 5) + 1}))`,
-          dark: `hsl(var(--chart-${(i % 5) + 1}))`,
+          light: `var(--chart-${(i % 5) + 1})`,
+          dark: `var(--chart-${(i % 5) + 1})`,
         },
       };
       return acc;

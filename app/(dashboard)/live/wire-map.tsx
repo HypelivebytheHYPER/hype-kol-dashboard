@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useEffect, useState } from "react";
+import { cn } from "@/lib/cn";
 import { CONTENT_CATEGORIES, getBrandCategories, type ContentCategoryId } from "@/lib/taxonomy";
 import { mcHue, oklch, canvasColors } from "@/lib/design-tokens";
 import type { LiveMC } from "@/lib/types/catalog";
@@ -16,8 +17,11 @@ interface Node {
   type: "mc" | "category" | "brand";
   x: number;
   y: number;
-  color: string;
   radius: number;
+  /** Category ID for theme-aware color lookup at draw time */
+  catId?: ContentCategoryId;
+  /** Hue for MC nodes (deterministic from handle) */
+  hue?: number;
 }
 
 interface Edge {
@@ -40,11 +44,15 @@ const LAYOUT = {
 export function WireMap({ mcs, selectedCategory }: WireMapProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [isHoveringNode, setIsHoveringNode] = useState(false);
   const [dimensions, setDimensions] = useState({ width: 900, height: 600 });
   const [isDark, setIsDark] = useState(false);
+
+  // Refs for hover state to avoid React re-renders on every mousemove pixel
+  const hoveredNodeRef = useRef<string | null>(null);
+  const isHoveringNodeRef = useRef(false);
+  const rafRef = useRef<number | null>(null);
 
   // Clear node selection when category filter changes
   useEffect(() => {
@@ -110,15 +118,14 @@ export function WireMap({ mcs, selectedCategory }: WireMapProps) {
 
     mcs.forEach((mc, i) => {
       const angle = (i / mcs.length) * Math.PI * 2 - Math.PI / 2;
-      const hue = mcHue(mc.handle);
       nodeMap.set(mc.id, {
         id: mc.id,
         label: mc.handle,
         type: "mc",
         x: mcCenterX + Math.cos(angle) * mcCircleRadius,
         y: centerY + Math.sin(angle) * mcCircleRadius,
-        color: oklch(null, 0.60, hue, 0.14),
         radius: LAYOUT.radius.mc,
+        hue: mcHue(mc.handle),
       });
     });
 
@@ -134,8 +141,8 @@ export function WireMap({ mcs, selectedCategory }: WireMapProps) {
         type: "category",
         x: catX,
         y: catStartY + i * LAYOUT.gap.cat,
-        color: oklch(cat.id, 0.62),
         radius: LAYOUT.radius.cat,
+        catId: cat.id,
       });
     });
 
@@ -151,7 +158,6 @@ export function WireMap({ mcs, selectedCategory }: WireMapProps) {
         type: "brand",
         x: brandX,
         y: brandStartY + i * LAYOUT.gap.brand,
-        color: oklch(null, 0.55),
         radius: LAYOUT.radius.brand,
       });
     });
@@ -199,8 +205,27 @@ export function WireMap({ mcs, selectedCategory }: WireMapProps) {
     );
   }, [nodes]);
 
-  // Draw
-  useEffect(() => {
+  // Hit-test a canvas coordinate against all nodes
+  const hitTest = (clientX: number, clientY: number): string | null => {
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+    const rect = canvas.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+
+    for (const node of nodes) {
+      const dx = x - node.x;
+      const dy = y - node.y;
+      const hitRadius = node.radius + 8;
+      if (dx * dx + dy * dy < hitRadius * hitRadius) {
+        return node.id;
+      }
+    }
+    return null;
+  };
+
+  // Imperative redraw using refs — avoids React re-renders on every mousemove
+  const drawCanvas = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -214,8 +239,20 @@ export function WireMap({ mcs, selectedCategory }: WireMapProps) {
 
     const nodeById = new Map(nodes.map((n) => [n.id, n]));
     const theme = canvasColors();
+    const hoverId = hoveredNodeRef.current;
+    const selectId = selectedNode;
 
-    const focus = hoveredNode ?? selectedNode ?? (selectedCategory ? `cat:${selectedCategory}` : null);
+    const getNodeColor = (node: Node): string => {
+      if (node.type === "mc" && node.hue != null) {
+        return oklch(null, 0.60, node.hue, 0.14);
+      }
+      if (node.type === "category" && node.catId) {
+        return oklch(node.catId, 0.62);
+      }
+      return oklch(null, 0.55);
+    };
+
+    const focus = hoverId ?? selectId ?? (selectedCategory ? `cat:${selectedCategory}` : null);
     const hasFocus = !!focus;
 
     const isConnected2Hop = (nodeId: string): boolean => {
@@ -270,14 +307,14 @@ export function WireMap({ mcs, selectedCategory }: WireMapProps) {
       // Node circle
       ctx.beginPath();
       ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
-      ctx.fillStyle = node.color;
+      ctx.fillStyle = getNodeColor(node);
       ctx.fill();
 
-      if (node.id === hoveredNode) {
+      if (node.id === hoverId) {
         ctx.strokeStyle = theme.nodeStroke;
         ctx.lineWidth = 2;
         ctx.stroke();
-      } else if (node.id === selectedNode) {
+      } else if (node.id === selectId) {
         ctx.setLineDash([4, 3]);
         ctx.strokeStyle = theme.nodeStroke;
         ctx.lineWidth = 1.5;
@@ -287,7 +324,7 @@ export function WireMap({ mcs, selectedCategory }: WireMapProps) {
 
       // Label
       const fontSize = node.type === "category" ? 11 : node.type === "mc" ? 10 : 9;
-      const fontWeight = node.type === "category" || node.id === hoveredNode || node.id === selectedNode ? "bold " : "";
+      const fontWeight = node.type === "category" || node.id === hoverId || node.id === selectId ? "bold " : "";
       ctx.font = `${fontWeight}${fontSize}px system-ui, sans-serif`;
       ctx.fillStyle = dimmed
         ? theme.textDimmed
@@ -316,37 +353,98 @@ export function WireMap({ mcs, selectedCategory }: WireMapProps) {
     ctx.fillText("MCs", dimensions.width * LAYOUT.col.mc, 20);
     ctx.fillText("Categories", dimensions.width * LAYOUT.col.cat, 20);
     ctx.fillText("Brands", dimensions.width * LAYOUT.col.brand, 20);
-  }, [nodes, edges, hoveredNode, selectedNode, selectedCategory, dimensions, isDark]);
-
-  // Hit-test a canvas coordinate against all nodes
-  const hitTest = (clientX: number, clientY: number): string | null => {
-    const canvas = canvasRef.current;
-    if (!canvas) return null;
-    const rect = canvas.getBoundingClientRect();
-    const x = clientX - rect.left;
-    const y = clientY - rect.top;
-
-    for (const node of nodes) {
-      const dx = x - node.x;
-      const dy = y - node.y;
-      const hitRadius = node.radius + 8;
-      if (dx * dx + dy * dy < hitRadius * hitRadius) {
-        return node.id;
-      }
-    }
-    return null;
   };
+
+  // Redraw when dependencies change (but NOT on every hover — hover uses refs + rAF)
+  useEffect(() => {
+    drawCanvas();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes, edges, selectedNode, selectedCategory, dimensions, isDark]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const hit = hitTest(e.clientX, e.clientY);
-    setHoveredNode(hit);
-    setIsHoveringNode(!!hit);
+    const changed = hit !== hoveredNodeRef.current;
+    hoveredNodeRef.current = hit;
+    isHoveringNodeRef.current = !!hit;
+
+    if (changed) {
+      setIsHoveringNode(!!hit);
+      // Imperative redraw for hover visuals without waiting for React re-render
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(drawCanvas);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (hoveredNodeRef.current !== null) {
+      hoveredNodeRef.current = null;
+      isHoveringNodeRef.current = false;
+      setIsHoveringNode(false);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(drawCanvas);
+    }
   };
 
   const handleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const hit = hitTest(e.clientX, e.clientY);
     setSelectedNode((prev) => (prev === hit ? null : hit));
   };
+
+  // Keyboard navigation
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLCanvasElement>) => {
+    if (nodes.length === 0) return;
+    const currentId = selectedNode ?? hoveredNodeRef.current;
+
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      if (currentId) {
+        setSelectedNode((prev) => (prev === currentId ? null : currentId));
+      } else {
+        setSelectedNode(nodes[0].id);
+      }
+      return;
+    }
+
+    if (e.key === "Escape") {
+      e.preventDefault();
+      setSelectedNode(null);
+      return;
+    }
+
+    let targetIndex = -1;
+    if (currentId) {
+      targetIndex = nodes.findIndex((n) => n.id === currentId);
+    }
+
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+      e.preventDefault();
+      const nextIndex = targetIndex >= 0 ? (targetIndex + 1) % nodes.length : 0;
+      const nextId = nodes[nextIndex].id;
+      setSelectedNode(nextId);
+      hoveredNodeRef.current = nextId;
+      isHoveringNodeRef.current = true;
+      setIsHoveringNode(true);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(drawCanvas);
+    } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+      e.preventDefault();
+      const nextIndex = targetIndex >= 0 ? (targetIndex - 1 + nodes.length) % nodes.length : nodes.length - 1;
+      const nextId = nodes[nextIndex].id;
+      setSelectedNode(nextId);
+      hoveredNodeRef.current = nextId;
+      isHoveringNodeRef.current = true;
+      setIsHoveringNode(true);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(drawCanvas);
+    }
+  };
+
+  const focusDescription = useMemo(() => {
+    const mcCount = mcs.length;
+    const catCount = new Set(mcs.flatMap((mc) => mc.contentCategories)).size;
+    const brandCount = new Set(mcs.flatMap((mc) => mc.brands)).size;
+    return `Network graph showing ${mcCount} MCs connected to ${catCount} categories and ${brandCount} brands. Use arrow keys to navigate nodes, Enter or Space to select, Escape to clear.`;
+  }, [mcs]);
 
   return (
     <div ref={containerRef} className="rounded-xl border border-border bg-card overflow-hidden">
@@ -371,14 +469,18 @@ export function WireMap({ mcs, selectedCategory }: WireMapProps) {
       </div>
       <canvas
         ref={canvasRef}
+        role="img"
+        aria-label={focusDescription}
+        tabIndex={0}
         style={{ width: dimensions.width, height: dimensions.height }}
-        className={isHoveringNode ? "cursor-pointer" : "cursor-crosshair"}
+        className={cn(
+          "outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+          isHoveringNode ? "cursor-pointer" : "cursor-crosshair"
+        )}
         onMouseMove={handleMouseMove}
-        onMouseLeave={() => {
-          setHoveredNode(null);
-          setIsHoveringNode(false);
-        }}
+        onMouseLeave={handleMouseLeave}
         onClick={handleClick}
+        onKeyDown={handleKeyDown}
       />
     </div>
   );

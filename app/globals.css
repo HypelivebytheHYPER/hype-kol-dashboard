@@ -37,6 +37,15 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --studio-accent: oklch(0.58 0.2 255);
+  --studio-accent-foreground: oklch(0.985 0 0);
+  --ring-width: 1.5px;
+  --ring-offset-width: 3px;
+  --scrollbar-size: 6px;
+  --scrollbar-radius: 100px;
+  --animation-offset-md: 1rem;
+  --animation-offset-sm: 0.5rem;
+  --touch-target: 44px;
 }
 
 @theme inline {
@@ -64,10 +73,10 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 0.25rem);
+  --radius-md: calc(var(--radius) - 0.125rem);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-xl: calc(var(--radius) + 0.25rem);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono), ui-monospace, monospace;
   --text-2xs: 0.625rem;
@@ -79,15 +88,18 @@
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
+  --color-studio-accent: var(--studio-accent);
+  --color-studio-accent-foreground: var(--studio-accent-foreground);
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --breakpoint-xs: 20rem;
 }
 
 /* ── Premium Scrollbar ── */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: var(--scrollbar-size);
+  height: var(--scrollbar-size);
 }
 
 ::-webkit-scrollbar-track {
@@ -96,7 +108,7 @@
 
 ::-webkit-scrollbar-thumb {
   background: var(--border);
-  border-radius: 100px;
+  border-radius: var(--scrollbar-radius);
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -107,7 +119,7 @@
 @keyframes fade-in-up {
   from {
     opacity: 0;
-    transform: translateY(16px);
+    transform: translateY(var(--animation-offset-md));
   }
   to {
     opacity: 1;
@@ -144,7 +156,7 @@
 @keyframes slide-in-right {
   from {
     opacity: 0;
-    transform: translateX(-8px);
+    transform: translateX(calc(var(--animation-offset-sm) * -1));
   }
   to {
     opacity: 1;
@@ -194,6 +206,10 @@
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
   }
+  /* Defensive: prevent unexpected orphaned nodes from expanding document flow */
+  body > div:not([class]) {
+    display: none !important;
+  }
 }
 
 /* ── Dark Mode: Premium Tesla/Uber Vibe ── */
@@ -230,31 +246,28 @@
   --sidebar-accent-foreground: oklch(0.97 0 0);
   --sidebar-border: oklch(1 0 0 / 6%);
   --sidebar-ring: oklch(0.5 0 0);
+  --studio-accent: oklch(0.72 0.18 255);
+  --studio-accent-foreground: oklch(0.1 0 0);
 }
 
-/* ── Focus States: Minimal & Premium ── */
-*:focus {
-  outline: none !important;
-}
-
+/* ── Focus States: Accessible & Premium ── */
 *:focus-visible {
-  outline: none !important;
-  box-shadow: 0 0 0 1.5px var(--ring) !important;
+  outline: var(--ring-width) solid var(--ring);
+  outline-offset: var(--ring-offset-width);
 }
 
 button:focus-visible,
 a:focus-visible {
-  box-shadow:
-    0 0 0 1.5px var(--ring),
-    0 0 0 3px var(--background) !important;
+  outline: var(--ring-width) solid var(--ring);
+  outline-offset: var(--ring-offset-width);
 }
 
 /* ── Better touch targets for mobile ── */
-@media (max-width: 640px) {
+@media (width < theme(--breakpoint-sm)) {
   button,
   a {
-    min-height: 44px;
-    min-width: 44px;
+    min-height: var(--touch-target);
+    min-width: var(--touch-target);
   }
 }
 
@@ -262,6 +275,7 @@ a:focus-visible {
 button,
 a,
 [role="button"] {
+  cursor: pointer;
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
@@ -277,8 +291,8 @@ a,
   display: none;
 }
 
-/* xs breakpoint utility (320px+) */
-@media (min-width: 320px) {
+/* xs breakpoint utility */
+@media (width >= theme(--breakpoint-xs)) {
   .xs\:inline {
     display: inline;
   }

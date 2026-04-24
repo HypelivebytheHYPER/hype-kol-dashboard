@@ -62,7 +62,7 @@ All data fetched server-side via two helpers in `lib/lark-base.ts`:
 
 | Table             | ID                  | Mapper                       |
 | ----------------- | ------------------- | ---------------------------- |
-| ALL_KOLS          | tbl5864QVOiEokTQ    | `recordToCreator()`          |
+| ALL_KOLS          | tblaijZshhnZLDWJ    | `recordToCreator()`          |
 | LIVE_MC_LIST      | tblozhTWBHelXqRR    | `recordToLiveMC()`           |
 | DASHBOARD_SUMMARY | tblOwkSqf5rci6zq    | `recordToDashboardMetric()`  |
 

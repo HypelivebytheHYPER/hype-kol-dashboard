@@ -36,6 +36,7 @@ export const ROUTES = {
   KOLS: "/kols",
   LIVE: "/live",
   DASHBOARD: "/dashboard",
+  HYPESTUDIO: "/hypestudio",
 } as const;
 
 /** Valid dashboard types for /dashboard/[dashboard-type] */

@@ -23,11 +23,10 @@ export const metadata: Metadata = {
   },
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300; // 5 minutes ISR
 
-// Route-level fallback lives in `./loading.tsx` — no Suspense wrapper here.
 export default async function LiveCatalogPage() {
-  const result = await fetchRecords(TABLES.LIVE_MC_LIST, { tags: ["live-mc"], cache: "no-store" });
+  const result = await fetchRecords(TABLES.LIVE_MC_LIST, { pageSize: 100 });
   const mcs = result.data.map(recordToLiveMC);
 
   return <LiveCatalogClient mcs={mcs} />;

@@ -101,9 +101,10 @@ export function DataTableSection({ metrics }: DataTableSectionProps) {
           return dir * (a.metricValue - b.metricValue);
         case "change":
           return dir * (a.change - b.change);
-        case "trend":
+        case "trend": {
           const order = { up: 3, neutral: 2, down: 1 };
           return dir * (order[a.trend] - order[b.trend]);
+        }
         default:
           return 0;
       }

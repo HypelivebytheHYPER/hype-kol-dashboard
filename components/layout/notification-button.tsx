@@ -17,9 +17,10 @@ export function NotificationButton({ className }: NotificationButtonProps) {
       size="icon"
       className={className}
       title={t("header.notifications")}
+      aria-label={t("header.notifications")}
     >
-      <Bell />
-      <span className="absolute top-1 right-1 size-2 bg-destructive rounded-full" />
+      <Bell aria-hidden="true" />
+      <span className="absolute top-1 right-1 size-2 bg-destructive rounded-full" aria-hidden="true" />
     </Button>
   );
 }

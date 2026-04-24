@@ -10,7 +10,7 @@ export interface ErrorProps {
 
 // ============ Lark Base table schemas ============
 
-// ALL_KOLS (tbl5864QVOiEokTQ)
+// ALL_KOLS (tblaijZshhnZLDWJ)
 // Note: Lark stores one row per fee package, so a single creator can span
 // multiple rows. `fees` aggregates the package range after dedupe().
 export interface Creator {
@@ -56,6 +56,8 @@ export interface LiveMC {
   brands: string[];
   categories: string[];
   contentCategories: string[];
+  /** Profile photo URL (from TikTok/IG scrape or manual upload) */
+  profilePhoto?: string;
   videos: { token: string; url: string; name: string }[];
   /** All image attachments from LIVE Reference field (proper token URLs) */
   images: { token: string; url: string; name: string }[];
@@ -74,4 +76,24 @@ export interface DashboardMetric {
   metricUnit: string;
   change: number;
   trend: "up" | "down" | "neutral";
+}
+
+// STUDIO_LIST (tblKvYwcJY7Yxa20)
+// Photo / video studio and venue listings.
+export interface Studio {
+  id: string;
+  name: string;
+  provider: string;
+  /** Display price — formula field (Starting Price), NOT raw Price */
+  startingPrice: number;
+  size: string;
+  capacity: number;
+  parking: string;
+  hours: string;
+  deposit: number;
+  contact: string;
+  reference: string;
+  recommended: boolean;
+  /** All attachment image URLs — served via Cloudflare Worker */
+  images: string[];
 }

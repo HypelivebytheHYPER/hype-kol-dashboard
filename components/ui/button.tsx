@@ -20,6 +20,12 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
         link: "text-primary underline-offset-4 hover:underline",
+        studio:
+          "bg-studio-accent text-studio-accent-foreground hover:brightness-110 focus-visible:ring-studio-accent/30",
+        "studio-outline":
+          "border-studio-accent/30 bg-transparent text-studio-accent hover:bg-studio-accent/10 hover:border-studio-accent/50 focus-visible:ring-studio-accent/20",
+        "studio-ghost":
+          "bg-transparent text-studio-accent hover:bg-studio-accent/10 focus-visible:ring-studio-accent/20",
       },
       size: {
         default:

@@ -97,8 +97,7 @@ export function MobileBottomNav() {
         </div>
       </nav>
 
-      {/* Spacer for content to not be hidden behind bottom nav */}
-      <div className="h-20 lg:hidden" />
+      {/* Spacer removed — dashboard layout <main> already has pb-24 to clear nav */}
     </>
   );
 }

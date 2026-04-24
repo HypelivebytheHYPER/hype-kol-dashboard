@@ -23,10 +23,11 @@ export function BrandLogo({ size = "md", onClick, className }: BrandLogoProps) {
     >
       <Image
         src={BRAND.logoUrl}
-        alt={BRAND.name}
+        alt=""
         width={isSmall ? 28 : 36}
         height={isSmall ? 28 : 36}
         className="rounded-lg drop-shadow-md"
+        aria-hidden="true"
       />
       <span className={cn("font-bold tracking-tight", isSmall ? "text-base" : "text-lg")}>
         {BRAND.name}

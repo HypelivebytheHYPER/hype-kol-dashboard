@@ -5,8 +5,8 @@ import "./globals.css";
 import { ThemeProvider } from "@/contexts/theme-provider";
 import { I18nProvider } from "@/contexts/i18n-context";
 import { BRAND } from "@/lib/brand";
-import { SERVICES } from "@/lib/external-services";
 import { Toaster } from "sonner";
+import { SERVICES } from "@/lib/external-services";
 
 const notoSansThai = Noto_Sans_Thai({
   subsets: ["thai", "latin"],

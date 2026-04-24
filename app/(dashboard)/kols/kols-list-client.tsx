@@ -1,38 +1,33 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect, useRef } from "react";
-
+import { useState, useMemo, useCallback } from "react";
 import {
   Search,
-  SlidersHorizontal,
   X,
+  SlidersHorizontal,
   ChevronDown,
+  Check,
   Users,
-  Clock,
+  ImageIcon,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { KOLFeedCard } from "@/components/kol/kol-feed-card";
-import { Pagination } from "@/components/ui/pagination";
-import { formatCurrency, formatNumber } from "@/lib/format";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { formatNumber } from "@/lib/format";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
 import { TIER_ORDER } from "@/lib/tier";
 import type { Creator } from "@/lib/types/catalog";
-import {
-  parseSmartSearch,
-  applySmartFilters,
-  getSearchSuggestions,
-  getRecentSearches,
-  addRecentSearch,
-} from "@/lib/smart-search";
+import { parseSmartSearch, applySmartFilters } from "@/lib/smart-search";
+import { KOLFeedCard } from "@/components/kol/kol-feed-card";
+import { cn } from "@/lib/cn";
 
 type SortKey = "followers" | "gmv" | "engagement" | "revenue" | "views" | "quality";
 type TypeTab = "all" | "Live Creator" | "Live Seller" | "Creator";
-
-
 
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: "revenue", label: "Revenue" },
@@ -43,20 +38,21 @@ const SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: "quality", label: "Score" },
 ];
 
+const TYPE_TABS: { value: TypeTab; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "Live Creator", label: "Live Creator" },
+  { value: "Live Seller", label: "Live Seller" },
+  { value: "Creator", label: "Creator" },
+];
+
 function getSortValue(kol: Creator, key: SortKey): number {
   switch (key) {
-    case "followers":
-      return kol.followers;
-    case "gmv":
-      return kol.avgGMV || kol.avgLiveGMV;
-    case "engagement":
-      return kol.engagementRate;
-    case "revenue":
-      return kol.stats.revenue;
-    case "views":
-      return kol.stats.views;
-    case "quality":
-      return kol.qualityScore;
+    case "followers": return kol.followers;
+    case "gmv": return kol.avgGMV || kol.avgLiveGMV;
+    case "engagement": return kol.engagementRate;
+    case "revenue": return kol.stats.revenue;
+    case "views": return kol.stats.views;
+    case "quality": return kol.qualityScore;
   }
 }
 
@@ -67,58 +63,44 @@ interface KOLsListClientProps {
 
 export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState<SortKey>("revenue");
   const [sortDesc, setSortDesc] = useState(true);
   const [selectedTiers, setSelectedTiers] = useState<string[]>([]);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
+  const [hidePlaceholders, setHidePlaceholders] = useState(false);
   const [typeTab, setTypeTab] = useState<TypeTab>("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [recentSearches, setRecentSearches] = useState<string[]>([]);
-  const suggestionsRef = useRef<HTMLDivElement>(null);
+  const [showSidebar, setShowSidebar] = useState(false);
 
   const allKOLs = useMemo(() => {
     if (typeTab === "all") return initialKOLs;
     return initialKOLs.filter((k) => k.kolType === typeTab);
   }, [initialKOLs, typeTab]);
 
-  // Derive filter option lists from the loaded data so the UI automatically
-  // tracks the real Lark option sets (including future additions).
   const tiers = useMemo(() => {
     const present = new Set(initialKOLs.map((k) => k.tier).filter(Boolean));
     return TIER_ORDER.filter((t) => present.has(t));
   }, [initialKOLs]);
 
   const platforms = useMemo(
-    () =>
-      [...new Set(initialKOLs.map((k) => k.platform).filter(Boolean))].sort(),
+    () => [...new Set(initialKOLs.map((k) => k.platform).filter(Boolean))].sort(),
     [initialKOLs]
   );
 
-  // Parse smart search filters
   const smartFilters = useMemo(() => parseSmartSearch(searchQuery), [searchQuery]);
 
   const filtered = useMemo(() => {
     let result = allKOLs;
-
-    // Apply smart search filters
-    if (searchQuery.trim()) {
-      result = applySmartFilters(result, smartFilters);
-    }
-
-    // UI filter toggles
-    if (selectedTiers.length > 0) {
-      result = result.filter((k) => selectedTiers.includes(k.tier));
-    }
+    if (searchQuery.trim()) result = applySmartFilters(result, smartFilters);
+    if (selectedTiers.length > 0) result = result.filter((k) => selectedTiers.includes(k.tier));
     if (selectedPlatforms.length > 0) {
       result = result.filter((k) =>
         selectedPlatforms.some((p) => k.platform?.toLowerCase().includes(p.toLowerCase()))
       );
     }
+    if (hidePlaceholders) result = result.filter((k) => !!k.image);
     return result;
-  }, [allKOLs, smartFilters, selectedTiers, selectedPlatforms, searchQuery]);
+  }, [allKOLs, smartFilters, selectedTiers, selectedPlatforms, searchQuery, hidePlaceholders]);
 
   const sorted = useMemo(() => {
     return [...filtered].sort((a, b) => {
@@ -131,14 +113,7 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
   const totalPages = Math.ceil(sorted.length / ITEMS_PER_PAGE);
   const paginated = sorted.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
-  const stats = useMemo(() => {
-    const total = filtered.length;
-    const totalFollowers = filtered.reduce((s, k) => s + k.followers, 0);
-    const totalRevenue = filtered.reduce((s, k) => s + (k.stats?.revenue || 0), 0);
-    const avgGMV =
-      total > 0 ? filtered.reduce((s, k) => s + (k.avgGMV || k.avgLiveGMV || 0), 0) / total : 0;
-    return { total, totalFollowers, totalRevenue, avgGMV };
-  }, [filtered]);
+  const withPhotoCount = useMemo(() => initialKOLs.filter((k) => !!k.image).length, [initialKOLs]);
 
   const toggleFilter = useCallback(
     (setter: React.Dispatch<React.SetStateAction<string[]>>, value: string) => {
@@ -148,358 +123,350 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
     []
   );
 
-  const activeFilterCount = selectedTiers.length + selectedPlatforms.length;
+  const activeFilterCount = selectedTiers.length + selectedPlatforms.length + (hidePlaceholders ? 1 : 0);
   const clearAllFilters = () => {
     setSelectedTiers([]);
     setSelectedPlatforms([]);
+    setHidePlaceholders(false);
     setSearchQuery("");
     setCurrentPage(1);
   };
 
-  // Load recent searches on mount
-  // Update suggestions as user types
-  useEffect(() => {
-    if (searchQuery.trim().length >= 2) {
-      const newSuggestions = getSearchSuggestions(allKOLs, searchQuery);
-      setSuggestions(newSuggestions);
-      setShowSuggestions(newSuggestions.length > 0);
-    } else {
-      setShowSuggestions(false);
-    }
-  }, [searchQuery, allKOLs]);
-
-  // Handle click outside to close suggestions
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (suggestionsRef.current && !suggestionsRef.current.contains(event.target as Node)) {
-        setShowSuggestions(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  // Handle search submission
-  const handleSearchSubmit = (value: string) => {
-    setSearchQuery(value);
-    addRecentSearch(value);
-    setRecentSearches(getRecentSearches());
-    setShowSuggestions(false);
-    setCurrentPage(1);
-  };
-
   return (
-    <div className="flex flex-col gap-6">
-      {/* === HEADER === */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Creators</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Discover, filter and shortlist creators
-          </p>
-        </div>
-        <div className="flex items-baseline gap-5 sm:text-right">
-          <Stat label="Database" value={formatNumber(total)} />
-          <div className="w-px h-8 bg-border/30 hidden sm:block" />
-          <Stat label="Reach" value={formatNumber(stats.totalFollowers)} />
-          <div className="w-px h-8 bg-border/30 hidden sm:block" />
-          <Stat label="Revenue" value={formatCurrency(stats.totalRevenue)} />
-        </div>
+    <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 animate-fade-in">
+      {/* ── Mobile Filter Toggle ── */}
+      <div className="lg:hidden flex items-center gap-3">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowSidebar(!showSidebar)}
+          className="h-10 rounded-xl gap-2 active:scale-95 transition-transform"
+        >
+          <SlidersHorizontal className="size-4" />
+          Filters
+          {activeFilterCount > 0 && (
+            <span className="ml-0.5 px-1.5 py-0.5 text-[10px] bg-primary text-primary-foreground rounded-full min-w-[18px] inline-flex items-center justify-center">
+              {activeFilterCount}
+            </span>
+          )}
+        </Button>
+        {activeFilterCount > 0 && (
+          <button onClick={clearAllFilters} className="text-xs text-primary font-medium">
+            Clear all
+          </button>
+        )}
       </div>
 
-      {/* === TOOLBAR === */}
-      <div className="flex flex-col gap-3">
-        {/* Row 1: Source tabs + Search - stacks on mobile */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Tabs
-            value={typeTab}
-            onValueChange={(v) => {
-              setTypeTab(v as TypeTab);
+      {/* ── Sidebar Filters ── */}
+      <aside
+        className={cn(
+          "lg:w-64 shrink-0 flex-col gap-6",
+          showSidebar ? "flex" : "hidden lg:flex"
+        )}
+      >
+        {/* Type Tabs */}
+        <div className="flex flex-col gap-2" role="tablist" aria-label="Creator type">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Type</p>
+          <div className="flex flex-col gap-0.5 relative">
+            {TYPE_TABS.map((tab) => {
+              const isActive = typeTab === tab.value;
+              const count = tab.value === "all"
+                ? initialKOLs.length
+                : initialKOLs.filter((k) => k.kolType === tab.value).length;
+              return (
+                <button
+                  key={tab.value}
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => {
+                    setTypeTab(tab.value);
+                    setCurrentPage(1);
+                  }}
+                  className={cn(
+                    "group relative text-left px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 ease-out active:scale-[0.98] overflow-hidden",
+                    isActive
+                      ? "text-primary translate-x-0.5"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
+                  )}
+                >
+                  {/* Sliding background pill */}
+                  <span
+                    className={cn(
+                      "absolute inset-0 rounded-xl transition-all duration-300 ease-out",
+                      isActive ? "bg-primary/10 opacity-100" : "bg-transparent opacity-0"
+                    )}
+                  />
+                  {/* Left accent indicator */}
+                  <span
+                    className={cn(
+                      "absolute left-0 top-2 bottom-2 w-1 rounded-full bg-primary transition-all duration-300 ease-out",
+                      isActive ? "opacity-100 scale-y-100" : "opacity-0 scale-y-0"
+                    )}
+                  />
+                  {/* Content */}
+                  <span className="relative flex items-center justify-between">
+                    <span className={cn("transition-colors duration-300", isActive && "font-semibold")}>
+                      {tab.label}
+                    </span>
+                    <span
+                      className={cn(
+                        "text-xs transition-all duration-300",
+                        isActive
+                          ? "text-primary/70 bg-primary/10 px-2 py-0.5 rounded-full font-mono"
+                          : "text-muted-foreground group-hover:text-foreground"
+                      )}
+                    >
+                      {count}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Tier Filter */}
+        {tiers.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tier</p>
+            <div className="flex flex-wrap gap-2">
+              {tiers.map((tier) => (
+                <FilterChip
+                  key={tier}
+                  label={tier.replace(" KOL", "")}
+                  active={selectedTiers.includes(tier)}
+                  onClick={() => toggleFilter(setSelectedTiers, tier)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Platform Filter */}
+        {platforms.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Platform</p>
+            <div className="flex flex-wrap gap-2">
+              {platforms.map((platform) => (
+                <FilterChip
+                  key={platform}
+                  label={platform}
+                  active={selectedPlatforms.includes(platform)}
+                  onClick={() => toggleFilter(setSelectedPlatforms, platform)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Photo Filter */}
+        <div className="flex flex-col gap-2">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Photos</p>
+          <button
+            onClick={() => {
+              setHidePlaceholders((v) => !v);
               setCurrentPage(1);
             }}
+            className={cn(
+              "flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150 active:scale-[0.98]",
+              hidePlaceholders
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+            )}
           >
-            <TabsList className="h-9 bg-muted/30 border border-border/20">
-              <TabsTrigger value="all" className="text-xs px-3">
-                All
-              </TabsTrigger>
-              <TabsTrigger value="Live Creator" className="text-xs px-3">
-                Live Creator
-              </TabsTrigger>
-              <TabsTrigger value="Live Seller" className="text-xs px-3">
-                Live Seller
-              </TabsTrigger>
-              <TabsTrigger value="Creator" className="text-xs px-3">
-                Creator
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+            <ImageIcon className="size-4" />
+            With photo only
+            <span className="ml-auto text-xs text-muted-foreground">{withPhotoCount}</span>
+          </button>
+        </div>
 
-          <div className="flex-1 relative min-w-0" ref={suggestionsRef}>
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+        {/* Clear All */}
+        {activeFilterCount > 0 && (
+          <button
+            onClick={clearAllFilters}
+            className="text-xs text-primary font-medium hover:text-primary/80 transition-colors text-left px-3"
+          >
+            Clear all filters
+          </button>
+        )}
+      </aside>
+
+      {/* ── Main Content ── */}
+      <div className="flex-1 min-w-0 flex flex-col gap-6">
+        {/* Header + Search + Sort */}
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Creators</h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                {formatNumber(total)} talent in our curated roster
+              </p>
+            </div>
+
+            {/* Sort Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-muted/40 border border-border/60 text-sm font-medium hover:bg-muted/60 active:scale-95 transition-all">
+                Sort by: {SORT_OPTIONS.find((o) => o.key === sortBy)?.label}
+                <ChevronDown className="size-3.5" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[180px]">
+                {SORT_OPTIONS.map((opt) => (
+                  <DropdownMenuItem
+                    key={opt.key}
+                    onClick={() => {
+                      if (sortBy === opt.key) setSortDesc(!sortDesc);
+                      else { setSortBy(opt.key); setSortDesc(true); }
+                      setCurrentPage(1);
+                    }}
+                    className="flex items-center justify-between cursor-pointer"
+                  >
+                    <span className={cn(sortBy === opt.key && "text-primary font-medium")}>{opt.label}</span>
+                    {sortBy === opt.key && <Check className="size-3.5 text-primary" />}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          {/* Search */}
+          <div className="relative max-w-xl">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/60" />
             <Input
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSearchSubmit(searchQuery);
-              }}
-              onFocus={() => {
-                if (suggestions.length > 0 || recentSearches.length > 0) setShowSuggestions(true);
-              }}
-              className="pl-9 h-10 rounded-xl bg-muted/20 border-border/20 hover:border-border/40 focus:border-border/60 transition-colors"
+              placeholder="Search creators, brands, categories..."
+              className="pl-11 h-11 rounded-xl bg-muted/30 border-border/40 focus:border-foreground/20 transition-colors"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Clear search"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground active:scale-90 transition-all"
               >
                 <X className="size-3.5" />
               </button>
             )}
-
-            {/* Autocomplete suggestions */}
-            {showSuggestions && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-card/95 backdrop-blur-xl border border-border/20 rounded-xl shadow-2xl z-50 py-2">
-                {/* Recent searches */}
-                {!searchQuery && recentSearches.length > 0 && (
-                  <div className="px-3 py-2">
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2 font-medium">
-                      Recent Searches
-                    </p>
-                    {recentSearches.map((search, i) => (
-                      <button
-                        key={i}
-                        onClick={() => handleSearchSubmit(search)}
-                        className="w-full text-left px-2 py-1.5 text-sm hover:bg-muted/40 rounded-md flex items-center gap-2 transition-colors"
-                      >
-                        <Clock className="size-3.5 text-muted-foreground" />
-                        {search}
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {/* Smart suggestions */}
-                {searchQuery && suggestions.length > 0 && (
-                  <div className="px-3 py-2">
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2 font-medium">
-                      Suggestions
-                    </p>
-                    {suggestions.map((suggestion, i) => (
-                      <button
-                        key={i}
-                        onClick={() => handleSearchSubmit(suggestion)}
-                        className="w-full text-left px-2 py-1.5 text-sm hover:bg-muted/40 rounded-md flex items-center gap-2 transition-colors"
-                      >
-                        <Search className="size-3.5 text-muted-foreground" />
-                        {suggestion}
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {/* Smart search tips — keep examples aligned with parseSmartSearch */}
-                {searchQuery && suggestions.length === 0 && (
-                  <div className="px-3 py-2 text-muted-foreground">
-                    <p className="text-[10px] uppercase tracking-wider mb-2 font-medium">Smart Search Tips</p>
-                    <div className="flex flex-col text-xs gap-1">
-                      <p>• &quot;beauty bangkok&quot; — category + location</p>
-                      <p>• &quot;&gt;100k followers&quot; — follower threshold</p>
-                      <p>• &quot;&gt;3% engagement&quot; — engagement threshold</p>
-                      <p>• &quot;has line&quot; — require contact on file</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
 
-          <Button
-            variant={showFilters || activeFilterCount > 0 ? "default" : "outline"}
-            size="sm"
-            onClick={() => setShowFilters(!showFilters)}
-            className="h-10 rounded-xl gap-1.5"
-          >
-            <SlidersHorizontal className="size-3.5" />
-            Filters
-            {activeFilterCount > 0 && (
-              <span className="ml-0.5 px-1.5 py-0.5 text-[10px] bg-white/20 rounded-full min-w-[18px] inline-flex items-center justify-center">
-                {activeFilterCount}
-              </span>
-            )}
-          </Button>
+          {/* Active Filter Chips */}
+          {activeFilterCount > 0 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              {hidePlaceholders && (
+                <FilterTag onRemove={() => setHidePlaceholders(false)}>With photo</FilterTag>
+              )}
+              {selectedTiers.map((t) => (
+                <FilterTag key={t} onRemove={() => toggleFilter(setSelectedTiers, t)}>
+                  {t.replace(" KOL", "")}
+                </FilterTag>
+              ))}
+              {selectedPlatforms.map((p) => (
+                <FilterTag key={p} onRemove={() => toggleFilter(setSelectedPlatforms, p)}>
+                  {p}
+                </FilterTag>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Filters panel */}
-        {showFilters && (
-          <div className="flex flex-col rounded-xl border border-dashed border-border/30 p-3 sm:p-4 bg-muted/20 gap-4 animate-fade-in">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              <FilterGroup
-                label="Tier"
-                items={tiers}
-                selected={selectedTiers}
-                onToggle={(v) => toggleFilter(setSelectedTiers, v)}
-                displayFn={(v) => v.replace(" KOL", "")}
-              />
-              <FilterGroup
-                label="Platform"
-                items={platforms}
-                selected={selectedPlatforms}
-                onToggle={(v) => toggleFilter(setSelectedPlatforms, v)}
-              />
+        {/* Results count */}
+        <p className="text-sm text-muted-foreground">
+          Showing <span className="font-mono font-bold text-foreground">{paginated.length}</span> of{" "}
+          <span className="font-mono font-bold text-foreground">{sorted.length}</span> results
+        </p>
+
+        {/* Card Grid */}
+        {paginated.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4">
+            {paginated.map((kol) => (
+              <KOLFeedCard key={kol.id} kol={kol} />
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="size-16 rounded-2xl bg-muted/60 border border-border/60 flex items-center justify-center mb-4">
+              <Users className="size-6 text-muted-foreground/30" />
             </div>
-            {activeFilterCount > 0 && (
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-3 border-t border-border/20 gap-3">
-                <div className="flex flex-wrap gap-1.5">
-                  {[...selectedTiers, ...selectedPlatforms].map((v) => (
-                    <Badge key={v} variant="secondary" className="gap-1 text-xs rounded-full border-border/20">
-                      {v}
-                      <button
-                        onClick={() => {
-                          setSelectedTiers((p) => p.filter((x) => x !== v));
-                          setSelectedPlatforms((p) => p.filter((x) => x !== v));
-                        }}
-                        aria-label={`Remove ${v} filter`}
-                        className="hover:text-destructive transition-colors"
-                      >
-                        <X className="size-3" />
-                      </button>
-                    </Badge>
-                  ))}
-                </div>
-                <Button variant="link" size="sm" onClick={clearAllFilters} className="text-xs">
-                  Clear all
-                </Button>
-              </div>
-            )}
+            <p className="text-lg font-semibold text-muted-foreground">No creators found</p>
+            <p className="text-sm text-muted-foreground mt-1">Try adjusting your filters or search</p>
+            <Button variant="link" onClick={clearAllFilters} className="mt-2">
+              Clear all filters
+            </Button>
           </div>
         )}
 
-        {/* Row 2: Count + Sort */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <p className="text-sm text-muted-foreground">
-            <span className="font-mono font-bold text-foreground tabular-nums">{filtered.length}</span>{" "}
-            results
-          </p>
-          <div className="flex items-center gap-1 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
-            {SORT_OPTIONS.map((opt) => (
-              <button
-                key={opt.key}
-                onClick={() => {
-                  if (sortBy === opt.key) {
-                    setSortDesc(!sortDesc);
-                  } else {
-                    setSortBy(opt.key);
-                    setSortDesc(true);
-                  }
-                }}
-                className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
-                  sortBy === opt.key
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
-                }`}
-              >
-                {opt.label}
-                {sortBy === opt.key && (
-                  <ChevronDown
-                    className={`size-3 ml-0.5 inline transition-transform duration-200 ${!sortDesc ? "rotate-180" : ""}`}
-                  />
-                )}
-              </button>
-            ))}
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 pt-4">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 rounded-xl text-sm font-medium border border-border/40 hover:bg-muted/50 disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition-all"
+            >
+              Previous
+            </button>
+            <span className="text-sm text-muted-foreground px-2">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 rounded-xl text-sm font-medium border border-border/40 hover:bg-muted/50 disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition-all"
+            >
+              Next
+            </button>
           </div>
-        </div>
+        )}
       </div>
-
-      {/* === CARD GRID === */}
-      <div className="flex md:grid overflow-x-auto md:overflow-visible snap-x md:snap-none scroll-smooth scrollbar-hide gap-3 md:gap-4 md:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5 -mx-4 px-4 md:mx-0 md:px-0 pb-2 md:pb-0">
-        {paginated.map((kol) => (
-          <div
-            key={kol.id}
-            className="flex-shrink-0 snap-start w-[85vw] sm:w-[46vw] md:w-full"
-          >
-            <KOLFeedCard kol={kol} />
-          </div>
-        ))}
-      </div>
-      {/* Mobile swipe hint */}
-      <p className="flex md:hidden items-center justify-center gap-1.5 text-xs text-muted-foreground/60 -mt-1">
-        <span>&larr;</span> swipe to browse <span>&rarr;</span>
-      </p>
-
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-        totalItems={sorted.length}
-        itemsPerPage={ITEMS_PER_PAGE}
-      />
-
-      {sorted.length === 0 && (
-        <div className="text-center py-20 animate-fade-in">
-          <div className="text-4xl mb-3 opacity-30">
-            <Users className="size-12 mx-auto" />
-          </div>
-          <p className="text-lg font-medium text-muted-foreground">
-            No creators match your filters
-          </p>
-          <Button variant="link" onClick={clearAllFilters} className="mt-3">
-            Clear all filters
-          </Button>
-        </div>
-      )}
     </div>
   );
 }
 
-/* === Sub-components === */
+/* ── Sub-components ── */
 
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="min-w-0">
-      <p className="text-[10px] uppercase tracking-wider text-muted-foreground truncate font-medium">{label}</p>
-      <p className="text-base sm:text-lg font-mono font-bold leading-tight truncate tabular-nums tracking-tight text-foreground">
-        {value}
-      </p>
-    </div>
-  );
-}
-
-function FilterGroup({
+function FilterChip({
   label,
-  items,
-  selected,
-  onToggle,
-  displayFn,
+  active,
+  onClick,
 }: {
   label: string;
-  items: string[];
-  selected: string[];
-  onToggle: (value: string) => void;
-  displayFn?: (value: string) => string;
+  active: boolean;
+  onClick: () => void;
 }) {
   return (
-    <div>
-      <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-        {label}
-      </p>
-      <div className="flex flex-wrap gap-1.5">
-        {items.map((item) => (
-          <button
-            key={item}
-            onClick={() => onToggle(item)}
-            className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-200 border ${
-              selected.includes(item)
-                ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                : "bg-transparent text-muted-foreground border-border/30 hover:border-border/60 hover:text-foreground"
-            }`}
-          >
-            {displayFn ? displayFn(item) : item}
-          </button>
-        ))}
-      </div>
-    </div>
+    <button
+      onClick={onClick}
+      className={cn(
+        "px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-150 border min-h-[32px] active:scale-95 touch-manipulation",
+        active
+          ? "bg-primary text-primary-foreground border-primary shadow-sm"
+          : "bg-transparent text-muted-foreground border-border/40 hover:border-border/70 hover:text-foreground hover:bg-muted/30"
+      )}
+    >
+      {label}
+    </button>
+  );
+}
+
+function FilterTag({
+  children,
+  onRemove,
+}: {
+  children: React.ReactNode;
+  onRemove: () => void;
+}) {
+  return (
+    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+      {children}
+      <button
+        onClick={onRemove}
+        aria-label={`Remove ${children} filter`}
+        className="hover:text-destructive transition-colors active:scale-90"
+      >
+        <X className="size-3" />
+      </button>
+    </span>
   );
 }

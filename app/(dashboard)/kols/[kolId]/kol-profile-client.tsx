@@ -42,8 +42,10 @@ import {
   Info,
 } from "lucide-react";
 import { TikTokProfileEmbed } from "@/components/tiktok-profile-embed";
+import { TikTokVideoCarousel } from "@/components/tiktok-video-carousel";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import Link from "next/link";
+import { useProfilePhoto } from "@/lib/profile-photo";
 import type { Creator } from "@/lib/types/catalog";
 
 const radarConfig = {
@@ -61,6 +63,8 @@ interface KOLProfileClientProps {
 }
 
 export function KOLProfileClient({ kol }: KOLProfileClientProps) {
+  const { imageUrl: profilePhoto } = useProfilePhoto(kol);
+
   // Performance radar (normalised 0–100)
   const radarData = [
     { axis: "Followers", value: Math.min(100, (kol.followers / RADAR_CEILINGS.followers) * 100) },
@@ -111,7 +115,7 @@ export function KOLProfileClient({ kol }: KOLProfileClientProps) {
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div className="flex items-end gap-4">
               <Avatar className="border-4 border-card shadow-xl size-24 text-2xl">
-                <AvatarImage src={kol.image} alt={kol.name} />
+                <AvatarImage src={profilePhoto || undefined} alt={kol.name} />
                 <AvatarFallback className="bg-muted text-lg font-semibold">
                   {kol.name?.slice(0, 2).toUpperCase() || "?"}
                 </AvatarFallback>
@@ -119,7 +123,7 @@ export function KOLProfileClient({ kol }: KOLProfileClientProps) {
               <div className="pb-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h1 className="text-2xl font-bold">{kol.name}</h1>
-                  <Badge className={`${getTierColor(kol.tier)} text-white border-0`}>
+                  <Badge className={`${getTierColor(kol.tier)} text-foreground border-0`}>
                     {kol.tier}
                   </Badge>
                   {kol.kolType && <Badge variant="outline">{kol.kolType}</Badge>}
@@ -427,7 +431,10 @@ export function KOLProfileClient({ kol }: KOLProfileClientProps) {
             {/* Sidebar: social preview */}
             <div className="flex flex-col lg:col-span-1 gap-5">
               {kol.platform?.toLowerCase().includes("tiktok") && kol.handle && (
-                <TikTokProfileEmbed handle={kol.handle} name={kol.name} />
+                <>
+                  <TikTokProfileEmbed handle={kol.handle} name={kol.name} />
+                  <TikTokVideoCarousel handle={kol.handle} />
+                </>
               )}
             </div>
           </div>

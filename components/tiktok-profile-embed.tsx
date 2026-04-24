@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ExternalLink } from "lucide-react";
 
@@ -16,17 +16,34 @@ interface OEmbedData {
   author_url?: string;
 }
 
+function buildSrcdoc(html: string): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{margin:0;padding:0;overflow-x:hidden;background:transparent}
+</style>
+</head>
+<body>${html}</body>
+</html>`;
+}
+
 export function TikTokProfileEmbed({ handle, name }: TikTokProfileEmbedProps) {
   const [data, setData] = useState<OEmbedData | null>(null);
   const [loading, setLoading] = useState(true);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const scriptInjected = useRef(false);
+  const [height, setHeight] = useState(480);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  /* ── 1. Fetch oEmbed JSON ── */
+  /* ── Fetch oEmbed JSON ── */
   useEffect(() => {
     if (!handle) return;
     let stale = false;
     setLoading(true);
+    setData(null);
+    setHeight(480);
     fetch(`/api/tiktok-oembed?handle=${encodeURIComponent(handle)}`)
       .then((r) => r.json())
       .then((json: OEmbedData) => {
@@ -38,49 +55,41 @@ export function TikTokProfileEmbed({ handle, name }: TikTokProfileEmbedProps) {
       .catch(() => {
         if (!stale) setLoading(false);
       });
-    return () => {
-      stale = true;
-    };
+    return () => { stale = true; };
   }, [handle]);
 
-  /* ── 2. Render embed once HTML is in the DOM ── */
-  useEffect(() => {
-    if (!data?.html || !containerRef.current) return;
+  /* ── Resize iframe to match content ── */
+  const handleLoad = useCallback(() => {
+    const iframe = iframeRef.current;
+    if (!iframe?.contentDocument?.body) return;
 
-    const renderEmbed = () => {
-      const lib = (window as any).tiktokEmbedLibrary;
-      if (lib && containerRef.current) {
-        lib.render(containerRef.current);
+    const body = iframe.contentDocument.body;
+
+    // Set initial height
+    setHeight(body.scrollHeight);
+
+    // Watch for size changes
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setHeight(entry.target.scrollHeight);
+      }
+    });
+    observer.observe(body);
+
+    // Also watch the documentElement for good measure
+    observer.observe(iframe.contentDocument.documentElement);
+
+    (iframe as any).__tkObserver = observer;
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      const iframe = iframeRef.current;
+      if (iframe && (iframe as any).__tkObserver) {
+        (iframe as any).__tkObserver.disconnect();
       }
     };
-
-    const existing = document.querySelector(
-      'script[src="https://www.tiktok.com/embed.js"]'
-    ) as HTMLScriptElement | null;
-
-    if (!existing && !scriptInjected.current) {
-      const script = document.createElement("script");
-      script.src = "https://www.tiktok.com/embed.js";
-      script.async = true;
-      script.onload = renderEmbed;
-      document.body.appendChild(script);
-      scriptInjected.current = true;
-      return () => {
-        script.onload = null;
-      };
-    }
-
-    if (existing && !(window as any).tiktokEmbedLibrary) {
-      // Script tag exists but library hasn't loaded yet — wait for it
-      const onLoad = () => renderEmbed();
-      existing.addEventListener("load", onLoad);
-      return () => existing.removeEventListener("load", onLoad);
-    }
-
-    // Script already loaded — render immediately
-    renderEmbed();
-    return undefined;
-  }, [data]);
+  }, []);
 
   if (!handle) return null;
 
@@ -106,16 +115,18 @@ export function TikTokProfileEmbed({ handle, name }: TikTokProfileEmbedProps) {
       <Card className="overflow-hidden">
         <CardContent className="p-6 text-center text-muted-foreground text-sm">
           Unable to load TikTok profile embed.
+          <a
+            href={profileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block mt-2 text-primary hover:underline"
+          >
+            Open @{handle} on TikTok →
+          </a>
         </CardContent>
       </Card>
     );
   }
-
-  /* ── Strip the <script> tag from oEmbed HTML ── */
-  const blockquoteHtml = data.html.replace(
-    /<script[\s\S]*?<\/script>/gi,
-    ""
-  );
 
   return (
     <Card className="overflow-hidden border-t-2 border-t-chart-5">
@@ -135,10 +146,13 @@ export function TikTokProfileEmbed({ handle, name }: TikTokProfileEmbedProps) {
         </a>
       </CardHeader>
       <CardContent className="pt-0">
-        <div
-          ref={containerRef}
-          className="flex justify-center"
-          dangerouslySetInnerHTML={{ __html: blockquoteHtml }}
+        <iframe
+          ref={iframeRef}
+          srcDoc={buildSrcdoc(data.html)}
+          onLoad={handleLoad}
+          style={{ width: "100%", height, border: "none", display: "block" }}
+          loading="lazy"
+          title={`TikTok profile @${handle}`}
         />
       </CardContent>
     </Card>

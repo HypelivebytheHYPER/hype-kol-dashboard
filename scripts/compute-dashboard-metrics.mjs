@@ -4,7 +4,7 @@
 const LARK_API_URL = "https://lark-http-hype.hypelive.workers.dev";
 const LARK_API_KEY = process.env["LARK_API_KEY"];
 const APP_TOKEN = "H2GQbZBFqaUW2usqPswlczYggWg";
-const ALL_KOLS_TABLE = "tbl5864QVOiEokTQ";
+const ALL_KOLS_TABLE = "tblaijZshhnZLDWJ";
 const DASHBOARD_TABLE = "tblOwkSqf5rci6zq";
 
 function authHeaders() {

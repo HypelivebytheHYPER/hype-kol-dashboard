@@ -9,6 +9,9 @@ export const SERVICES = {
   // Hypelive brand-asset bucket (Cloudflare R2, public).
   r2Brand: "https://pub-816814216dff403d8cc6955bb0ad1fec.r2.dev",
 
+  // HypeStudio content bucket (Cloudflare R2, public).
+  r2Studio: "https://pub-6b552d9c3c0f4ef0ba8e32adfb058578.r2.dev",
+
   // Lark's own CDN — media host, CSP-only (never fetched directly).
   // Stored as a host pattern because CSP accepts wildcards that URLs can't
   // parse. Kept separate so `hostOf()` doesn't see a malformed URL.

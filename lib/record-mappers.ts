@@ -8,7 +8,7 @@ import {
   CATEGORY_FIELD,
   getMCContentCategories,
 } from "./taxonomy";
-import type { Creator, LiveMC, DashboardMetric } from "./types/catalog";
+import type { Creator, LiveMC, DashboardMetric, Studio } from "./types/catalog";
 
 
 
@@ -16,15 +16,33 @@ import type { Creator, LiveMC, DashboardMetric } from "./types/catalog";
 
 /** Convert a single raw Lark row into a typed Creator.
  *  Private — consumers should use `loadKOLCatalog` or `loadKOLProfile`. */
+/** Extract TikTok handle from a profile URL like https://www.tiktok.com/@username */
+function extractTikTokHandleFromUrl(urlStr: string): string | null {
+  try {
+    const url = new URL(urlStr);
+    const match = url.pathname.match(/^\/@([^/]+)/);
+    return match?.[1] ?? null;
+  } catch {
+    return null;
+  }
+}
+
 function recordToCreator(r: LarkRecord): Creator {
   const f = r.fields;
   const accountType = str(f, "Account Type");
   const fee = num(f, "Fee");
+
+  // The "Handle" field is often an internal ID, not the TikTok handle.
+  // The actual TikTok handle is in the Channel URL: https://www.tiktok.com/@realhandle
+  const channelUrl = url(f, "Channel");
+  const tiktokHandleFromUrl = channelUrl ? extractTikTokHandleFromUrl(channelUrl) : null;
+  const rawHandle = str(f, "Handle");
+
   const creator: Creator = {
     id: r.record_id,
     kolId: str(f, "Record ID") || r.record_id,
-    name: str(f, "Nickname") || str(f, "Handle"),
-    handle: str(f, "Handle"),
+    name: str(f, "Nickname") || rawHandle,
+    handle: tiktokHandleFromUrl || rawHandle,
     platform: str(f, "Platform"),
     tier: str(f, "Levels of KOLs"),
     followers: num(f, "Follower"),
@@ -51,19 +69,20 @@ function recordToCreator(r: LarkRecord): Creator {
   if (accountType) creator.accountType = accountType;
 
   // 1. Prefer Lark Base attachment (uploaded image)
-  //    tmp_url is a pre-signed CDN URL — direct, no auth, proper CORS.
+  //    tmp_url expires quickly — always use the stable worker proxy.
   const att = attachments(f, "Attachment");
   const isImage = (a: LarkAttachment) =>
     a.type?.startsWith("image/") ?? /\.(jpg|jpeg|png|gif|webp|avif)$/i.test(a.name);
   const images = att.filter(isImage);
   const img = images.length > 0 ? images[images.length - 1] : undefined;
   if (img) {
-    const url = img.tmp_url ?? img.url;
-    creator.image = url && url.length > 0 ? url : buildMediaUrl(img.file_token, TABLES.ALL_KOLS);
+    creator.image = buildMediaUrl(img.file_token, TABLES.ALL_KOLS);
   } else {
-    // 2. Fall back to "Avatar URL" field (scraped from TikTok profile, stored in Lark)
-    const avatarUrl = str(f, "Avatar URL");
-    if (avatarUrl) creator.image = avatarUrl;
+    // 2. Fall back to stored profile photo URL (scraped from TikTok/IG profile page)
+    const profilePhotoUrl = str(f, "Profile Photo URL") || str(f, "Avatar URL");
+    if (profilePhotoUrl) creator.image = profilePhotoUrl;
+    // 3. If still no image, the frontend will fetch from /api/profile-photo
+    //    using sourceUrl or channel as the profile page URL.
   }
 
   return creator;
@@ -157,12 +176,14 @@ export function recordToLiveMC(r: LarkRecord): LiveMC {
       url: mediaUrl(img),
       name: img.name,
     }));
+  const profilePhoto = str(f, "Profile Photo URL") || str(f, "Avatar URL") || undefined;
   const mc: LiveMC = {
     id: r.record_id,
     handle: str(f, "Handle"),
     brands: brandList,
     categories: normalizeCategories(arr(f, CATEGORY_FIELD)),
     contentCategories: getMCContentCategories(brandList),
+    ...(profilePhoto ? { profilePhoto } : {}),
     images,
     videos: refs
       .filter((a: LarkAttachment) => isVideo(a.name) || a.type?.startsWith("video/"))
@@ -287,4 +308,39 @@ export const loadDashboardPeriods = unstable_cache(
   },
   ["dashboard-periods"],
   { revalidate: 300, tags: ["dashboard"] }
+);
+
+/* ── Studio Record Parsing ──────────────────────────────────────────── */
+
+function recordToStudio(r: LarkRecord): Studio {
+  const f = r.fields;
+  const photos = attachments(f, "Photos");
+  return {
+    id: r.record_id,
+    name: str(f, "Studio Name"),
+    provider: str(f, "Provider"),
+    startingPrice: num(f, "Starting Price"),
+    size: str(f, "Size"),
+    capacity: num(f, "Capacity"),
+    parking: str(f, "Parking"),
+    hours: str(f, "Hours"),
+    deposit: num(f, "Deposit"),
+    contact: str(f, "Contact"),
+    reference: str(f, "Reference"),
+    recommended: Boolean(f["Recommended"]),
+    images: photos.map((p) => buildMediaUrl(p.file_token, TABLES.STUDIO_LIST)),
+  };
+}
+
+/** Load all studio/venue listings.
+ *  Display uses `startingPrice` (formula field) — never expose raw `Price`. */
+export const loadStudioList = unstable_cache(
+  async () => {
+    const records = await fetchAllRecords(TABLES.STUDIO_LIST, {
+      tags: ["studio"],
+    });
+    return records.map(recordToStudio);
+  },
+  ["studio-list"],
+  { revalidate: 300, tags: ["studio"] }
 );

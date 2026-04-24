@@ -1,30 +1,40 @@
 /**
- * Semantic design token system for category colors.
+ * Semantic design token system.
  *
- * Maps each content category to a Tailwind v4 semantic color token
- * (chart-1 … chart-5 + primary). These are defined in globals.css
- * via @theme inline and automatically adapt to light/dark mode.
+ * Maps domain concepts (categories, studios, trends) to Tailwind v4 semantic
+ * color tokens (chart-1 … chart-5 + primary + studio-accent). Colors are
+ * defined in globals.css via @theme inline and automatically adapt to
+ * light/dark mode.
  *
- * Usage: import CATEGORY_STYLES and spread the classes you need.
- * Every class is a complete literal string so Tailwind's scanner
- * picks it up — no dynamic concatenation.
+ * Every exported class string is a complete literal so Tailwind's scanner
+ * picks it up — no dynamic concatenation at the call site.
+ *
+ * @example
+ *   import { CATEGORY_STYLES, STUDIO, TREND } from "@/lib/design-tokens";
+ *
+ *   <span className={CATEGORY_STYLES.cosmetics.dot} />
+ *   <span className={STUDIO.text}>HypeStudio</span>
+ *   <span className={TREND.up}>+12%</span>
  */
 
 import type { ContentCategoryId } from "./taxonomy";
 
-/** Tailwind semantic color token name for each category. */
-const CATEGORY_COLOR: Record<ContentCategoryId, string> = {
-  cosmetics:     "chart-5",  // pink
-  health:        "chart-2",  // green
-  food:          "chart-1",  // orange
-  home:          "chart-3",  // purple/blue
-  fashion:       "chart-4",  // lime/yellow-green
-  "personal-care": "primary", // dark / accent
-};
+// ═════════════════════════════════════════════════════════════════
+//  CATEGORY COLORS
+// ═════════════════════════════════════════════════════════════════
 
-/** Complete Tailwind class bundles per category.
- *  Use these instead of inline styles so colors stay in the design system. */
-export const CATEGORY_STYLES: Record<ContentCategoryId, {
+/** Tailwind semantic color token name for each content category. */
+const CATEGORY_COLOR: Record<ContentCategoryId, string> = {
+  cosmetics: "chart-5", // pink
+  health: "chart-2", // green
+  food: "chart-1", // orange
+  home: "chart-3", // purple/blue
+  fashion: "chart-4", // lime/yellow-green
+  "personal-care": "primary", // dark / accent
+} as const;
+
+/** Style keys available for every category. */
+export interface CategoryStyle {
   dot: string;
   chipBg: string;
   chipBorder: string;
@@ -35,19 +45,17 @@ export const CATEGORY_STYLES: Record<ContentCategoryId, {
   filterActiveBg: string;
   filterActiveBorder: string;
   filterActiveShadow: string;
-  /** Play button background (list item, thumbnail) */
   playButtonBg: string;
-  /** Play button icon color */
   playButtonText: string;
-  /** Glow behind large play button */
   playGlow: string;
-  /** Border for active/selected rows and media */
   activeBorder: string;
-  /** Hover border for media thumbnails */
   mediaHoverBorder: string;
-  /** Ring color for active/selected state */
   ring: string;
-}> = {
+}
+
+/** Complete Tailwind class bundles per category.
+ *  Spread the properties you need instead of inline styles. */
+export const CATEGORY_STYLES: Record<ContentCategoryId, CategoryStyle> = {
   cosmetics: {
     dot: "bg-chart-5",
     chipBg: "bg-chart-5/10",
@@ -156,55 +164,15 @@ export const CATEGORY_STYLES: Record<ContentCategoryId, {
     mediaHoverBorder: "hover:border-primary/40",
     ring: "ring-primary/30",
   },
-};
+} as const satisfies Record<ContentCategoryId, CategoryStyle>;
 
-/** Get the semantic color token name for a category (for wire-map, canvas, etc). */
+/** @deprecated Not used in any source file. Prefer CATEGORY_STYLES[catId] directly. */
 export function categoryColorName(catId: ContentCategoryId | null): string {
   return catId ? CATEGORY_COLOR[catId] ?? "muted-foreground" : "muted-foreground";
 }
 
-/** Deterministic hue for an MC based on their handle (for wire-map nodes). */
-export function mcHue(handle: string): number {
-  let hash = 0;
-  for (let i = 0; i < handle.length; i++) {
-    hash = handle.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return Math.abs(hash) % 360;
-}
-
-/** Generate an OKLCH color string for canvas rendering.
- *  Only used in wire-map.tsx where CSS classes can't reach. */
-export function oklch(catId: ContentCategoryId | null, lightness?: number): string;
-export function oklch(catId: null, lightness: number, hue: number, chroma: number): string;
-export function oklch(catId: ContentCategoryId | null, lightness = 0.65, hue?: number, chroma?: number): string {
-  if (hue != null && chroma != null) {
-    return `oklch(${lightness} ${chroma} ${hue})`;
-  }
-  if (!catId) return `oklch(${lightness} 0 0)`;
-  // Map to chart color OKLCH values for canvas consistency
-  const map: Record<ContentCategoryId, { h: number; c: number }> = {
-    cosmetics:     { h: 350, c: 0.24 },
-    health:        { h: 165, c: 0.20 },
-    food:          { h: 35,  c: 0.22 },
-    home:          { h: 280, c: 0.22 },
-    fashion:       { h: 140, c: 0.20 },
-    "personal-care": { h: 0,   c: 0 },
-  };
-  const t = map[catId];
-  if (!t) return `oklch(${lightness} 0 0)`;
-  return `oklch(${lightness} ${t.c} ${t.h})`;
-}
-
-/** OKLCH with alpha — for canvas only. */
-export function oklcha(catId: ContentCategoryId | null, lightness = 0.65, alpha = 1): string {
-  if (alpha >= 1) return oklch(catId, lightness);
-  if (!catId) return `oklch(${lightness} 0 0 / ${alpha})`;
-  const base = oklch(catId, lightness);
-  return base.replace(")", ` / ${alpha})`);
-}
-
 /** Fallback style when an MC has no category. Uses neutral muted tokens. */
-export const UNCATEGORIZED_STYLE = {
+export const UNCATEGORIZED_STYLE: CategoryStyle = {
   dot: "bg-muted-foreground",
   chipBg: "bg-muted",
   chipBorder: "border-border",
@@ -221,19 +189,64 @@ export const UNCATEGORIZED_STYLE = {
   activeBorder: "border-border",
   mediaHoverBorder: "hover:border-foreground/20",
   ring: "ring-primary/30",
+} as const satisfies CategoryStyle;
+
+// ═════════════════════════════════════════════════════════════════
+//  STUDIO TOKENS
+// ═════════════════════════════════════════════════════════════════
+
+/** HypeStudio brand accent — used across the studio showcase page.
+ *  Compose with these tokens instead of hard-coding `studio-accent` classes. */
+export const STUDIO = {
+  text: "text-studio-accent",
+  bg: "bg-studio-accent",
+  bgSubtle: "bg-studio-accent/10",
+  bgMuted: "bg-studio-accent/5",
+  border: "border-studio-accent",
+  borderSubtle: "border-studio-accent/20",
+  borderHover: "hover:border-studio-accent/30",
+  ring: "ring-studio-accent/30",
+  glow: "bg-studio-accent/5",
+  foreground: "text-studio-accent-foreground",
+  badge: "bg-studio-accent/90 text-studio-accent-foreground",
+  progress: "bg-studio-accent",
 } as const;
 
-// ── UI Pattern Tokens ───────────────────────────────────────────────
+// ═════════════════════════════════════════════════════════════════
+//  TREND / DELTA TOKENS
+// ═════════════════════════════════════════════════════════════════
 
-/** Glassmorphism button / badge — used for play controls, badges, overlays.
- *  Compose with size tokens (size-9, size-14) and shape (rounded-full). */
+/** Trend direction colors — positive, negative, neutral. */
+export const TREND = {
+  up: "text-chart-2",
+  down: "text-destructive",
+  neutral: "text-muted-foreground",
+} as const;
+
+/** Trend badge/chip backgrounds — for Badge components. */
+export const TREND_CHIP = {
+  up: "bg-chart-2/10 text-chart-2 hover:bg-chart-2/20",
+  down: "bg-destructive/10 text-destructive hover:bg-destructive/20",
+  neutral: "bg-muted text-muted-foreground hover:bg-muted/80",
+} as const;
+
+/** Accent color for monetary values (fees, rate cards, pricing). */
+export const VALUE_ACCENT = "text-chart-4" as const;
+
+// ═════════════════════════════════════════════════════════════════
+//  UI PATTERN TOKENS
+// ═════════════════════════════════════════════════════════════════
+
+/** Glassmorphism button / badge — play controls, badges, overlays.
+ *  @example `<div className={cn(GLASS.base, GLASS.hover, "size-9 rounded-full")} />` */
 export const GLASS = {
   base: "bg-background/70 backdrop-blur-md border border-foreground/10",
   hover: "hover:bg-background/90 transition-colors",
 } as const;
 
 /** Chip base — category chips, brand chips, filter chips.
- *  Compose with color tokens from CATEGORY_STYLES. */
+ *  Compose with color tokens from CATEGORY_STYLES.
+ *  @example `<span className={cn(CHIP.base, CHIP.md, categoryStyle.chipBg)} />` */
 export const CHIP = {
   base: "inline-flex items-center font-medium border",
   sm: "gap-1 px-1.5 py-0.5 rounded-md text-2xs",
@@ -241,17 +254,25 @@ export const CHIP = {
   lg: "gap-1.5 px-3.5 py-1.5 rounded-xl text-xs",
 } as const;
 
-/** Avatar placeholder — initial-letter or image avatar.
- *  Compose with size (size-11, size-12, size-14) and color tokens. */
+/** Profile photo placeholder — initial-letter or image fallback.
+ *  @example `<div className={cn(AVATAR.base, AVATAR.hover, "size-12", style.avatarBg)} />` */
 export const AVATAR = {
   base: "relative shrink-0 rounded-xl flex items-center justify-center border font-bold overflow-hidden",
   hover: "transition-transform duration-200 group-hover:scale-105",
 } as const;
 
-/** Video cover — fills its relative container. */
-export const VIDEO_COVER = "absolute inset-0 size-full object-cover" as const;
+/** Card container — reusable card shell. */
+export const CARD = {
+  base: "border border-border rounded-2xl overflow-hidden bg-card",
+} as const;
 
-/** Section header — icon + uppercase label pattern. */
+/** Section header — icon + uppercase label pattern.
+ *  @example
+ *   <div className={SECTION_HEADER.base}>
+ *     <Icon className={SECTION_HEADER.icon} />
+ *     <h3 className={SECTION_HEADER.label}>{title}</h3>
+ *   </div>
+ */
 export const SECTION_HEADER = {
   base: "flex items-center gap-2",
   label: "text-xs font-semibold uppercase tracking-widest text-muted-foreground",
@@ -259,66 +280,197 @@ export const SECTION_HEADER = {
 } as const;
 
 /** Stats label — uppercase micro label (MCs, Brands, etc). */
-export const STAT_LABEL = "text-2xs uppercase tracking-widest font-semibold";
+export const STAT_LABEL = "text-2xs uppercase tracking-widest font-semibold" as const;
 
-/** Card container — reusable card shell. */
-export const CARD = {
-  base: "border border-border rounded-2xl overflow-hidden bg-card",
-  hero: "relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-card via-card to-background",
+// ═════════════════════════════════════════════════════════════════
+//  ANIMATION & MOTION TOKENS
+// ═════════════════════════════════════════════════════════════════
+
+/** Cubic-bezier easing curves used throughout the app.
+ *  @example `transition-all duration-500 ${EASING.emphasized}` */
+export const EASING = {
+  default: "ease-out",
+  emphasized: "[transition-timing-function:cubic-bezier(0.16,1,0.3,1)]",
+  smooth: "[transition-timing-function:cubic-bezier(0.4,0,0.2,1)]",
+  bounce: "[transition-timing-function:cubic-bezier(0.34,1.56,0.64,1)]",
 } as const;
 
-/** Toggle button — segmented control item. */
+/** Duration presets for consistent motion.
+ *  @example `transition-all ${DURATION.fast} ease-out` */
+export const DURATION = {
+  fast: "duration-150",
+  normal: "duration-300",
+  slow: "duration-500",
+  slower: "duration-700",
+  slowest: "duration-1000",
+} as const;
+
+/** Reusable animation class combinations.
+ *  @example `<div className={cn(FADE_IN_UP, "delay-100")} />` */
+export const FADE_IN_UP = "animate-fade-in-up" as const;
+export const FADE_IN = "animate-fade-in" as const;
+export const SCALE_IN = "animate-scale-in" as const;
+
+// ═════════════════════════════════════════════════════════════════
+//  SHADOW & ELEVATION TOKENS
+// ═════════════════════════════════════════════════════════════════
+
+/** Shadow presets for elevation system.
+ *  @example `<Card className={SHADOW.md} />` */
+export const SHADOW = {
+  sm: "shadow-sm",
+  md: "shadow-md",
+  lg: "shadow-lg",
+  xl: "shadow-xl",
+  glow: "shadow-studio-accent/10",
+  glowLg: "shadow-studio-accent/20",
+} as const;
+
+// ═════════════════════════════════════════════════════════════════
+//  GRADIENT TOKENS
+// ═════════════════════════════════════════════════════════════════
+
+/** Reusable gradient patterns.
+ *  @example `<div className={GRADIENT.heroOverlay} />` */
+export const GRADIENT = {
+  heroOverlay: "bg-gradient-to-t from-background via-background/40 to-transparent",
+  cardOverlay: "bg-gradient-to-t from-background/70 via-transparent to-transparent",
+  bottomFade: "bg-gradient-to-t from-black/60 via-transparent to-transparent",
+  topFade: "bg-gradient-to-b from-black/40 via-transparent to-transparent",
+  cta: "bg-gradient-to-br from-muted/50 via-background to-muted/30",
+} as const;
+
+// ═════════════════════════════════════════════════════════════════
+//  DEPRECATED — kept for backward compatibility
+// ═════════════════════════════════════════════════════════════════
+
+/** @deprecated Not used in any source file. Use CATEGORY_STYLES or STUDIO tokens. */
 export const TOGGLE = {
   base: "px-3.5 py-2 text-xs font-medium flex items-center gap-1.5 transition-all duration-200",
   active: "bg-foreground/10 text-foreground",
   inactive: "text-muted-foreground hover:text-foreground hover:bg-foreground/10",
 } as const;
 
-/** Filter chip inactive state. */
-export const FILTER_INACTIVE = "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80 border border-border";
+/** @deprecated Not used in any source file. Use CHIP + CATEGORY_STYLES instead. */
+export const FILTER_INACTIVE = "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80 border border-border" as const;
 
-/** Empty state icon container. */
+/** @deprecated Not used in any source file. */
 export const EMPTY_ICON = {
   sm: "size-16 rounded-full bg-muted border border-border flex items-center justify-center",
   lg: "size-20 rounded-2xl bg-muted border border-border flex items-center justify-center",
 } as const;
 
-/** Trend / change indicator colors — positive, negative, neutral.
- *  Used for KPI cards, data tables, and metric deltas. */
-export const TREND = {
-  up: "text-chart-2",
-  down: "text-destructive",
-  neutral: "text-muted-foreground",
-} as const;
+/** @deprecated Not used in any source file. */
+export const VIDEO_COVER = "absolute inset-0 size-full object-cover" as const;
 
-/** Trend badge/chip backgrounds — for Badge components showing trend direction.
- *  Compose with TREND for text color when needed. */
-export const TREND_CHIP = {
-  up: "bg-chart-2/10 text-chart-2 hover:bg-chart-2/20",
-  down: "bg-destructive/10 text-destructive hover:bg-destructive/20",
-  neutral: "bg-muted text-muted-foreground hover:bg-muted/80",
-} as const;
+/** @deprecated Not used in any source file. Use CARD.base instead. */
+export const CARD_HERO = "relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-card via-card to-background" as const;
 
-/** Accent color for monetary values (fees, rate cards, pricing).
- *  Compose with font-mono / tabular-nums as needed. */
-export const VALUE_ACCENT = "text-chart-4" as const;
+// ═════════════════════════════════════════════════════════════════
+//  CANVAS HELPERS
+// ═════════════════════════════════════════════════════════════════
 
-// ── Canvas helpers ──────────────────────────────────────────────────
-
-/** Read a CSS custom property value for use in Canvas 2D. */
+/** Read a CSS custom property value for use in Canvas 2D.
+ *  Safe to call inside useEffect (browser only). */
 export function cssVar(name: string): string {
   if (typeof document === "undefined") return "";
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || "";
+  return (
+    getComputedStyle(document.documentElement)
+      .getPropertyValue(name)
+      .trim() || ""
+  );
 }
 
-/** Semantic canvas colors derived from the current CSS theme. */
+/** Semantic canvas colors derived from the current CSS theme.
+ *  Called inside useEffect (browser only) so document is always available. */
 export function canvasColors() {
   return {
-    textPrimary: cssVar("--foreground") || "oklch(0.145 0 0)",
-    textMuted: cssVar("--muted-foreground") || "oklch(0.556 0 0)",
-    textDimmed: cssVar("--border") || "oklch(0.922 0 0)",
-    edgeHighlight: cssVar("--chart-3") || "oklch(0.6 0.22 280)",
-    edgeDefault: cssVar("--border") || "oklch(0.922 0 0)",
-    nodeStroke: cssVar("--background") || "oklch(1 0 0)",
-  };
+    textPrimary: cssVar("--foreground"),
+    textMuted: cssVar("--muted-foreground"),
+    textDimmed: cssVar("--border"),
+    edgeHighlight: cssVar("--chart-3"),
+    edgeDefault: cssVar("--border"),
+    nodeStroke: cssVar("--background"),
+  } as const;
+}
+
+/** Deterministic hue for an MC based on their handle (for wire-map nodes). */
+export function mcHue(handle: string): number {
+  let hash = 0;
+  for (let i = 0; i < handle.length; i++) {
+    hash = handle.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return Math.abs(hash) % 360;
+}
+
+// ── OKLCH Parsing ───────────────────────────────────────────────
+
+function parseOklch(value: string): { l: number; c: number; h: number } | null {
+  const m = value
+    .trim()
+    .match(/oklch\(\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s*\)/);
+  if (!m) return null;
+  return { l: parseFloat(m[1]), c: parseFloat(m[2]), h: parseFloat(m[3]) };
+}
+
+/** Generate an OKLCH color string for canvas rendering.
+ *  Reads live CSS custom properties so canvas stays in sync with the theme.
+ *
+ *  @param catId    Category to derive hue from, or null for grayscale.
+ *  @param lightness  Target lightness (0–1). If omitted, uses the parsed
+ *                    lightness from the CSS variable.
+ *  @param hue      Manual hue override ( bypasses catId lookup ).
+ *  @param chroma   Manual chroma override ( bypasses catId lookup ).
+ *
+ *  @example
+ *   oklch("food", 0.7)           // oklch with food hue at 70% lightness
+ *   oklch(null, 0.65, 200, 0.2)  // custom hue + chroma
+ */
+export function oklch(
+  catId: ContentCategoryId | null,
+  lightness?: number
+): string;
+export function oklch(
+  catId: null,
+  lightness: number,
+  hue: number,
+  chroma: number
+): string;
+export function oklch(
+  catId: ContentCategoryId | null,
+  lightness?: number,
+  hue?: number,
+  chroma?: number
+): string {
+  // Manual override path
+  if (hue != null && chroma != null) {
+    return `oklch(${lightness ?? 0.65} ${chroma} ${hue})`;
+  }
+
+  // Grayscale fallback
+  if (!catId) return `oklch(${lightness ?? 0.65} 0 0)`;
+
+  // Read from CSS custom property
+  const cssValue = cssVar(`--${CATEGORY_COLOR[catId]}`);
+  const parsed = parseOklch(cssValue);
+
+  if (parsed) {
+    // Use caller lightness if provided, otherwise fall back to CSS value
+    const l = lightness ?? parsed.l;
+    return `oklch(${l} ${parsed.c} ${parsed.h})`;
+  }
+
+  return `oklch(${lightness ?? 0.65} 0 0)`;
+}
+
+/** OKLCH with alpha — for canvas only. */
+export function oklcha(
+  catId: ContentCategoryId | null,
+  lightness?: number,
+  alpha = 1
+): string {
+  if (alpha >= 1) return oklch(catId, lightness);
+  if (!catId) return `oklch(${lightness ?? 0.65} 0 0 / ${alpha})`;
+  const base = oklch(catId, lightness);
+  return base.replace(")", ` / ${alpha})`);
 }
