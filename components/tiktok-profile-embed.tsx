@@ -100,10 +100,10 @@ export function TikTokProfileEmbed({ handle }: TikTokProfileEmbedProps) {
   );
 
   return (
-    <Card className="overflow-hidden border-t-2 border-t-[#fe2c55]">
+    <Card className="overflow-hidden border-t-2 border-t-chart-5">
       <CardHeader className="pb-3 flex flex-row items-center justify-between">
         <CardTitle className="text-sm font-semibold flex items-center gap-2">
-          <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#fe2c55]" />
+          <span className="inline-block w-1.5 h-1.5 rounded-full bg-chart-5" />
           {data.author_name || "TikTok Profile"}
         </CardTitle>
         <a
