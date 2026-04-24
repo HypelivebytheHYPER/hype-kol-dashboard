@@ -425,7 +425,7 @@ export function KOLProfileClient({ kol }: KOLProfileClientProps) {
             {/* Sidebar: social preview */}
             <div className="lg:col-span-1 space-y-5">
               {kol.platform?.toLowerCase().includes("tiktok") && kol.handle && (
-                <TikTokProfileEmbed handle={kol.handle} />
+                <TikTokProfileEmbed handle={kol.handle} name={kol.name} />
               )}
             </div>
           </div>

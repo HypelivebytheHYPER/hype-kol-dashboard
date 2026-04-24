@@ -6,6 +6,7 @@ import { ExternalLink } from "lucide-react";
 
 interface TikTokProfileEmbedProps {
   handle: string;
+  name?: string;
 }
 
 interface OEmbedData {
@@ -15,7 +16,7 @@ interface OEmbedData {
   author_url?: string;
 }
 
-export function TikTokProfileEmbed({ handle }: TikTokProfileEmbedProps) {
+export function TikTokProfileEmbed({ handle, name }: TikTokProfileEmbedProps) {
   const [data, setData] = useState<OEmbedData | null>(null);
   const [loading, setLoading] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -104,7 +105,7 @@ export function TikTokProfileEmbed({ handle }: TikTokProfileEmbedProps) {
       <CardHeader className="pb-3 flex flex-row items-center justify-between">
         <CardTitle className="text-sm font-semibold flex items-center gap-2">
           <span className="inline-block w-1.5 h-1.5 rounded-full bg-chart-5" />
-          {data.author_name || "TikTok Profile"}
+          {data.author_name || name || `@${handle}`}
         </CardTitle>
         <a
           href={profileUrl}
