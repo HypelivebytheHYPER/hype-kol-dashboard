@@ -49,6 +49,10 @@ interface FetchOptions {
   fieldNames?: string[];
   sort?: Array<{ fieldName: string; desc?: boolean }>;
   tags?: string[];
+  /** Bypass Next.js Data Cache. Use when fresh data is required. */
+  cache?: "default" | "no-store" | "force-cache" | "only-if-cached";
+  /** Seconds to cache the fetch result. 0 = no cache. */
+  revalidate?: number;
 }
 
 interface FetchResult {
@@ -105,7 +109,11 @@ export async function fetchRecords(
       ...(fieldNames && { field_names: fieldNames }),
       ...(wireSort && { sort: wireSort }),
     }),
-    next: { tags: ["lark", ...tags] },
+    next: {
+      tags: ["lark", ...tags],
+      ...(opts.cache && { cache: opts.cache }),
+      ...(opts.revalidate !== undefined && { revalidate: opts.revalidate }),
+    },
   });
 
   if (!res.ok) return { data: [], total: 0, hasMore: false };

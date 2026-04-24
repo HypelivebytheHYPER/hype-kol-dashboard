@@ -152,7 +152,7 @@ export function LiveCatalogClient({ mcs }: LiveCatalogClientProps) {
               {/* Eyebrow */}
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted border border-border text-[11px] font-semibold text-muted-foreground tracking-wide uppercase">
-                  <Sparkles className="size-3 text-chart-1" />
+                  <Sparkles className="size-3 text-primary" />
                   Premium Talent
                 </span>
               </div>

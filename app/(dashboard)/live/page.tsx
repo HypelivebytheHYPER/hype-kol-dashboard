@@ -27,7 +27,7 @@ export const dynamic = "force-dynamic";
 
 // Route-level fallback lives in `./loading.tsx` — no Suspense wrapper here.
 export default async function LiveCatalogPage() {
-  const result = await fetchRecords(TABLES.LIVE_MC_LIST, { tags: ["live-mc"] });
+  const result = await fetchRecords(TABLES.LIVE_MC_LIST, { tags: ["live-mc"], cache: "no-store" });
   const mcs = result.data.map(recordToLiveMC);
 
   return <LiveCatalogClient mcs={mcs} />;

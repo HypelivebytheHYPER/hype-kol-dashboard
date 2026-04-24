@@ -106,11 +106,12 @@ export function MCDetailPanel({
       {/* Video Player Area */}
       <div className="relative bg-card border-b border-border">
         <div className="relative aspect-video max-h-[360px]">
-          {hasVideo && !videoError ? (
+          {isPlaying && hasVideo && !videoError ? (
             <video
+              key={videoUrl}
               ref={videoRef}
               src={videoUrl}
-              preload="metadata"
+              preload="auto"
               playsInline
               loop
               muted
@@ -119,36 +120,58 @@ export function MCDetailPanel({
               className="absolute inset-0 size-full object-cover"
             />
           ) : (
-            <div className="absolute inset-0 bg-card flex items-center justify-center overflow-hidden">
-              <div className="relative flex flex-col items-center gap-3">
-                <div
-                  className={cn(
-                    "size-20 rounded-2xl flex items-center justify-center border text-3xl font-bold overflow-hidden",
-                    mc.image
-                      ? "bg-muted"
-                      : catStyle
-                        ? [catStyle.avatarBg, catStyle.avatarBorder, catStyle.avatarText]
-                        : "bg-muted border-border text-muted-foreground"
-                  )}
-                >
-                  {mc.image ? (
-                    <img
-                      src={mc.image}
-                      alt={mc.handle}
-                      className="size-full object-cover"
-                      loading="lazy"
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                        e.currentTarget.parentElement!.textContent = initial;
-                      }}
-                    />
-                  ) : (
-                    initial
-                  )}
+            <div className={cn("absolute inset-0 flex items-center justify-center overflow-hidden", catStyle?.chipBg ?? "bg-muted/30")}>
+              {/* Subtle category gradient overlay */}
+              <div className={cn("absolute inset-0 opacity-30", catStyle?.avatarBg ?? "bg-muted")} />
+              <div className="relative flex flex-col items-center gap-4">
+                {/* Avatar + handle row */}
+                <div className="flex items-center gap-3">
+                  <div
+                    className={cn(
+                      "relative size-14 rounded-xl flex items-center justify-center border text-xl font-bold overflow-hidden shrink-0",
+                      mc.image
+                        ? "bg-muted"
+                        : catStyle
+                          ? [catStyle.avatarBg, catStyle.avatarBorder, catStyle.avatarText]
+                          : "bg-muted border-border text-muted-foreground"
+                    )}
+                  >
+                    {mc.image ? (
+                      <img
+                        src={mc.image}
+                        alt={mc.handle}
+                        className="size-full object-cover"
+                        loading="lazy"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                          e.currentTarget.parentElement!.textContent = initial;
+                        }}
+                      />
+                    ) : (
+                      initial
+                    )}
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-bold text-foreground">{mc.handle}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {activeVideo?.name ?? `${mc.videos.length} video${mc.videos.length !== 1 ? "s" : ""}`}
+                    </p>
+                  </div>
                 </div>
-                <span className="text-xs font-medium text-muted-foreground tracking-widest uppercase">
-                  {mc.handle}
-                </span>
+
+                {/* Play button */}
+                {hasVideo && (
+                  <button
+                    onClick={onTogglePlay}
+                    className="relative flex items-center justify-center group/play"
+                    aria-label={`Play ${mc.handle}`}
+                  >
+                    <div className={cn("absolute inset-0 rounded-full blur-xl scale-150 opacity-40 group-hover/play:opacity-70 transition-opacity duration-300", catStyle?.playGlow ?? "bg-primary/30")} />
+                    <div className="relative size-14 rounded-full bg-background/70 backdrop-blur-md border border-foreground/15 flex items-center justify-center hover:bg-background/90 transition-colors shadow-lg">
+                      <Play className="size-6 text-foreground fill-foreground ml-0.5" />
+                    </div>
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -158,22 +181,6 @@ export function MCDetailPanel({
             <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-40 backdrop-blur-sm">
               <Loader2 className="size-8 text-foreground animate-spin" />
             </div>
-          )}
-
-          {/* Play button overlay */}
-          {!isPlaying && hasVideo && (
-            <button
-              onClick={onTogglePlay}
-              className="absolute inset-0 flex items-center justify-center z-20 group/play"
-              aria-label={`Play ${mc.handle}`}
-            >
-              <div className="relative flex items-center justify-center transition-all duration-300 ease-out scale-100 group-hover/play:scale-110">
-                <div className={cn("absolute inset-0 rounded-full blur-xl scale-150 opacity-0 group-hover/play:opacity-50 transition-opacity duration-300", catStyle?.playGlow ?? "bg-primary/30")} />
-                <div className="relative size-14 rounded-full bg-background/60 backdrop-blur-md border border-foreground/20 flex items-center justify-center hover:bg-background/80 transition-colors">
-                  <Play className="size-6 text-foreground fill-foreground ml-0.5" />
-                </div>
-              </div>
-            </button>
           )}
 
           {/* Video controls */}
@@ -208,52 +215,36 @@ export function MCDetailPanel({
             </div>
           )}
 
-          {/* Top badges */}
-          <div className="absolute top-3 left-3 right-3 flex items-start justify-between z-10 pointer-events-none">
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-background/60 backdrop-blur-md border border-foreground/10 text-[10px] font-bold text-foreground tracking-wide">
-              <Radio className="size-2.5 text-destructive" />
-              LIVE
-            </span>
-          </div>
+          {/* LIVE badge — only when actually playing */}
+          {isPlaying && (
+            <div className="absolute top-3 left-3 right-3 flex items-start justify-between z-10 pointer-events-none">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-background/60 backdrop-blur-md border border-foreground/10 text-[10px] font-bold text-foreground tracking-wide">
+                <Radio className="size-2.5 text-destructive" />
+                LIVE
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Video thumbnail strip */}
         {mc.videos.length > 1 && (
           <div className="flex gap-2 p-3 overflow-x-auto scrollbar-hide">
             {mc.videos.map((video, i) => (
-                <button
-                  key={video.token}
-                  onClick={() => handleVideoSwitch(i)}
-                  className={cn(
-                    "relative shrink-0 rounded-lg border overflow-hidden transition-all duration-200",
-                    activeVideoIndex === i
-                      ? "border-primary ring-1 ring-primary/30"
-                      : "border-border hover:border-foreground/20"
-                  )}
-                >
-                  <div className="size-16 bg-muted">
-                    {video.url ? (
-                      <video
-                        src={video.url}
-                        preload="metadata"
-                        muted
-                        playsInline
-                        className="size-full object-cover"
-                        onError={(e) => {
-                          const target = e.currentTarget;
-                          target.style.display = "none";
-                        }}
-                      />
-                    ) : (
-                      <div className="size-full flex items-center justify-center">
-                        <Film className="size-5 text-muted-foreground/40" />
-                      </div>
-                    )}
-                  </div>
-                  <span className="absolute bottom-1 left-1 right-1 truncate text-[9px] text-foreground bg-background/70 backdrop-blur-sm rounded px-1">
-                    {video.name}
-                  </span>
-                </button>
+              <button
+                key={video.token}
+                onClick={() => handleVideoSwitch(i)}
+                className={cn(
+                  "relative shrink-0 size-16 rounded-lg border overflow-hidden flex flex-col items-center justify-center gap-1 transition-all duration-200",
+                  activeVideoIndex === i
+                    ? cn("ring-1", catStyle?.activeBorder ?? "border-primary", "ring-primary/30")
+                    : "border-border hover:border-foreground/20"
+                )}
+              >
+                <Film className={cn("size-5", catStyle?.playButtonText ?? "text-muted-foreground/40")} />
+                <span className="absolute bottom-1 left-1 right-1 truncate text-[9px] text-foreground bg-background/70 backdrop-blur-sm rounded px-1">
+                  {video.name}
+                </span>
+              </button>
             ))}
           </div>
         )}
