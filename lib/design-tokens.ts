@@ -45,6 +45,8 @@ export const CATEGORY_STYLES: Record<ContentCategoryId, {
   activeBorder: string;
   /** Hover border for media thumbnails */
   mediaHoverBorder: string;
+  /** Ring color for active/selected state */
+  ring: string;
 }> = {
   cosmetics: {
     dot: "bg-chart-5",
@@ -62,6 +64,7 @@ export const CATEGORY_STYLES: Record<ContentCategoryId, {
     playGlow: "bg-chart-5/30",
     activeBorder: "border-chart-5/20",
     mediaHoverBorder: "hover:border-chart-5/40",
+    ring: "ring-chart-5/30",
   },
   health: {
     dot: "bg-chart-2",
@@ -79,6 +82,7 @@ export const CATEGORY_STYLES: Record<ContentCategoryId, {
     playGlow: "bg-chart-2/30",
     activeBorder: "border-chart-2/20",
     mediaHoverBorder: "hover:border-chart-2/40",
+    ring: "ring-chart-2/30",
   },
   food: {
     dot: "bg-chart-1",
@@ -96,6 +100,7 @@ export const CATEGORY_STYLES: Record<ContentCategoryId, {
     playGlow: "bg-chart-1/30",
     activeBorder: "border-chart-1/20",
     mediaHoverBorder: "hover:border-chart-1/40",
+    ring: "ring-chart-1/30",
   },
   home: {
     dot: "bg-chart-3",
@@ -113,6 +118,7 @@ export const CATEGORY_STYLES: Record<ContentCategoryId, {
     playGlow: "bg-chart-3/30",
     activeBorder: "border-chart-3/20",
     mediaHoverBorder: "hover:border-chart-3/40",
+    ring: "ring-chart-3/30",
   },
   fashion: {
     dot: "bg-chart-4",
@@ -130,6 +136,7 @@ export const CATEGORY_STYLES: Record<ContentCategoryId, {
     playGlow: "bg-chart-4/30",
     activeBorder: "border-chart-4/20",
     mediaHoverBorder: "hover:border-chart-4/40",
+    ring: "ring-chart-4/30",
   },
   "personal-care": {
     dot: "bg-primary",
@@ -147,6 +154,7 @@ export const CATEGORY_STYLES: Record<ContentCategoryId, {
     playGlow: "bg-primary/30",
     activeBorder: "border-primary/20",
     mediaHoverBorder: "hover:border-primary/40",
+    ring: "ring-primary/30",
   },
 };
 
@@ -175,7 +183,7 @@ export function oklch(catId: ContentCategoryId | null, lightness = 0.65, hue?: n
   if (!catId) return `oklch(${lightness} 0 0)`;
   // Map to chart color OKLCH values for canvas consistency
   const map: Record<ContentCategoryId, { h: number; c: number }> = {
-    cosmetics:     { h: 350, c: 0.22 },
+    cosmetics:     { h: 350, c: 0.24 },
     health:        { h: 165, c: 0.20 },
     food:          { h: 35,  c: 0.22 },
     home:          { h: 280, c: 0.22 },
@@ -194,6 +202,26 @@ export function oklcha(catId: ContentCategoryId | null, lightness = 0.65, alpha 
   const base = oklch(catId, lightness);
   return base.replace(")", ` / ${alpha})`);
 }
+
+/** Fallback style when an MC has no category. Uses neutral muted tokens. */
+export const UNCATEGORIZED_STYLE = {
+  dot: "bg-muted-foreground",
+  chipBg: "bg-muted",
+  chipBorder: "border-border",
+  chipText: "text-muted-foreground",
+  avatarBg: "bg-muted",
+  avatarBorder: "border-border",
+  avatarText: "text-muted-foreground",
+  filterActiveBg: "bg-muted",
+  filterActiveBorder: "border-border",
+  filterActiveShadow: "shadow-foreground/10",
+  playButtonBg: "bg-muted",
+  playButtonText: "text-muted-foreground",
+  playGlow: "bg-primary/30",
+  activeBorder: "border-border",
+  mediaHoverBorder: "hover:border-foreground/20",
+  ring: "ring-primary/30",
+} as const;
 
 // ── Canvas helpers ──────────────────────────────────────────────────
 

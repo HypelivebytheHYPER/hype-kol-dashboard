@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { MapPin, Eye, Video, BarChart3, Info } from "lucide-react";
@@ -37,6 +38,7 @@ interface KOLFeedCardProps {
 
 export function KOLFeedCard({ kol }: KOLFeedCardProps) {
   const { t } = useI18n();
+  const [imgError, setImgError] = useState(false);
 
   const typeKey = kol.kolType?.toLowerCase().includes("live")
     ? "live"
@@ -72,7 +74,7 @@ export function KOLFeedCard({ kol }: KOLFeedCardProps) {
         href={kolProfilePath(kol.id)}
         className="relative block overflow-hidden aspect-[3/4] bg-muted"
       >
-        {kol.image ? (
+        {kol.image && !imgError ? (
           <Image
             src={kol.image}
             alt={kol.name || kol.handle || "Creator profile"}
@@ -80,6 +82,7 @@ export function KOLFeedCard({ kol }: KOLFeedCardProps) {
             className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
             loading="lazy"
             sizes="(max-width: 640px) 85vw, (max-width: 768px) 46vw, (max-width: 1024px) 50vw, (max-width: 1536px) 25vw, 20vw"
+            onError={() => setImgError(true)}
           />
         ) : (
           <div
@@ -178,8 +181,8 @@ export function KOLFeedCard({ kol }: KOLFeedCardProps) {
               className="w-full h-9 rounded-xl text-xs font-medium gap-1.5 hover:bg-muted/50 transition-all duration-200"
             >
               <Eye className="size-3.5 shrink-0" />
-              <span className="truncate hidden xs:inline">{t("kol.actions.viewProfile")}</span>
-              <span className="truncate xs:hidden">{t("kol.actions.view")}</span>
+              <span className="truncate hidden sm:inline">{t("kol.actions.viewProfile")}</span>
+              <span className="truncate sm:hidden">{t("kol.actions.view")}</span>
             </Button>
           </Link>
         </div>
@@ -212,7 +215,7 @@ function MetricCol({
             {value}
           </p>
           <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5 inline-flex items-center gap-0.5">
-            <span className="truncate max-w-[50px] sm:max-w-none">{label}</span>
+            <span className="truncate max-w-[70px] sm:max-w-none">{label}</span>
             {tooltip && <Info className="size-2.5 opacity-40 shrink-0" />}
           </p>
         </div>

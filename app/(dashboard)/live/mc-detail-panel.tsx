@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { cn } from "@/lib/cn";
 import { CONTENT_CATEGORIES, type ContentCategoryId } from "@/lib/taxonomy";
-import { CATEGORY_STYLES } from "@/lib/design-tokens";
+import { CATEGORY_STYLES, UNCATEGORIZED_STYLE } from "@/lib/design-tokens";
 import type { LiveMC } from "@/lib/types/catalog";
 import {
   Play,
@@ -55,7 +55,7 @@ export function MCDetailPanel({
     return (mc.contentCategories[0] as ContentCategoryId) ?? null;
   }, [mc.contentCategories]);
 
-  const catStyle = firstCatId ? CATEGORY_STYLES[firstCatId] : null;
+  const catStyle = firstCatId ? CATEGORY_STYLES[firstCatId] : UNCATEGORIZED_STYLE;
 
   // Sync muted state
   useEffect(() => {
@@ -120,9 +120,9 @@ export function MCDetailPanel({
               className="absolute inset-0 size-full object-cover"
             />
           ) : (
-            <div className={cn("absolute inset-0 flex items-center justify-center overflow-hidden", catStyle?.chipBg ?? "bg-muted/30")}>
+            <div className={cn("absolute inset-0 flex items-center justify-center overflow-hidden", catStyle.chipBg)}>
               {/* Subtle category gradient overlay */}
-              <div className={cn("absolute inset-0 opacity-30", catStyle?.avatarBg ?? "bg-muted")} />
+              <div className={cn("absolute inset-0 opacity-30", catStyle.avatarBg)} />
               <div className="relative flex flex-col items-center gap-4">
                 {/* Avatar + handle row */}
                 <div className="flex items-center gap-3">
@@ -131,9 +131,7 @@ export function MCDetailPanel({
                       "relative size-14 rounded-xl flex items-center justify-center border text-xl font-bold overflow-hidden shrink-0",
                       mc.image
                         ? "bg-muted"
-                        : catStyle
-                          ? [catStyle.avatarBg, catStyle.avatarBorder, catStyle.avatarText]
-                          : "bg-muted border-border text-muted-foreground"
+                        : [catStyle.avatarBg, catStyle.avatarBorder, catStyle.avatarText]
                     )}
                   >
                     {mc.image ? (
@@ -166,7 +164,7 @@ export function MCDetailPanel({
                     className="relative flex items-center justify-center group/play"
                     aria-label={`Play ${mc.handle}`}
                   >
-                    <div className={cn("absolute inset-0 rounded-full blur-xl scale-150 opacity-40 group-hover/play:opacity-70 transition-opacity duration-300", catStyle?.playGlow ?? "bg-primary/30")} />
+                    <div className={cn("absolute inset-0 rounded-full blur-xl scale-150 opacity-40 group-hover/play:opacity-70 transition-opacity duration-300", catStyle.playGlow)} />
                     <div className="relative size-14 rounded-full bg-background/70 backdrop-blur-md border border-foreground/15 flex items-center justify-center hover:bg-background/90 transition-colors shadow-lg">
                       <Play className="size-6 text-foreground fill-foreground ml-0.5" />
                     </div>
@@ -236,11 +234,11 @@ export function MCDetailPanel({
                 className={cn(
                   "relative shrink-0 size-16 rounded-lg border overflow-hidden flex flex-col items-center justify-center gap-1 transition-all duration-200",
                   activeVideoIndex === i
-                    ? cn("ring-1", catStyle?.activeBorder ?? "border-primary", "ring-primary/30")
+                    ? cn("ring-1", catStyle.activeBorder, catStyle.ring)
                     : "border-border hover:border-foreground/20"
                 )}
               >
-                <Film className={cn("size-5", catStyle?.playButtonText ?? "text-muted-foreground/40")} />
+                <Film className={cn("size-5", catStyle.playButtonText)} />
                 <span className="absolute bottom-1 left-1 right-1 truncate text-[9px] text-foreground bg-background/70 backdrop-blur-sm rounded px-1">
                   {video.name}
                 </span>
@@ -352,7 +350,7 @@ export function MCDetailPanel({
                   href={img.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={cn("relative shrink-0 size-16 rounded-lg border overflow-hidden transition-colors", catStyle?.mediaHoverBorder ?? "hover:border-primary/40")}
+                  className={cn("relative shrink-0 size-16 rounded-lg border overflow-hidden transition-colors", catStyle.mediaHoverBorder)}
                 >
                   <img
                     src={img.url}
@@ -386,7 +384,7 @@ export function MCDetailPanel({
                   className={cn(
                     "flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all text-left",
                     activeVideoIndex === i
-                      ? cn("bg-muted text-foreground border", catStyle?.activeBorder ?? "border-primary/20")
+                      ? cn("bg-muted text-foreground border", catStyle.activeBorder)
                       : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                   )}
                 >
