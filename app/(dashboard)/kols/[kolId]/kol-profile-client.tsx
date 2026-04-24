@@ -39,6 +39,7 @@ import {
   Star,
   Info,
 } from "lucide-react";
+import { TikTokProfileEmbed } from "@/components/tiktok-profile-embed";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import Link from "next/link";
 import type { Creator } from "@/lib/types/catalog";
@@ -417,6 +418,11 @@ export function KOLProfileClient({ kol }: KOLProfileClientProps) {
             </CardContent>
           </Card>
 
+          {/* Row 4: TikTok Profile Embed */}
+          {kol.platform?.toLowerCase().includes("tiktok") && kol.handle && (
+            <TikTokProfileEmbed handle={kol.handle} />
+          )}
+
         </TabsContent>
 
         {/* ── CONTACT ── */}
@@ -431,6 +437,8 @@ export function KOLProfileClient({ kol }: KOLProfileClientProps) {
                   icon={<MessageCircle className="w-4 h-4 text-green-500" />}
                   label="LINE ID"
                   value={kol.contact.lineId}
+                  href={`https://line.me/ti/p/~${encodeURIComponent(kol.contact.lineId)}`}
+                  isExternal
                 />
               )}
               {kol.contact.phone?.trim() && (
@@ -438,6 +446,7 @@ export function KOLProfileClient({ kol }: KOLProfileClientProps) {
                   icon={<Phone className="w-4 h-4" />}
                   label="Phone"
                   value={kol.contact.phone}
+                  href={`tel:${kol.contact.phone.replace(/\s/g, "")}`}
                 />
               )}
               {kol.contact.email?.trim() && (
@@ -445,6 +454,7 @@ export function KOLProfileClient({ kol }: KOLProfileClientProps) {
                   icon={<Mail className="w-4 h-4" />}
                   label="Email"
                   value={kol.contact.email}
+                  href={`mailto:${kol.contact.email}`}
                 />
               )}
               {kol.channel && (
@@ -452,7 +462,8 @@ export function KOLProfileClient({ kol }: KOLProfileClientProps) {
                   icon={<ExternalLink className="w-4 h-4" />}
                   label="Channel"
                   value={kol.channel}
-                  isLink
+                  href={kol.channel}
+                  isExternal
                 />
               )}
 
@@ -527,23 +538,24 @@ function ContactRow({
   icon,
   label,
   value,
-  isLink,
+  href,
+  isExternal,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string;
-  isLink?: boolean;
+  href?: string;
+  isExternal?: boolean;
 }) {
   return (
     <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30">
       <div className="text-muted-foreground shrink-0">{icon}</div>
       <div className="min-w-0">
         <p className="text-xs text-muted-foreground">{label}</p>
-        {isLink ? (
+        {href ? (
           <a
-            href={value}
-            target="_blank"
-            rel="noopener noreferrer"
+            href={href}
+            {...(isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {})}
             className="text-sm text-primary hover:underline truncate block"
           >
             {value}
