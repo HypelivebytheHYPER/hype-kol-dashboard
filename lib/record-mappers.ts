@@ -154,7 +154,11 @@ export function recordToLiveMC(r: LarkRecord): LiveMC {
     images,
     videos: refs
       .filter((a: LarkAttachment) => a.type?.startsWith("video/"))
-      .map((v: LarkAttachment) => ({ token: v.file_token, name: v.name })),
+      .map((v: LarkAttachment) => ({
+        token: v.file_token,
+        url: buildMediaUrl(v.file_token, TABLES.LIVE_MC_LIST),
+        name: v.name,
+      })),
   };
   if (images[0]) mc.image = images[0].url;
   return mc;

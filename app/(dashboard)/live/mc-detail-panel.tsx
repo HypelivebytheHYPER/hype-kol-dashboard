@@ -21,7 +21,6 @@ import { Button } from "@/components/ui/button";
 
 interface MCDetailPanelProps {
   mc: LiveMC;
-  videoUrls: Record<string, string>;
   isPlaying: boolean;
   onTogglePlay: () => void;
   onClose?: () => void;
@@ -30,7 +29,6 @@ interface MCDetailPanelProps {
 
 export function MCDetailPanel({
   mc,
-  videoUrls,
   isPlaying,
   onTogglePlay,
   onClose,
@@ -50,7 +48,7 @@ export function MCDetailPanel({
   }, [mc.id]);
 
   const activeVideo = mc.videos[activeVideoIndex];
-  const videoUrl = activeVideo ? videoUrls[activeVideo.token] : null;
+  const videoUrl = activeVideo?.url ?? null;
   const hasVideo = !!videoUrl;
 
   const firstCatId = useMemo(() => {
@@ -222,9 +220,7 @@ export function MCDetailPanel({
         {/* Video thumbnail strip */}
         {mc.videos.length > 1 && (
           <div className="flex gap-2 p-3 overflow-x-auto scrollbar-hide">
-            {mc.videos.map((video, i) => {
-              const url = videoUrls[video.token];
-              return (
+            {mc.videos.map((video, i) => (
                 <button
                   key={video.token}
                   onClick={() => handleVideoSwitch(i)}
@@ -236,9 +232,9 @@ export function MCDetailPanel({
                   )}
                 >
                   <div className="size-16 bg-muted">
-                    {url ? (
+                    {video.url ? (
                       <video
-                        src={url}
+                        src={video.url}
                         preload="metadata"
                         muted
                         playsInline
@@ -258,8 +254,7 @@ export function MCDetailPanel({
                     {video.name}
                   </span>
                 </button>
-              );
-            })}
+            ))}
           </div>
         )}
       </div>

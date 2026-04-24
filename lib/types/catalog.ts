@@ -56,7 +56,7 @@ export interface LiveMC {
   brands: string[];
   categories: string[];
   contentCategories: string[];
-  videos: { token: string; name: string }[];
+  videos: { token: string; url: string; name: string }[];
   /** All image attachments from LIVE Reference field (proper token URLs) */
   images: { token: string; url: string; name: string }[];
   /** First image — used as avatar */

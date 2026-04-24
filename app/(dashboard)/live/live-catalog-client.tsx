@@ -22,7 +22,6 @@ import type { LiveMC } from "@/lib/types/catalog";
 
 interface LiveCatalogClientProps {
   mcs: LiveMC[];
-  videoUrls: Record<string, string>;
 }
 
 type ViewMode = "list" | "wiremap";
@@ -49,7 +48,7 @@ function pickVideo(
   return mc.videos[0];
 }
 
-export function LiveCatalogClient({ mcs, videoUrls }: LiveCatalogClientProps) {
+export function LiveCatalogClient({ mcs }: LiveCatalogClientProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -369,7 +368,7 @@ export function LiveCatalogClient({ mcs, videoUrls }: LiveCatalogClientProps) {
             {selectedMC ? (
               <MCDetailPanel
                 mc={selectedMC}
-                videoUrls={videoUrls}
+
                 isPlaying={playingId === selectedMC.id}
                 onTogglePlay={() => handlePlay(selectedMC.id)}
               />
