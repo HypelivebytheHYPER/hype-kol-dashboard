@@ -11,6 +11,7 @@ import { formatCurrency, formatFeeRange, formatNumber } from "@/lib/format";
 import { getTierColor } from "@/lib/tier";
 import { kolProfilePath } from "@/lib/constants";
 import { cn } from "@/lib/cn";
+import { VALUE_ACCENT } from "@/lib/design-tokens";
 import { useI18n } from "@/contexts/i18n-context";
 
 import type { Creator } from "@/lib/types/catalog";
@@ -78,9 +79,9 @@ function PlatformIcon({ platform }: { platform: string }) {
 }
 
 const TYPE_ICON_COLORS = {
-  live: "text-red-400",
-  video: "text-blue-400",
-  default: "text-violet-400",
+  live: "text-destructive",
+  video: "text-chart-3",
+  default: "text-muted-foreground",
 };
 
 interface KOLFeedCardProps {
@@ -211,7 +212,7 @@ export function KOLFeedCard({ kol }: KOLFeedCardProps) {
             )}
           </div>
           {kol.fees && (
-            <span className="text-[11px] font-mono font-bold text-chart-4 shrink-0 tabular-nums">
+            <span className={cn("text-[11px] font-mono font-bold shrink-0 tabular-nums", VALUE_ACCENT)}>
               {formatFeeRange(kol.fees)}
             </span>
           )}

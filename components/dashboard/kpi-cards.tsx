@@ -3,6 +3,7 @@
 import type { DashboardMetric } from "@/lib/types/catalog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/cn";
+import { TREND } from "@/lib/design-tokens";
 import {
   TrendingUp,
   TrendingDown,
@@ -67,10 +68,10 @@ export function KpiCards({ metrics }: KpiCardsProps) {
         const TrendIcon = metric.trend === "up" ? TrendingUp : metric.trend === "down" ? TrendingDown : Minus;
         const trendColor =
           metric.trend === "up"
-            ? "text-chart-2"
+            ? TREND.up
             : metric.trend === "down"
-              ? "text-destructive"
-              : "text-muted-foreground";
+              ? TREND.down
+              : TREND.neutral;
 
         return (
           <Card key={metric.metricKey} size="sm">

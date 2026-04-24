@@ -51,10 +51,15 @@ function recordToCreator(r: LarkRecord): Creator {
   if (accountType) creator.accountType = accountType;
 
   // 1. Prefer Lark Base attachment (uploaded image)
+  //    tmp_url is a pre-signed CDN URL — direct, no auth, proper CORS.
   const att = attachments(f, "Attachment");
-  const img = att.find((a: LarkAttachment) => a.type?.startsWith("image/"));
+  const isImage = (a: LarkAttachment) =>
+    a.type?.startsWith("image/") ?? /\.(jpg|jpeg|png|gif|webp|avif)$/i.test(a.name);
+  const images = att.filter(isImage);
+  const img = images.length > 0 ? images[images.length - 1] : undefined;
   if (img) {
-    creator.image = buildMediaUrl(img.file_token, TABLES.ALL_KOLS);
+    const url = img.tmp_url ?? img.url;
+    creator.image = url && url.length > 0 ? url : buildMediaUrl(img.file_token, TABLES.ALL_KOLS);
   } else {
     // 2. Fall back to "Avatar URL" field (scraped from TikTok profile, stored in Lark)
     const avatarUrl = str(f, "Avatar URL");
@@ -138,11 +143,18 @@ export function recordToLiveMC(r: LarkRecord): LiveMC {
   const f = r.fields;
   const refs = attachments(f, "LIVE Reference");
   const brandList = arr(f, "Brand");
+
+  // Lark's +record-list API doesn't return type/url/tmp_url for attachments.
+  // Infer media type from filename extension and always use worker proxy.
+  const isImage = (name: string) => /\.(jpg|jpeg|png|gif|webp|avif|bmp|heic)$/i.test(name);
+  const isVideo = (name: string) => /\.(mp4|mov|avi|mkv|webm|m4v)$/i.test(name);
+  const mediaUrl = (a: LarkAttachment) => buildMediaUrl(a.file_token, TABLES.LIVE_MC_LIST);
+
   const images = refs
-    .filter((a: LarkAttachment) => a.type?.startsWith("image/"))
+    .filter((a: LarkAttachment) => isImage(a.name) || a.type?.startsWith("image/"))
     .map((img: LarkAttachment) => ({
       token: img.file_token,
-      url: buildMediaUrl(img.file_token, TABLES.LIVE_MC_LIST),
+      url: mediaUrl(img),
       name: img.name,
     }));
   const mc: LiveMC = {
@@ -153,14 +165,13 @@ export function recordToLiveMC(r: LarkRecord): LiveMC {
     contentCategories: getMCContentCategories(brandList),
     images,
     videos: refs
-      .filter((a: LarkAttachment) => a.type?.startsWith("video/"))
+      .filter((a: LarkAttachment) => isVideo(a.name) || a.type?.startsWith("video/"))
       .map((v: LarkAttachment) => ({
         token: v.file_token,
-        url: buildMediaUrl(v.file_token, TABLES.LIVE_MC_LIST),
+        url: mediaUrl(v),
         name: v.name,
       })),
   };
-  if (images[0]) mc.image = images[0].url;
   return mc;
 }
 

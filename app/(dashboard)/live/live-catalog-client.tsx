@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { formatNumber } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { CONTENT_CATEGORIES, getBrandsInCategory, type ContentCategoryId } from "@/lib/taxonomy";
-import { CATEGORY_STYLES } from "@/lib/design-tokens";
+import { CATEGORY_STYLES, CARD, TOGGLE, FILTER_INACTIVE, STAT_LABEL, EMPTY_ICON } from "@/lib/design-tokens";
 import { MCListItem } from "./mc-list-item";
 import { MCDetailPanel } from "./mc-detail-panel";
 import { WireMap } from "./wire-map";
@@ -142,16 +142,16 @@ export function LiveCatalogClient({ mcs }: LiveCatalogClientProps) {
   return (
     <div className="flex flex-col gap-5 animate-fade-in">
       {/* ── Hero Header ── */}
-      <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-card via-card to-background">
+      <div className={CARD.hero}>
         <div className="absolute top-0 right-0 size-96 bg-foreground/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none" />
         <div className="absolute bottom-0 left-0 size-64 bg-foreground/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4 pointer-events-none" />
 
-        <div className="relative p-5 sm:p-6">
+        <div className="p-5 sm:p-6">
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5">
             <div className="flex flex-col gap-3">
               {/* Eyebrow */}
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted border border-border text-[11px] font-semibold text-muted-foreground tracking-wide uppercase">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted border border-border text-xs font-semibold text-muted-foreground tracking-wide uppercase">
                   <Sparkles className="size-3 text-primary" />
                   Premium Talent
                 </span>
@@ -174,7 +174,7 @@ export function LiveCatalogClient({ mcs }: LiveCatalogClientProps) {
               <div className="text-center sm:text-left">
                 <div className="flex items-center gap-1.5 justify-center sm:justify-start text-muted-foreground mb-0.5">
                   <Users className="size-3.5" />
-                  <span className="text-[10px] uppercase tracking-widest font-semibold">MCs</span>
+                  <span className={cn(STAT_LABEL)}>MCs</span>
                 </div>
                 <p className="text-2xl font-bold font-mono tabular-nums">{formatNumber(mcs.length)}</p>
               </div>
@@ -182,7 +182,7 @@ export function LiveCatalogClient({ mcs }: LiveCatalogClientProps) {
               <div className="text-center sm:text-left">
                 <div className="flex items-center gap-1.5 justify-center sm:justify-start text-muted-foreground mb-0.5">
                   <Store className="size-3.5" />
-                  <span className="text-[10px] uppercase tracking-widest font-semibold">Brands</span>
+                  <span className={cn(STAT_LABEL)}>Brands</span>
                 </div>
                 <p className="text-2xl font-bold font-mono tabular-nums">{formatNumber(totalBrands)}</p>
               </div>
@@ -190,7 +190,7 @@ export function LiveCatalogClient({ mcs }: LiveCatalogClientProps) {
               <div className="text-center sm:text-left hidden sm:block">
                 <div className="flex items-center gap-1.5 justify-center sm:justify-start text-muted-foreground mb-0.5">
                   <LayoutGrid className="size-3.5" />
-                  <span className="text-[10px] uppercase tracking-widest font-semibold">Categories</span>
+                  <span className={cn(STAT_LABEL)}>Categories</span>
                 </div>
                 <p className="text-2xl font-bold font-mono tabular-nums">{formatNumber(totalCategories)}</p>
               </div>
@@ -225,29 +225,19 @@ export function LiveCatalogClient({ mcs }: LiveCatalogClientProps) {
           <div className="flex rounded-xl border border-border overflow-hidden bg-muted/30">
             <button
               onClick={() => setView("list")}
-              className={cn(
-                "px-3.5 py-2 text-xs font-medium flex items-center gap-1.5 transition-all duration-200",
-                view === "list"
-                  ? "bg-foreground/10 text-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-foreground/10"
-              )}
+              className={cn(TOGGLE.base, view === "list" ? TOGGLE.active : TOGGLE.inactive)}
             >
               <LayoutGrid className="size-3.5" /> List
             </button>
             <button
               onClick={() => setView("wiremap")}
-              className={cn(
-                "px-3.5 py-2 text-xs font-medium flex items-center gap-1.5 transition-all duration-200",
-                view === "wiremap"
-                  ? "bg-foreground/10 text-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-foreground/10"
-              )}
+              className={cn(TOGGLE.base, view === "wiremap" ? TOGGLE.active : TOGGLE.inactive)}
             >
               <Network className="size-3.5" /> Wire Map
             </button>
           </div>
           <div className="hidden sm:block text-right">
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Results</p>
+            <p className={cn("text-muted-foreground", STAT_LABEL)}>Results</p>
             <p className="text-sm font-mono font-bold tabular-nums">{formatNumber(filtered.length)}</p>
           </div>
         </div>
@@ -280,7 +270,7 @@ export function LiveCatalogClient({ mcs }: LiveCatalogClientProps) {
                       CATEGORY_STYLES[cat.id].filterActiveBorder,
                       CATEGORY_STYLES[cat.id].filterActiveShadow
                     )
-                  : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80 border border-border"
+                  : FILTER_INACTIVE
               )}
             >
               <span
@@ -303,7 +293,7 @@ export function LiveCatalogClient({ mcs }: LiveCatalogClientProps) {
               key={brand}
               onClick={() => setSelectedBrand(selectedBrand === brand ? null : brand)}
               className={cn(
-                "px-3 py-1 rounded-lg text-[11px] font-medium transition-all duration-200",
+                "px-3 py-1 rounded-lg text-xs font-medium transition-all duration-200",
                 selectedBrand === brand
                   ? "bg-foreground text-background shadow-md shadow-foreground/10"
                   : "bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-muted border border-border"
@@ -320,7 +310,7 @@ export function LiveCatalogClient({ mcs }: LiveCatalogClientProps) {
 
       {/* ── List + Detail Split View ── */}
       {view === "list" && (
-        <div className="flex flex-col lg:flex-row gap-0 border border-border rounded-2xl overflow-hidden bg-card min-h-[600px]">
+        <div className={cn("flex flex-col lg:flex-row gap-0 min-h-[600px]", CARD.base)}>
           {/* Left: MC List */}
           <div className="flex flex-col w-full lg:w-[380px] xl:w-[420px] shrink-0 border-b lg:border-b-0 lg:border-r border-border">
             {/* List header */}
@@ -353,7 +343,7 @@ export function LiveCatalogClient({ mcs }: LiveCatalogClientProps) {
                 })
               ) : (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <div className="size-16 rounded-full bg-muted border border-border flex items-center justify-center mb-4">
+                  <div className={cn(EMPTY_ICON.sm, "mb-4")}>
                     <Search className="size-6 text-muted-foreground/30" />
                   </div>
                   <p className="text-sm font-semibold text-muted-foreground mb-1">No MCs found</p>
@@ -374,7 +364,7 @@ export function LiveCatalogClient({ mcs }: LiveCatalogClientProps) {
               />
             ) : (
               <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center p-8">
-                <div className="size-20 rounded-2xl bg-muted border border-border flex items-center justify-center mb-5">
+                <div className={cn(EMPTY_ICON.lg, "mb-5")}>
                   <Users className="size-8 text-muted-foreground/30" />
                 </div>
                 <p className="text-lg font-semibold text-muted-foreground mb-1">

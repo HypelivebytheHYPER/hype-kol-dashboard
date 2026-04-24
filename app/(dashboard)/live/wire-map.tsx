@@ -41,8 +41,15 @@ export function WireMap({ mcs, selectedCategory }: WireMapProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
+  const [selectedNode, setSelectedNode] = useState<string | null>(null);
+  const [isHoveringNode, setIsHoveringNode] = useState(false);
   const [dimensions, setDimensions] = useState({ width: 900, height: 600 });
   const [isDark, setIsDark] = useState(false);
+
+  // Clear node selection when category filter changes
+  useEffect(() => {
+    setSelectedNode(null);
+  }, [selectedCategory]);
 
   // Detect color scheme for canvas rendering
   useEffect(() => {
@@ -208,10 +215,11 @@ export function WireMap({ mcs, selectedCategory }: WireMapProps) {
     const nodeById = new Map(nodes.map((n) => [n.id, n]));
     const theme = canvasColors();
 
+    const focus = hoveredNode ?? selectedNode ?? (selectedCategory ? `cat:${selectedCategory}` : null);
+    const hasFocus = !!focus;
+
     const isConnected2Hop = (nodeId: string): boolean => {
-      if (!hoveredNode && !selectedCategory) return true;
-      const focus = hoveredNode || (selectedCategory ? `cat:${selectedCategory}` : null);
-      if (!focus) return true;
+      if (!hasFocus) return true;
       if (nodeId === focus) return true;
       if (edges.some((e) => (e.from === focus && e.to === nodeId) || (e.to === focus && e.from === nodeId))) return true;
       const intermediates = edges
@@ -223,8 +231,7 @@ export function WireMap({ mcs, selectedCategory }: WireMapProps) {
     };
 
     const isEdgeHighlighted = (edge: Edge): boolean => {
-      const focus = hoveredNode || (selectedCategory ? `cat:${selectedCategory}` : null);
-      if (!focus) return false;
+      if (!hasFocus) return false;
       return (
         edge.from === focus ||
         edge.to === focus ||
@@ -236,8 +243,6 @@ export function WireMap({ mcs, selectedCategory }: WireMapProps) {
           })
       );
     };
-
-    const hasFocus = !!hoveredNode || !!selectedCategory;
 
     // Draw edges
     edges.forEach((edge) => {
@@ -272,11 +277,17 @@ export function WireMap({ mcs, selectedCategory }: WireMapProps) {
         ctx.strokeStyle = theme.nodeStroke;
         ctx.lineWidth = 2;
         ctx.stroke();
+      } else if (node.id === selectedNode) {
+        ctx.setLineDash([4, 3]);
+        ctx.strokeStyle = theme.nodeStroke;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.setLineDash([]);
       }
 
       // Label
       const fontSize = node.type === "category" ? 11 : node.type === "mc" ? 10 : 9;
-      const fontWeight = node.type === "category" || node.id === hoveredNode ? "bold " : "";
+      const fontWeight = node.type === "category" || node.id === hoveredNode || node.id === selectedNode ? "bold " : "";
       ctx.font = `${fontWeight}${fontSize}px system-ui, sans-serif`;
       ctx.fillStyle = dimmed
         ? theme.textDimmed
@@ -305,27 +316,36 @@ export function WireMap({ mcs, selectedCategory }: WireMapProps) {
     ctx.fillText("MCs", dimensions.width * LAYOUT.col.mc, 20);
     ctx.fillText("Categories", dimensions.width * LAYOUT.col.cat, 20);
     ctx.fillText("Brands", dimensions.width * LAYOUT.col.brand, 20);
-  }, [nodes, edges, hoveredNode, selectedCategory, dimensions, isDark]);
+  }, [nodes, edges, hoveredNode, selectedNode, selectedCategory, dimensions, isDark]);
 
-  // Mouse hover
-  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  // Hit-test a canvas coordinate against all nodes
+  const hitTest = (clientX: number, clientY: number): string | null => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas) return null;
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
 
-    let found: string | null = null;
     for (const node of nodes) {
       const dx = x - node.x;
       const dy = y - node.y;
       const hitRadius = node.radius + 8;
       if (dx * dx + dy * dy < hitRadius * hitRadius) {
-        found = node.id;
-        break;
+        return node.id;
       }
     }
-    setHoveredNode(found);
+    return null;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const hit = hitTest(e.clientX, e.clientY);
+    setHoveredNode(hit);
+    setIsHoveringNode(!!hit);
+  };
+
+  const handleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const hit = hitTest(e.clientX, e.clientY);
+    setSelectedNode((prev) => (prev === hit ? null : hit));
   };
 
   return (
@@ -339,10 +359,10 @@ export function WireMap({ mcs, selectedCategory }: WireMapProps) {
         </div>
         <div className="flex gap-3 text-[10px] text-muted-foreground">
           <span className="flex items-center gap-1.5">
-            <span className="size-2.5 rounded-full inline-block" style={{ backgroundColor: oklch("cosmetics", 0.60) }} /> MC
+            <span className="size-2.5 rounded-full inline-block bg-gradient-to-br from-chart-3 to-chart-4" /> MC
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="size-2.5 rounded-full inline-block" style={{ backgroundColor: oklch("health", 0.62) }} /> Category
+            <span className="size-2.5 rounded-full inline-block bg-chart-2" /> Category
           </span>
           <span className="flex items-center gap-1.5">
             <span className="size-2.5 rounded-full inline-block bg-muted-foreground" /> Brand
@@ -352,9 +372,13 @@ export function WireMap({ mcs, selectedCategory }: WireMapProps) {
       <canvas
         ref={canvasRef}
         style={{ width: dimensions.width, height: dimensions.height }}
-        className="cursor-crosshair"
+        className={isHoveringNode ? "cursor-pointer" : "cursor-crosshair"}
         onMouseMove={handleMouseMove}
-        onMouseLeave={() => setHoveredNode(null)}
+        onMouseLeave={() => {
+          setHoveredNode(null);
+          setIsHoveringNode(false);
+        }}
+        onClick={handleClick}
       />
     </div>
   );

@@ -24,13 +24,15 @@ export interface LarkRecord {
   fields: Record<string, unknown>;
 }
 
+/** Lark attachment — fields are optional because Lark omits them
+ *  when the attachment metadata hasn't been fully indexed. */
 export interface LarkAttachment {
   file_token: string;
   name: string;
-  size: number;
-  type: string;
-  url: string;
-  tmp_url: string;
+  size?: number;
+  type?: string;
+  url?: string;
+  tmp_url?: string;
 }
 
 interface SearchFilter {
@@ -215,9 +217,15 @@ export function url(fields: Record<string, unknown>, key: string): string {
   return "";
 }
 
+function isValidAttachment(v: unknown): v is LarkAttachment {
+  if (typeof v !== "object" || v === null) return false;
+  const a = v as Record<string, unknown>;
+  return typeof a["file_token"] === "string" && typeof a["name"] === "string";
+}
+
 export function attachments(fields: Record<string, unknown>, key: string): LarkAttachment[] {
   const v = fields[key];
-  return Array.isArray(v) ? v as LarkAttachment[] : [];
+  return Array.isArray(v) ? v.filter(isValidAttachment) : [];
 }
 
 // ============ Media URL ============

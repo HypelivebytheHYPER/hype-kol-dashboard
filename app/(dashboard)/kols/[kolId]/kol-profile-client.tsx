@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { PremiumAvatar } from "@/components/ui/premium-avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   ChartContainer,
@@ -24,7 +24,9 @@ import {
 } from "recharts";
 import { formatCurrency, formatFeeRange, formatNumber, formatEngagement, numOrDash } from "@/lib/format";
 import { ROUTES, RADAR_CEILINGS, ENGAGEMENT_COUNT_THRESHOLD } from "@/lib/constants";
+import { cn } from "@/lib/cn";
 import { getTierColor } from "@/lib/tier";
+import { VALUE_ACCENT } from "@/lib/design-tokens";
 import {
   ExternalLink,
   Mail,
@@ -108,12 +110,12 @@ export function KOLProfileClient({ kol }: KOLProfileClientProps) {
         <CardContent className="px-6 pb-6 -mt-12 relative">
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div className="flex items-end gap-4">
-              <PremiumAvatar
-                src={kol.image}
-                name={kol.name}
-                size="xl"
-                className="border-4 border-card shadow-xl size-24 text-2xl"
-              />
+              <Avatar className="border-4 border-card shadow-xl size-24 text-2xl">
+                <AvatarImage src={kol.image} alt={kol.name} />
+                <AvatarFallback className="bg-muted text-lg font-semibold">
+                  {kol.name?.slice(0, 2).toUpperCase() || "?"}
+                </AvatarFallback>
+              </Avatar>
               <div className="pb-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h1 className="text-2xl font-bold">{kol.name}</h1>
@@ -248,7 +250,7 @@ export function KOLProfileClient({ kol }: KOLProfileClientProps) {
               <span className="text-xs uppercase tracking-wider text-muted-foreground">
                 Rate Card
               </span>
-              <span className="font-mono font-bold text-chart-4 tabular-nums">
+              <span className={cn("font-mono font-bold tabular-nums", VALUE_ACCENT)}>
                 {formatFeeRange(kol.fees, " – ")}
               </span>
               <span className="text-xs text-muted-foreground">
@@ -440,7 +442,7 @@ export function KOLProfileClient({ kol }: KOLProfileClientProps) {
             <CardContent className="flex flex-col gap-3">
               {kol.contact.lineId?.trim() && (
                 <ContactRow
-                  icon={<MessageCircle className="size-4 text-green-500" />}
+                  icon={<MessageCircle className="size-4 text-chart-2" />}
                   label="LINE ID"
                   value={kol.contact.lineId}
                   href={`https://line.me/ti/p/~${encodeURIComponent(kol.contact.lineId)}`}

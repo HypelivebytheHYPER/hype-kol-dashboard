@@ -59,8 +59,6 @@ export interface LiveMC {
   videos: { token: string; url: string; name: string }[];
   /** All image attachments from LIVE Reference field (proper token URLs) */
   images: { token: string; url: string; name: string }[];
-  /** First image — used as avatar */
-  image?: string;
 }
 
 // DASHBOARD_SUMMARY (tblOwkSqf5rci6zq)

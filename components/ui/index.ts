@@ -8,7 +8,6 @@ export * from "./dialog";
 export * from "./dropdown-menu";
 export * from "./input";
 export * from "./pagination";
-export { PremiumAvatar } from "./premium-avatar";
 export { ScoreGauge } from "./score-gauge";
 export * from "./sheet";
 export * from "./tabs";

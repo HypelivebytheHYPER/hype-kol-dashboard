@@ -14,16 +14,13 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/cn";
+import { TREND, TREND_CHIP } from "@/lib/design-tokens";
 import { Search, ArrowUpDown, ArrowUp, ArrowDown, Download, TrendingUp, TrendingDown, X } from "lucide-react";
 
 type SortKey = "metricLabel" | "metricValue" | "change" | "trend";
 type SortDir = "asc" | "desc";
 
-const TREND_STYLES = {
-  up: "bg-chart-2/10 text-chart-2 hover:bg-chart-2/20",
-  down: "bg-destructive/10 text-destructive hover:bg-destructive/20",
-  neutral: "bg-muted text-muted-foreground hover:bg-muted/80",
-};
+
 
 const TREND_ICONS = {
   up: TrendingUp,
@@ -206,7 +203,7 @@ export function DataTableSection({ metrics }: DataTableSectionProps) {
                       <td className="py-3 pr-4 tabular-nums">
                         <span
                           className={cn(
-                            row.change >= 0 ? "text-chart-2" : "text-destructive"
+                            row.change >= 0 ? TREND.up : TREND.down
                           )}
                         >
                           {row.change >= 0 ? "+" : ""}
@@ -216,7 +213,7 @@ export function DataTableSection({ metrics }: DataTableSectionProps) {
                       <td className="py-3">
                         <Badge
                           variant="secondary"
-                          className={cn("gap-1 text-xs font-medium", TREND_STYLES[row.trend])}
+                          className={cn("gap-1 text-xs font-medium", TREND_CHIP[row.trend])}
                         >
                           <TrendIcon className="size-3" />
                           {row.trend}
@@ -264,7 +261,7 @@ export function DataTableSection({ metrics }: DataTableSectionProps) {
               <span className="text-sm text-muted-foreground">Change vs Last Period</span>
               <span className={cn(
                 "text-sm font-medium tabular-nums",
-                selectedMetric && selectedMetric.change >= 0 ? "text-chart-2" : "text-destructive"
+                selectedMetric && selectedMetric.change >= 0 ? TREND.up : TREND.down
               )}>
                 {selectedMetric && `${selectedMetric.change >= 0 ? "+" : ""}${selectedMetric.change}%`}
               </span>
@@ -275,7 +272,7 @@ export function DataTableSection({ metrics }: DataTableSectionProps) {
                 variant="secondary"
                 className={cn(
                   "gap-1 text-xs font-medium",
-                  selectedMetric && TREND_STYLES[selectedMetric.trend]
+                  selectedMetric && TREND_CHIP[selectedMetric.trend]
                 )}
               >
                 {selectedMetric?.trend}

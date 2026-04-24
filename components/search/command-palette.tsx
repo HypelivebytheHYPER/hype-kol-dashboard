@@ -69,7 +69,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
           <CommandGroup heading="Smart Search">
             {smartSearchExamples.map((example) => (
               <CommandItem key={example.query} onSelect={() => handleSearch(example.query)}>
-                <Sparkles className="mr-2 size-4 text-amber-500" />
+                <Sparkles className="mr-2 size-4 text-chart-1" />
                 <span>{example.query}</span>
                 <span className="ml-2 text-xs text-muted-foreground">{example.description}</span>
               </CommandItem>

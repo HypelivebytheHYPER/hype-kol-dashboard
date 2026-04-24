@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/cn";
 import { CONTENT_CATEGORIES, type ContentCategoryId } from "@/lib/taxonomy";
-import { CATEGORY_STYLES, UNCATEGORIZED_STYLE } from "@/lib/design-tokens";
+import { CATEGORY_STYLES, UNCATEGORIZED_STYLE, CHIP, AVATAR } from "@/lib/design-tokens";
 import type { LiveMC } from "@/lib/types/catalog";
 import { Play, Briefcase } from "lucide-react";
 
@@ -58,34 +58,12 @@ export function MCListItem({
       {/* Avatar */}
       <div
         className={cn(
-          "relative shrink-0 size-11 rounded-xl flex items-center justify-center border text-sm font-bold transition-transform duration-200 overflow-hidden",
-          "group-hover:scale-105",
-          mc.image
-            ? "bg-muted"
-            : [catStyle.avatarBg, catStyle.avatarBorder, catStyle.avatarText]
+          AVATAR.base, AVATAR.hover,
+          "size-11 text-sm",
+          catStyle.avatarBg, catStyle.avatarBorder, catStyle.avatarText
         )}
       >
-        {mc.image ? (
-          <img
-            src={mc.image}
-            alt={mc.handle}
-            className="size-full object-cover"
-            loading="lazy"
-            onError={(e) => {
-              const target = e.currentTarget;
-              target.style.display = "none";
-              if (target.parentElement) {
-                target.parentElement.textContent = initial;
-                target.parentElement.classList.add(
-                  catStyle.avatarBg,
-                  catStyle.avatarText
-                );
-              }
-            }}
-          />
-        ) : (
-          initial
-        )}
+        {initial}
         {isPlaying && (
           <span className="absolute -top-0.5 -right-0.5 flex size-3">
             <span className={cn("animate-ping absolute inline-flex size-full rounded-full opacity-75", catStyle.dot)} />
@@ -122,13 +100,13 @@ export function MCListItem({
         {/* Meta row */}
         <div className="flex items-center gap-2 mt-1">
           {brandCount > 0 && (
-            <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
               <Briefcase className="size-3" />
               {brandCount} {brandCount === 1 ? "brand" : "brands"}
             </span>
           )}
           {videoCount > 0 && (
-            <span className="text-[11px] text-muted-foreground">
+            <span className="text-xs text-muted-foreground">
               {videoCount} {videoCount === 1 ? "video" : "videos"}
             </span>
           )}
@@ -146,7 +124,7 @@ export function MCListItem({
                 <span
                   key={catId}
                   className={cn(
-                    "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium border",
+                    CHIP.base, CHIP.sm,
                     s.chipBg, s.chipBorder, s.chipText
                   )}
                 >

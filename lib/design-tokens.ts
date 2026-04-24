@@ -223,6 +223,86 @@ export const UNCATEGORIZED_STYLE = {
   ring: "ring-primary/30",
 } as const;
 
+// ── UI Pattern Tokens ───────────────────────────────────────────────
+
+/** Glassmorphism button / badge — used for play controls, badges, overlays.
+ *  Compose with size tokens (size-9, size-14) and shape (rounded-full). */
+export const GLASS = {
+  base: "bg-background/70 backdrop-blur-md border border-foreground/10",
+  hover: "hover:bg-background/90 transition-colors",
+} as const;
+
+/** Chip base — category chips, brand chips, filter chips.
+ *  Compose with color tokens from CATEGORY_STYLES. */
+export const CHIP = {
+  base: "inline-flex items-center font-medium border",
+  sm: "gap-1 px-1.5 py-0.5 rounded-md text-2xs",
+  md: "gap-1.5 px-2.5 py-1 rounded-full text-xs",
+  lg: "gap-1.5 px-3.5 py-1.5 rounded-xl text-xs",
+} as const;
+
+/** Avatar placeholder — initial-letter or image avatar.
+ *  Compose with size (size-11, size-12, size-14) and color tokens. */
+export const AVATAR = {
+  base: "relative shrink-0 rounded-xl flex items-center justify-center border font-bold overflow-hidden",
+  hover: "transition-transform duration-200 group-hover:scale-105",
+} as const;
+
+/** Video cover — fills its relative container. */
+export const VIDEO_COVER = "absolute inset-0 size-full object-cover" as const;
+
+/** Section header — icon + uppercase label pattern. */
+export const SECTION_HEADER = {
+  base: "flex items-center gap-2",
+  label: "text-xs font-semibold uppercase tracking-widest text-muted-foreground",
+  icon: "size-3.5 text-muted-foreground",
+} as const;
+
+/** Stats label — uppercase micro label (MCs, Brands, etc). */
+export const STAT_LABEL = "text-2xs uppercase tracking-widest font-semibold";
+
+/** Card container — reusable card shell. */
+export const CARD = {
+  base: "border border-border rounded-2xl overflow-hidden bg-card",
+  hero: "relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-card via-card to-background",
+} as const;
+
+/** Toggle button — segmented control item. */
+export const TOGGLE = {
+  base: "px-3.5 py-2 text-xs font-medium flex items-center gap-1.5 transition-all duration-200",
+  active: "bg-foreground/10 text-foreground",
+  inactive: "text-muted-foreground hover:text-foreground hover:bg-foreground/10",
+} as const;
+
+/** Filter chip inactive state. */
+export const FILTER_INACTIVE = "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80 border border-border";
+
+/** Empty state icon container. */
+export const EMPTY_ICON = {
+  sm: "size-16 rounded-full bg-muted border border-border flex items-center justify-center",
+  lg: "size-20 rounded-2xl bg-muted border border-border flex items-center justify-center",
+} as const;
+
+/** Trend / change indicator colors — positive, negative, neutral.
+ *  Used for KPI cards, data tables, and metric deltas. */
+export const TREND = {
+  up: "text-chart-2",
+  down: "text-destructive",
+  neutral: "text-muted-foreground",
+} as const;
+
+/** Trend badge/chip backgrounds — for Badge components showing trend direction.
+ *  Compose with TREND for text color when needed. */
+export const TREND_CHIP = {
+  up: "bg-chart-2/10 text-chart-2 hover:bg-chart-2/20",
+  down: "bg-destructive/10 text-destructive hover:bg-destructive/20",
+  neutral: "bg-muted text-muted-foreground hover:bg-muted/80",
+} as const;
+
+/** Accent color for monetary values (fees, rate cards, pricing).
+ *  Compose with font-mono / tabular-nums as needed. */
+export const VALUE_ACCENT = "text-chart-4" as const;
+
 // ── Canvas helpers ──────────────────────────────────────────────────
 
 /** Read a CSS custom property value for use in Canvas 2D. */

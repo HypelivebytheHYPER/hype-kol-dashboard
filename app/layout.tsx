@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Noto_Sans_Thai, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 import { ThemeProvider } from "@/contexts/theme-provider";
@@ -8,10 +8,11 @@ import { BRAND } from "@/lib/brand";
 import { SERVICES } from "@/lib/external-services";
 import { Toaster } from "sonner";
 
-const geist = Geist({
-  subsets: ["latin"],
+const notoSansThai = Noto_Sans_Thai({
+  subsets: ["thai", "latin"],
   variable: "--font-sans",
   display: "swap",
+  weight: ["400", "500", "600", "700"],
 });
 
 const geistMono = Geist_Mono({
@@ -60,7 +61,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geist.variable} ${geistMono.variable} font-sans`}
+      className={`${notoSansThai.variable} ${geistMono.variable} font-sans`}
       suppressHydrationWarning
     >
       <head>
