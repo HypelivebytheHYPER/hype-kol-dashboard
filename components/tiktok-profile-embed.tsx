@@ -71,7 +71,7 @@ export function TikTokProfileEmbed({ handle }: TikTokProfileEmbedProps) {
   /* ── Loading skeleton ── */
   if (loading) {
     return (
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden ring-1 ring-border/40">
         <CardHeader className="pb-3">
           <div className="h-4 w-32 bg-muted/50 rounded animate-pulse" />
         </CardHeader>
@@ -85,7 +85,7 @@ export function TikTokProfileEmbed({ handle }: TikTokProfileEmbedProps) {
   /* ── Error / no data ── */
   if (!data?.html) {
     return (
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden ring-1 ring-border/40">
         <CardContent className="p-6 text-center text-muted-foreground text-sm">
           Unable to load TikTok profile embed.
         </CardContent>
@@ -100,7 +100,7 @@ export function TikTokProfileEmbed({ handle }: TikTokProfileEmbedProps) {
   );
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden ring-1 ring-border/40">
       <CardHeader className="pb-3 flex flex-row items-center justify-between">
         <CardTitle className="text-sm font-semibold">
           {data.author_name || "TikTok Profile"}

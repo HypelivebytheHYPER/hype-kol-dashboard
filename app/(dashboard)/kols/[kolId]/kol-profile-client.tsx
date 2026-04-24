@@ -267,162 +267,168 @@ export function KOLProfileClient({ kol }: KOLProfileClientProps) {
         </TabsList>
 
         {/* ── ANALYTICS ── */}
-        <TabsContent value="analytics" className="mt-5 space-y-5">
-          {/* Row 1: Totals (Lark doesn't expose time-series — no trend charts) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-semibold">Total Revenue</CardTitle>
-                <p className="text-xs text-muted-foreground">Lifetime aggregate</p>
-              </CardHeader>
-              <CardContent className="pt-2">
-                <p className="text-3xl font-mono font-bold">
-                  {numOrDash(kol.stats.revenue, formatCurrency)}
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-semibold">Total Views</CardTitle>
-                <p className="text-xs text-muted-foreground">Lifetime aggregate</p>
-              </CardHeader>
-              <CardContent className="pt-2">
-                <p className="text-3xl font-mono font-bold">
-                  {numOrDash(kol.stats.views)}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Row 2: GMV breakdown bar + Performance radar */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-semibold">GMV Breakdown</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {gmvBarData.length > 0 ? (
-                  <ChartContainer config={barConfig} className="h-56 w-full">
-                    <BarChart data={gmvBarData} layout="vertical" margin={{ left: 8, right: 16 }}>
-                      <CartesianGrid
-                        horizontal={false}
-                        strokeDasharray="3 3"
-                        stroke="var(--border)"
-                      />
-                      <XAxis
-                        type="number"
-                        fontSize={10}
-                        tickFormatter={(v) => formatCurrency(v)}
-                        tick={{ fill: "var(--muted-foreground)" }}
-                      />
-                      <YAxis
-                        type="category"
-                        dataKey="label"
-                        width={80}
-                        fontSize={11}
-                        tick={{ fill: "var(--muted-foreground)" }}
-                      />
-                      <ChartTooltip
-                        content={
-                          <ChartTooltipContent formatter={(v) => formatCurrency(Number(v))} />
-                        }
-                      />
-                      <Bar
-                        dataKey="value"
-                        fill="var(--chart-1)"
-                        radius={[0, 4, 4, 0]}
-                        barSize={28}
-                      />
-                    </BarChart>
-                  </ChartContainer>
-                ) : (
-                  <EmptyChart label="No GMV data" />
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-semibold">Performance Profile</CardTitle>
-                <p className="text-xs text-muted-foreground">Normalised across 6 dimensions</p>
-              </CardHeader>
-              <CardContent>
-                <ChartContainer config={radarConfig} className="h-44 sm:h-56 w-full">
-                  <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="65%">
-                    <PolarGrid stroke="var(--border)" />
-                    <PolarAngleAxis
-                      dataKey="axis"
-                      tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-                    />
-                    <Radar
-                      dataKey="value"
-                      stroke="var(--chart-1)"
-                      fill="var(--chart-1)"
-                      fillOpacity={0.3}
-                      strokeWidth={2}
-                      dot={{ r: 3, fill: "var(--chart-1)" }}
-                    />
-                  </RadarChart>
-                </ChartContainer>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Row 3: all stats grid */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold">Full Performance Summary</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <StatTile
-                  label="Total Revenue"
-                  value={numOrDash(kol.stats.revenue, formatCurrency)}
-                />
-                <StatTile
-                  label="Live GMV"
-                  value={numOrDash(kol.stats.liveGmv, formatCurrency)}
-                />
-                <StatTile
-                  label="Video GMV"
-                  value={numOrDash(kol.stats.videoGmv, formatCurrency)}
-                />
-                <StatTile
-                  label="Avg Monthly GMV"
-                  value={numOrDash(kol.avgGMV, formatCurrency)}
-                />
-                <StatTile
-                  label="Total Views"
-                  value={numOrDash(kol.stats.views)}
-                />
-                <StatTile
-                  label="Products Promoted"
-                  value={numOrDash(kol.stats.productCount, String)}
-                />
-                <StatTile
-                  label="Live Sessions"
-                  value={numOrDash(kol.stats.liveNum, String)}
-                />
-                <StatTile
-                  label="Videos"
-                  value={numOrDash(kol.stats.videoNum, String)}
-                />
+        <TabsContent value="analytics" className="mt-5">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            {/* Main column: analytics content */}
+            <div className="lg:col-span-2 space-y-5">
+              {/* Row 1: Totals */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-semibold">Total Revenue</CardTitle>
+                    <p className="text-xs text-muted-foreground">Lifetime aggregate</p>
+                  </CardHeader>
+                  <CardContent className="pt-2">
+                    <p className="text-3xl font-mono font-bold">
+                      {numOrDash(kol.stats.revenue, formatCurrency)}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-semibold">Total Views</CardTitle>
+                    <p className="text-xs text-muted-foreground">Lifetime aggregate</p>
+                  </CardHeader>
+                  <CardContent className="pt-2">
+                    <p className="text-3xl font-mono font-bold">
+                      {numOrDash(kol.stats.views)}
+                    </p>
+                  </CardContent>
+                </Card>
               </div>
-              {kol.bio?.th && (
-                <div className="mt-5 pt-5 border-t border-border">
-                  <p className="text-xs text-muted-foreground mb-1.5">About</p>
-                  <p className="text-sm">{kol.bio.th}</p>
-                  {kol.bio.en && <p className="text-sm text-muted-foreground mt-1">{kol.bio.en}</p>}
-                </div>
+
+              {/* Row 2: GMV breakdown + Performance radar */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-semibold">GMV Breakdown</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {gmvBarData.length > 0 ? (
+                      <ChartContainer config={barConfig} className="h-56 w-full">
+                        <BarChart data={gmvBarData} layout="vertical" margin={{ left: 8, right: 16 }}>
+                          <CartesianGrid
+                            horizontal={false}
+                            strokeDasharray="3 3"
+                            stroke="var(--border)"
+                          />
+                          <XAxis
+                            type="number"
+                            fontSize={10}
+                            tickFormatter={(v) => formatCurrency(v)}
+                            tick={{ fill: "var(--muted-foreground)" }}
+                          />
+                          <YAxis
+                            type="category"
+                            dataKey="label"
+                            width={80}
+                            fontSize={11}
+                            tick={{ fill: "var(--muted-foreground)" }}
+                          />
+                          <ChartTooltip
+                            content={
+                              <ChartTooltipContent formatter={(v) => formatCurrency(Number(v))} />
+                            }
+                          />
+                          <Bar
+                            dataKey="value"
+                            fill="var(--chart-1)"
+                            radius={[0, 4, 4, 0]}
+                            barSize={28}
+                          />
+                        </BarChart>
+                      </ChartContainer>
+                    ) : (
+                      <EmptyChart label="No GMV data" />
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-semibold">Performance Profile</CardTitle>
+                    <p className="text-xs text-muted-foreground">Normalised across 6 dimensions</p>
+                  </CardHeader>
+                  <CardContent>
+                    <ChartContainer config={radarConfig} className="h-44 sm:h-56 w-full">
+                      <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="65%">
+                        <PolarGrid stroke="var(--border)" />
+                        <PolarAngleAxis
+                          dataKey="axis"
+                          tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                        />
+                        <Radar
+                          dataKey="value"
+                          stroke="var(--chart-1)"
+                          fill="var(--chart-1)"
+                          fillOpacity={0.3}
+                          strokeWidth={2}
+                          dot={{ r: 3, fill: "var(--chart-1)" }}
+                        />
+                      </RadarChart>
+                    </ChartContainer>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Row 3: Full stats grid */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-semibold">Full Performance Summary</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <StatTile
+                      label="Total Revenue"
+                      value={numOrDash(kol.stats.revenue, formatCurrency)}
+                    />
+                    <StatTile
+                      label="Live GMV"
+                      value={numOrDash(kol.stats.liveGmv, formatCurrency)}
+                    />
+                    <StatTile
+                      label="Video GMV"
+                      value={numOrDash(kol.stats.videoGmv, formatCurrency)}
+                    />
+                    <StatTile
+                      label="Avg Monthly GMV"
+                      value={numOrDash(kol.avgGMV, formatCurrency)}
+                    />
+                    <StatTile
+                      label="Total Views"
+                      value={numOrDash(kol.stats.views)}
+                    />
+                    <StatTile
+                      label="Products Promoted"
+                      value={numOrDash(kol.stats.productCount, String)}
+                    />
+                    <StatTile
+                      label="Live Sessions"
+                      value={numOrDash(kol.stats.liveNum, String)}
+                    />
+                    <StatTile
+                      label="Videos"
+                      value={numOrDash(kol.stats.videoNum, String)}
+                    />
+                  </div>
+                  {kol.bio?.th && (
+                    <div className="mt-5 pt-5 border-t border-border">
+                      <p className="text-xs text-muted-foreground mb-1.5">About</p>
+                      <p className="text-sm">{kol.bio.th}</p>
+                      {kol.bio.en && <p className="text-sm text-muted-foreground mt-1">{kol.bio.en}</p>}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Sidebar: social preview */}
+            <div className="lg:col-span-1 space-y-5">
+              {kol.platform?.toLowerCase().includes("tiktok") && kol.handle && (
+                <TikTokProfileEmbed handle={kol.handle} />
               )}
-            </CardContent>
-          </Card>
-
-          {/* Row 4: TikTok Profile Embed */}
-          {kol.platform?.toLowerCase().includes("tiktok") && kol.handle && (
-            <TikTokProfileEmbed handle={kol.handle} />
-          )}
-
+            </div>
+          </div>
         </TabsContent>
 
         {/* ── CONTACT ── */}
