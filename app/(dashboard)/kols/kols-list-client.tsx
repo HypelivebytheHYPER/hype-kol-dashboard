@@ -380,8 +380,8 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
         {/* Card Grid */}
         {paginated.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4">
-            {paginated.map((kol) => (
-              <KOLFeedCard key={kol.id} kol={kol} />
+            {paginated.map((kol, index) => (
+              <KOLFeedCard key={kol.id} kol={kol} priority={index < 12} />
             ))}
           </div>
         ) : (

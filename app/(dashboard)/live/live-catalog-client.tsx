@@ -447,10 +447,10 @@ export function LiveCatalogClient({ mcs }: LiveCatalogClientProps) {
             /* ── List View: Alphabetical Directory ── */
             <div className="relative flex gap-6">
               {/* Main list */}
-              <div ref={listRef} className="flex-1 min-w-0 flex flex-col gap-8">
+              <div ref={listRef} className="flex-1 min-w-0 flex flex-col">
                 {filtered.length > 0 ? (
                   Array.from(letterGroups.entries()).map(([letter, groupMCs]) => (
-                    <section key={letter} className="flex flex-col gap-3">
+                    <section key={letter} className="flex flex-col">
                       {/* Sticky letter header */}
                       <div
                         ref={(el) => {
@@ -469,7 +469,7 @@ export function LiveCatalogClient({ mcs }: LiveCatalogClientProps) {
                       </div>
 
                       {/* MCs in this letter group */}
-                      <div className="flex flex-col gap-2">
+                      <div className="flex flex-col divide-y divide-border/30">
                         {groupMCs.map((mc, idx) => (
                           <MCListItem
                             key={mc.id}

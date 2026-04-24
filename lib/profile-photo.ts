@@ -1,7 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { Creator } from "./types/catalog";
+
+/** Global in-memory cache for profile photo URLs — prevents duplicate fetches. */
+const photoCache = new Map<string, string | null>();
+const pendingFetches = new Map<string, Promise<string | null>>();
 
 /** Derive a profile page URL from creator data. */
 export function getProfilePageUrl(kol: Creator): string | null {
@@ -31,32 +35,71 @@ export function getProfilePageUrl(kol: Creator): string | null {
   return null;
 }
 
-/** React hook that returns the best available profile photo for a KOL. */
+/** Check if a URL is a TikTok CDN URL that likely expired. */
+function isExpiredTikTokCdn(url: string): boolean {
+  return /tiktokcdn[\w-]*\.com.*[?&]x-signature=/.test(url);
+}
+
+async function fetchPhoto(profileUrl: string): Promise<string | null> {
+  if (pendingFetches.has(profileUrl)) {
+    return pendingFetches.get(profileUrl)!;
+  }
+
+  const promise = fetch(`/api/profile-photo?url=${encodeURIComponent(profileUrl)}`)
+    .then((res) => (res.ok ? res.json() : Promise.resolve({ photoUrl: null })))
+    .then((data: { photoUrl?: string | null }) => data.photoUrl || null)
+    .catch(() => null);
+
+  pendingFetches.set(profileUrl, promise);
+  const result = await promise;
+  pendingFetches.delete(profileUrl);
+  return result;
+}
+
+/** React hook that returns the best available profile photo for a KOL.
+ *  Eagerly fetches fresh avatars for expired TikTok CDN URLs. */
 export function useProfilePhoto(kol: Creator): { imageUrl: string | null; isLoading: boolean } {
   const storedImage = kol.image || null;
-  const [imageUrl, setImageUrl] = useState<string | null>(storedImage);
+  const canUseStored = storedImage && !isExpiredTikTokCdn(storedImage);
+
+  const cacheKey = `${kol.platform}-${kol.handle}`;
+  const cached = photoCache.get(cacheKey);
+
+  const [imageUrl, setImageUrl] = useState<string | null>(canUseStored ? storedImage : cached ?? null);
+  const [isLoading, setIsLoading] = useState(!canUseStored && cached === undefined);
+  const fetchedRef = useRef(false);
 
   useEffect(() => {
-    if (storedImage) return;
+    if (canUseStored) {
+      setImageUrl(storedImage);
+      setIsLoading(false);
+      return;
+    }
+
+    if (photoCache.has(cacheKey)) {
+      setImageUrl(photoCache.get(cacheKey) ?? null);
+      setIsLoading(false);
+      return;
+    }
+
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
 
     const profileUrl = getProfilePageUrl(kol);
-    if (!profileUrl) return;
+    if (!profileUrl) {
+      photoCache.set(cacheKey, null);
+      setImageUrl(null);
+      setIsLoading(false);
+      return;
+    }
 
-    let cancelled = false;
+    setIsLoading(true);
+    fetchPhoto(profileUrl).then((url) => {
+      photoCache.set(cacheKey, url);
+      setImageUrl(url);
+      setIsLoading(false);
+    });
+  }, [kol.id, canUseStored, storedImage, cacheKey]);
 
-    fetch(`/api/profile-photo?url=${encodeURIComponent(profileUrl)}`)
-      .then((res) => (res.ok ? res.json() : Promise.resolve({ photoUrl: null })))
-      .then((data: { photoUrl?: string | null }) => {
-        if (!cancelled) setImageUrl(data.photoUrl || null);
-      })
-      .catch(() => {
-        if (!cancelled) setImageUrl(null);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [kol.id, storedImage]);
-
-  return { imageUrl, isLoading: !storedImage && imageUrl === null };
+  return { imageUrl, isLoading };
 }

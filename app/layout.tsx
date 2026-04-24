@@ -66,6 +66,9 @@ export default function RootLayout({
     >
       <head>
         <link rel="preconnect" href={SERVICES.larkWorker} />
+        <link rel="preconnect" href="https://p16-sign-sg.tiktokcdn.com" />
+        <link rel="preconnect" href="https://p16-common-sign.tiktokcdn-us.com" />
+        <link rel="dns-prefetch" href="https://www.tiktok.com" />
       </head>
       <body>
         <ThemeProvider>

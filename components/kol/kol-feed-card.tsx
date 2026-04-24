@@ -1,14 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { MapPin, Eye } from "lucide-react";
 import { formatCurrency, formatFeeRange, formatNumber } from "@/lib/format";
 import { getTierColor } from "@/lib/tier";
 import { kolProfilePath } from "@/lib/constants";
 import { cn } from "@/lib/cn";
-import { useProfilePhoto } from "@/lib/profile-photo";
 import type { Creator } from "@/lib/types/catalog";
 
 /* ── Platform-aware placeholder gradients ── */
@@ -27,10 +25,9 @@ interface KOLFeedCardProps {
   kol: Creator;
 }
 
-export function KOLFeedCard({ kol }: KOLFeedCardProps) {
+export function KOLFeedCard({ kol, priority = false }: KOLFeedCardProps & { priority?: boolean }) {
   const [imgError, setImgError] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const { imageUrl } = useProfilePhoto(kol);
 
   const primaryValue =
     kol.stats?.revenue > 0
@@ -38,7 +35,7 @@ export function KOLFeedCard({ kol }: KOLFeedCardProps) {
       : formatCurrency(kol.avgGMV || kol.avgLiveGMV);
 
   const initial = (kol.name?.[0] ?? kol.handle?.[0] ?? "?").toUpperCase();
-  const displayImage = imageUrl && !imgError;
+  const displayImage = !!kol.image && !imgError;
 
   return (
     <Link
@@ -47,15 +44,15 @@ export function KOLFeedCard({ kol }: KOLFeedCardProps) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Profile photo (stored or fetched from platform) or placeholder */}
+      {/* Profile photo or placeholder */}
       {displayImage ? (
-        <Image
-          src={imageUrl}
+        <img
+          src={kol.image}
           alt={kol.name || kol.handle || "Creator"}
-          fill
-          className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
-          loading="lazy"
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, (max-width: 1536px) 25vw, 20vw"
+          className="absolute inset-0 size-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+          loading={priority ? "eager" : "lazy"}
+          fetchPriority={priority ? "high" : "auto"}
+          decoding="async"
           onError={() => setImgError(true)}
         />
       ) : (
@@ -69,7 +66,7 @@ export function KOLFeedCard({ kol }: KOLFeedCardProps) {
             backgroundImage: "radial-gradient(circle, var(--foreground) 1px, transparent 1px)",
             backgroundSize: "20px 20px",
           }} />
-          <div className="size-16 rounded-full bg-foreground/10 border-2 border-foreground/20 flex items-center justify-center text-2xl font-bold text-foreground/70">
+          <div className="size-14 rounded-full bg-foreground/10 border border-foreground/15 flex items-center justify-center text-xl font-bold text-foreground/60">
             {initial}
           </div>
         </div>

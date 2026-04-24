@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/cn";
-import { CONTENT_CATEGORIES, type ContentCategoryId } from "@/lib/taxonomy";
-import { CATEGORY_STYLES, UNCATEGORIZED_STYLE, CHIP, AVATAR } from "@/lib/design-tokens";
+import { type ContentCategoryId } from "@/lib/taxonomy";
+import { CATEGORY_STYLES, UNCATEGORIZED_STYLE } from "@/lib/design-tokens";
 import type { LiveMC } from "@/lib/types/catalog";
 import { Play, Briefcase } from "lucide-react";
 
@@ -17,12 +17,10 @@ interface MCListItemProps {
   onSelect: () => void;
   onPlay: () => void;
   onToggleCheck?: () => void;
-  index?: number;
 }
 
 function getInitials(handle: string): string {
-  const first = handle.trim().charAt(0).toUpperCase();
-  return first || "?";
+  return handle.trim().charAt(0).toUpperCase() || "?";
 }
 
 function getFirstCategoryId(mc: LiveMC): ContentCategoryId | null {
@@ -39,194 +37,139 @@ export function MCListItem({
   onSelect,
   onPlay,
   onToggleCheck,
-  index = 0,
 }: MCListItemProps) {
   const [imgError, setImgError] = useState(false);
   const initial = getInitials(mc.handle);
   const firstCatId = getFirstCategoryId(mc);
   const catStyle = firstCatId ? CATEGORY_STYLES[firstCatId] : UNCATEGORIZED_STYLE;
-  const mainCategories = mc.contentCategories.slice(0, 2);
-  const brandCount = mc.brands.length;
-  const videoCount = mc.videos.length;
-  const hasProfilePhoto = !!mc.profilePhoto && !imgError;
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      if (isSelectionMode) {
-        onToggleCheck?.();
-      } else {
-        onSelect();
-      }
-    }
-  };
+  const previewUrl = mc.profilePhoto || mc.images[0]?.url;
+  const hasPreview = !!previewUrl && !imgError;
 
   const handleClick = () => {
-    if (isSelectionMode) {
-      onToggleCheck?.();
-    } else {
-      onSelect();
-    }
+    if (isSelectionMode) onToggleCheck?.();
+    else onSelect();
   };
 
   return (
     <div
-      role="button"
-      tabIndex={0}
-      aria-pressed={isSelected}
-      aria-label={`${mc.handle}, ${brandCount} brands, ${videoCount} videos`}
       className={cn(
-        "group relative flex items-center gap-3 rounded-2xl border transition-all duration-200 cursor-pointer outline-none overflow-hidden",
+        "group relative block rounded-xl overflow-hidden bg-muted aspect-[3/4] cursor-pointer transition-all duration-200",
         isSelected && !isSelectionMode
-          ? "bg-muted/60 border-transparent shadow-sm pl-5 pr-3.5 py-3"
-          : "bg-muted/20 border-border/30 hover:border-border/60 hover:bg-muted/40 px-3.5 py-3"
+          ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
+          : "hover:shadow-lg hover:-translate-y-0.5"
       )}
-      style={{
-        animationDelay: `${Math.min(index * 30, 500)}ms`,
-      }}
       onClick={handleClick}
-      onKeyDown={handleKeyDown}
     >
       {/* Selection checkbox */}
       {isSelectionMode && (
-        <div
-          className={cn(
-            "shrink-0 size-5 rounded-md border-2 flex items-center justify-center transition-all",
-            isChecked
-              ? "bg-primary border-primary"
-              : "bg-background/60 border-foreground/30 group-hover:border-foreground/50"
-          )}
+        <button
           onClick={(e) => {
             e.stopPropagation();
             onToggleCheck?.();
           }}
+          className={cn(
+            "absolute top-2 left-2 z-20 size-6 rounded-full border-2 flex items-center justify-center transition-all",
+            isChecked
+              ? "bg-primary border-primary text-primary-foreground"
+              : "bg-background/50 border-foreground/40 text-foreground/70 hover:bg-background/70"
+          )}
         >
           {isChecked && (
-            <svg className="size-3 text-primary-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <svg className="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12" />
             </svg>
           )}
+        </button>
+      )}
+
+      {/* Cover image / video preview */}
+      {hasPreview ? (
+        <img
+          src={previewUrl}
+          alt={mc.handle}
+          className="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+          loading="lazy"
+          onError={() => setImgError(true)}
+        />
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center bg-muted">
+          <span className="text-3xl font-black text-muted-foreground/30">{initial}</span>
         </div>
       )}
 
-      {/* Active indicator (non-selection mode) */}
-      {!isSelectionMode && (
-        <div
-          className={cn(
-            "absolute left-0 top-3 bottom-3 w-1 rounded-r-full transition-all duration-300",
-            isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-50"
-          )}
-          aria-hidden="true"
-        >
-          <div className={cn("size-full rounded-r-full", catStyle.dot)} />
+      {/* Bottom gradient */}
+      <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/30 to-transparent pointer-events-none" />
+
+      {/* Category indicator dot (top-right) */}
+      {firstCatId && (
+        <div className="absolute top-2 right-2 z-10">
+          <span className={cn("inline-block size-2.5 rounded-full border border-background/50", catStyle.dot)} />
         </div>
       )}
-
-      {/* Avatar / Profile Photo */}
-      <div
-        className={cn(
-          "relative shrink-0 size-12 rounded-xl overflow-hidden flex items-center justify-center text-sm font-semibold",
-          hasProfilePhoto ? "" : cn(AVATAR.base, catStyle.avatarBg, catStyle.avatarBorder, catStyle.avatarText)
-        )}
-      >
-        {hasProfilePhoto ? (
-          <img
-            src={mc.profilePhoto}
-            alt={mc.handle}
-            className="absolute inset-0 size-full object-cover"
-            loading="lazy"
-            onError={() => setImgError(true)}
-          />
-        ) : (
-          <>
-            {initial}
-            {isPlaying && (
-              <span className="absolute -top-0.5 -right-0.5 flex size-3">
-                <span className={cn("animate-ping absolute inline-flex size-full rounded-full opacity-75", catStyle.dot)} />
-                <span className={cn("relative inline-flex rounded-full size-3", catStyle.dot)} />
-              </span>
-            )}
-          </>
-        )}
-      </div>
-
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <h3 className="font-semibold text-sm text-foreground truncate">
-            {mc.handle}
-          </h3>
-        </div>
-
-        {/* Meta row */}
-        <div className="flex items-center gap-2 mt-1">
-          {brandCount > 0 && (
-            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-              <Briefcase className="size-3" />
-              {brandCount}
-            </span>
-          )}
-          {videoCount > 0 && (
-            <span className="text-xs text-muted-foreground">
-              {videoCount} video{videoCount !== 1 ? "s" : ""}
-            </span>
-          )}
-        </div>
-
-        {/* Category chips — truncated to prevent wrapping */}
-        {mainCategories.length > 0 && (
-          <div className="flex items-center gap-1.5 mt-2">
-            {mainCategories.map((rawCatId) => {
-              const catId = rawCatId as ContentCategoryId;
-              const cat = CONTENT_CATEGORIES.find((c) => c.id === catId);
-              const s = CATEGORY_STYLES[catId];
-              if (!cat || !s) return null;
-              return (
-                <span
-                  key={catId}
-                  className={cn(
-                    CHIP.base, CHIP.sm,
-                    s.chipBg, s.chipBorder, s.chipText
-                  )}
-                >
-                  <span className={cn("size-1.5 rounded-full", s.dot)} />
-                  <span className="truncate max-w-[80px]">{cat.label}</span>
-                </span>
-              );
-            })}
-            {mc.contentCategories.length > 2 && (
-              <span className="text-2xs text-muted-foreground">
-                +{mc.contentCategories.length - 2}
-              </span>
-            )}
-          </div>
-        )}
-      </div>
 
       {/* Play button */}
-      {hasVideo && (
-        <button
+      {!isSelectionMode && hasVideo && (
+        <div
+          className="absolute inset-0 flex items-center justify-center z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
           onClick={(e) => {
             e.stopPropagation();
             onPlay();
           }}
-          className={cn(
-            "shrink-0 size-8 rounded-full flex items-center justify-center transition-all duration-200",
-            isPlaying
-              ? cn(catStyle.playButtonBg, catStyle.playButtonText)
-              : "bg-muted/60 text-muted-foreground hover:text-foreground hover:bg-muted border border-border/40"
-          )}
-          aria-label={isPlaying ? "Pause video" : "Play video"}
         >
-          {isPlaying ? (
-            <span className="relative flex size-2">
-              <span className={cn("animate-ping absolute inline-flex size-full rounded-full opacity-75", catStyle.dot)} />
-              <span className={cn("relative inline-flex rounded-full size-2", catStyle.dot)} />
+          <div
+            className={cn(
+              "size-10 rounded-full flex items-center justify-center backdrop-blur-md border transition-transform active:scale-90",
+              isPlaying
+                ? "bg-primary/80 border-primary/30 text-primary-foreground"
+                : "bg-background/40 border-foreground/20 text-foreground"
+            )}
+            aria-label={isPlaying ? "Pause video" : "Play video"}
+          >
+            {isPlaying ? (
+              <span className="relative flex size-2">
+                <span className={cn("animate-ping absolute inline-flex size-full rounded-full opacity-75", catStyle.dot)} />
+                <span className={cn("relative inline-flex rounded-full size-2", catStyle.dot)} />
+              </span>
+            ) : (
+              <Play className="size-4 ml-0.5" />
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Brand count badge */}
+      {mc.brands.length > 0 && (
+        <div className="absolute top-2 right-8 z-10">
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-background/50 backdrop-blur-sm text-foreground/80 text-[10px] font-semibold border border-foreground/10">
+            <Briefcase className="size-2" />
+            {mc.brands.length}
+          </span>
+        </div>
+      )}
+
+      {/* Bottom info */}
+      <div className="absolute bottom-0 left-0 right-0 p-3 z-10">
+        <p className="text-foreground font-semibold text-sm leading-tight truncate">
+          {mc.handle}
+        </p>
+        <div className="flex flex-wrap gap-1 mt-1">
+          {mc.brands.slice(0, 2).map((brand) => (
+            <span
+              key={brand}
+              className="px-1.5 py-0.5 rounded-md bg-background/60 backdrop-blur-sm text-[10px] text-foreground/80 font-medium truncate max-w-[80px]"
+            >
+              {brand}
             </span>
-          ) : (
-            <Play className="size-3" />
+          ))}
+          {mc.brands.length > 2 && (
+            <span className="text-[10px] text-foreground/50 px-1">+{mc.brands.length - 2}</span>
           )}
-        </button>
+        </div>
+      </div>
+
+      {/* Selected indicator */}
+      {isSelected && !isSelectionMode && (
+        <div className={cn("absolute bottom-2 right-2 z-10 size-2 rounded-full", catStyle.dot)} />
       )}
     </div>
   );
