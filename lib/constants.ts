@@ -5,7 +5,7 @@
 
 /** Card grid page size on /kols. Tuned to fit 2×3 on desktop and 1×6 on
  * mobile without awkward orphans. */
-export const ITEMS_PER_PAGE = 6;
+export const ITEMS_PER_PAGE = 12;
 
 // ============ ISR Revalidation ============
 
@@ -35,7 +35,16 @@ export const ENGAGEMENT_COUNT_THRESHOLD = 100;
 export const ROUTES = {
   KOLS: "/kols",
   LIVE: "/live",
+  DASHBOARD: "/dashboard",
 } as const;
+
+/** Valid dashboard types for /dashboard/[dashboard-type] */
+export const DASHBOARD_TYPES = ["overview", "performance", "gmv", "engagement"] as const;
+export type DashboardType = (typeof DASHBOARD_TYPES)[number];
+
+export function dashboardPath(type: DashboardType): string {
+  return `${ROUTES.DASHBOARD}/${type}`;
+}
 
 export function kolProfilePath(id: string): string {
   return `${ROUTES.KOLS}/${id}`;

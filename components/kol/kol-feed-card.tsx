@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { MapPin, Eye, Video, BarChart3, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +11,7 @@ import { getTierColor } from "@/lib/tier";
 import { kolProfilePath } from "@/lib/constants";
 import { cn } from "@/lib/cn";
 import { useI18n } from "@/contexts/i18n-context";
-import { ScoreGauge } from "@/components/ui/score-gauge";
+
 import type { Creator } from "@/lib/types/catalog";
 
 const PLATFORM_GRADIENTS: Record<string, string> = {
@@ -65,20 +66,20 @@ export function KOLFeedCard({ kol }: KOLFeedCardProps) {
     ? t("kol.metrics.revenue.tooltip")
     : t("kol.metrics.gmv.tooltip");
 
-  const viewsValue = kol.stats?.views > 0 ? formatNumber(kol.stats.views) : null;
-
   return (
     <div className="group relative flex flex-col rounded-xl overflow-hidden border border-border/20 bg-card hover:border-border/50 hover:-translate-y-0.5 transition-all duration-300 ease-out">
       <Link
         href={kolProfilePath(kol.id)}
-        className="relative block overflow-hidden aspect-[4/5] sm:aspect-[4/5] bg-muted"
+        className="relative block overflow-hidden aspect-[3/4] bg-muted"
       >
         {kol.image ? (
-          <img
+          <Image
             src={kol.image}
-            alt={kol.name || kol.handle}
-            className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+            alt={kol.name || kol.handle || "Creator profile"}
+            fill
+            className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
             loading="lazy"
+            sizes="(max-width: 640px) 85vw, (max-width: 768px) 46vw, (max-width: 1024px) 50vw, (max-width: 1536px) 25vw, 20vw"
           />
         ) : (
           <div
@@ -119,7 +120,7 @@ export function KOLFeedCard({ kol }: KOLFeedCardProps) {
         </div>
       </Link>
 
-      <div className="flex flex-col flex-1 justify-between px-3 py-3 gap-2.5">
+      <div className="flex flex-col flex-1 justify-between px-3 py-2.5 gap-2">
         <div className="flex items-center justify-between gap-2 min-h-[20px]">
           <div className="flex items-center gap-1.5 text-muted-foreground overflow-hidden">
             {typeIcon}
@@ -169,108 +170,7 @@ export function KOLFeedCard({ kol }: KOLFeedCardProps) {
           </div>
         </TooltipProvider>
 
-        <div className="grid grid-cols-4 items-start gap-1">
-          <div className="flex justify-center">
-            {viewsValue ? (
-              <Tooltip>
-                <TooltipTrigger>
-                  <div className="flex flex-col items-center cursor-help min-w-[40px] sm:min-w-[50px] pt-1">
-                    <div className="h-7 sm:h-8 flex items-center justify-center">
-                      <span className="text-[11px] sm:text-[13px] font-mono font-bold tabular-nums leading-none truncate max-w-full px-1 text-foreground">
-                        {viewsValue}
-                      </span>
-                    </div>
-                    <span className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5">
-                      {t("kol.metrics.views.label")}
-                    </span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-xs">
-                  {t("kol.metrics.views.tooltip")}
-                </TooltipContent>
-              </Tooltip>
-            ) : (
-              <div className="h-11 sm:h-[52px] min-w-[40px] sm:min-w-[50px]" />
-            )}
-          </div>
-
-          <div className="flex justify-center">
-            {kol.qualityScore > 0 ? (
-              <Tooltip>
-                <TooltipTrigger>
-                  <div className="flex flex-col items-center cursor-help min-w-[40px] sm:min-w-[50px] pt-1">
-                    <div className="h-7 sm:h-8 flex items-center justify-center">
-                      <ScoreGauge score={kol.qualityScore} size={28} />
-                    </div>
-                    <span className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5">
-                      {t("kol.metrics.qualityScore.label")}
-                    </span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-[200px] text-xs">
-                  <p className="font-medium mb-1">{t("kol.metrics.qualityScore.tooltip")}</p>
-                  <p className="text-muted-foreground">
-                    {kol.qualityScore >= 4.5
-                      ? t("kol.metrics.qualityScore.excellent")
-                      : kol.qualityScore >= 3.5
-                        ? t("kol.metrics.qualityScore.good")
-                        : kol.qualityScore >= 2.5
-                          ? t("kol.metrics.qualityScore.average")
-                          : t("kol.metrics.qualityScore.belowAverage")}
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            ) : (
-              <div className="h-11 sm:h-[52px] min-w-[40px] sm:min-w-[50px]" />
-            )}
-          </div>
-
-          <div className="flex justify-center">
-            {kol.stats?.liveNum > 0 || kol.stats?.videoNum > 0 ? (
-              <Tooltip>
-                <TooltipTrigger>
-                  <div className="flex flex-col items-center cursor-help min-w-[40px] sm:min-w-[50px] pt-1">
-                    <div className="h-7 sm:h-8 flex items-center justify-center">
-                      <span className="text-[11px] sm:text-[13px] font-mono font-bold tabular-nums leading-none text-foreground">
-                        {kol.stats?.liveNum || 0}·{kol.stats?.videoNum || 0}
-                      </span>
-                    </div>
-                    <span className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5">
-                      {`${t("kol.metrics.contentOutput.live")}·${t("kol.metrics.contentOutput.video")}`}
-                    </span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-xs">
-                  {t("kol.metrics.contentOutput.tooltip", {
-                    liveNum: kol.stats?.liveNum || 0,
-                    videoNum: kol.stats?.videoNum || 0,
-                  })}
-                </TooltipContent>
-              </Tooltip>
-            ) : (
-              <div className="h-11 sm:h-[52px] min-w-[40px] sm:min-w-[50px]" />
-            )}
-          </div>
-
-          <div className="flex justify-center">
-            {kol.categories?.[0] ? (
-              <div className="h-11 sm:h-[52px] min-w-[40px] sm:min-w-[50px] pt-1">
-                <div className="h-7 sm:h-8 flex items-center justify-center">
-                  <Badge
-                    variant="secondary"
-                    className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 rounded-full truncate font-normal max-w-[60px] sm:max-w-[80px] border-border/20"
-                  >
-                    {kol.categories[0]}
-                  </Badge>
-                </div>
-              </div>
-            ) : (
-              <div className="h-11 sm:h-[52px] min-w-[40px] sm:min-w-[50px]" />
-            )}
-          </div>
-        </div>
-
-        <div className="flex gap-2 pt-1">
+        <div className="flex gap-2 pt-0.5">
           <Link href={kolProfilePath(kol.id)} className="flex-1 min-w-0">
             <Button
               variant="outline"

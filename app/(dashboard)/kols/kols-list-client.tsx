@@ -361,6 +361,7 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
                           setSelectedTiers((p) => p.filter((x) => x !== v));
                           setSelectedPlatforms((p) => p.filter((x) => x !== v));
                         }}
+                        aria-label={`Remove ${v} filter`}
                         className="hover:text-destructive transition-colors"
                       >
                         <X className="w-3 h-3" />
@@ -413,11 +414,11 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
       </div>
 
       {/* === CARD GRID === */}
-      <div className="flex md:grid overflow-x-auto md:overflow-visible snap-x md:snap-none scroll-smooth scrollbar-hide gap-4 md:gap-5 md:grid-cols-2 xl:grid-cols-3 -mx-4 px-4 md:mx-0 md:px-0 pb-2 md:pb-0">
+      <div className="flex md:grid overflow-x-auto md:overflow-visible snap-x md:snap-none scroll-smooth scrollbar-hide gap-3 md:gap-4 md:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5 -mx-4 px-4 md:mx-0 md:px-0 pb-2 md:pb-0">
         {paginated.map((kol) => (
           <div
             key={kol.id}
-            className="flex-shrink-0 snap-start w-[78vw] sm:w-[46vw] md:w-full"
+            className="flex-shrink-0 snap-start w-[85vw] sm:w-[46vw] md:w-full"
           >
             <KOLFeedCard kol={kol} />
           </div>
