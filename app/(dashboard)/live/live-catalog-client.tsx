@@ -22,12 +22,7 @@ interface LiveCatalogClientProps {
 type ViewMode = "list" | "grid" | "wiremap";
 type SortMode = "default" | "name-asc" | "name-desc";
 
-const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
-function getLetter(handle: string): string {
-  const first = handle.trim().charAt(0).toUpperCase();
-  return ALPHABET.includes(first) ? first : "#";
-}
 
 export function LiveCatalogClient({ mcs }: LiveCatalogClientProps) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -41,9 +36,7 @@ export function LiveCatalogClient({ mcs }: LiveCatalogClientProps) {
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [sortMode, setSortMode] = useState<SortMode>("name-asc");
-  const [activeLetter, setActiveLetter] = useState<string | null>(null);
-  const listRef = useRef<HTMLDivElement>(null);
-  const letterRefs = useRef(new Map<string, HTMLDivElement>());
+
 
   const activeCategories = useMemo(() => {
     const catSet = new Set<ContentCategoryId>();
@@ -88,51 +81,6 @@ export function LiveCatalogClient({ mcs }: LiveCatalogClientProps) {
     }
     return result;
   }, [mcs, selectedCategory, selectedBrand, searchQuery, sortMode]);
-
-  /* ── Alphabetical groups ── */
-  const letterGroups = useMemo(() => {
-    const groups = new Map<string, LiveMC[]>();
-    filtered.forEach((mc) => {
-      const letter = getLetter(mc.handle);
-      if (!groups.has(letter)) groups.set(letter, []);
-      groups.get(letter)!.push(mc);
-    });
-    return groups;
-  }, [filtered]);
-
-  const availableLetters = useMemo(() => {
-    return ALPHABET.filter((l) => letterGroups.has(l));
-  }, [letterGroups]);
-
-  /* ── Scroll spy for active letter ── */
-  useEffect(() => {
-    if (view !== "list" || availableLetters.length === 0) return;
-    const container = listRef.current;
-    if (!container) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const letter = entry.target.getAttribute("data-letter");
-            if (letter) setActiveLetter(letter);
-          }
-        });
-      },
-      { root: container, threshold: 0.1 }
-    );
-
-    letterRefs.current.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, [view, availableLetters, filtered]);
-
-  /* ── Jump to letter ── */
-  const scrollToLetter = useCallback((letter: string) => {
-    const el = letterRefs.current.get(letter);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }, []);
 
   const selectedMC = useMemo(() => {
     return filtered.find((mc) => mc.id === selectedId) ?? filtered[0] ?? null;
@@ -444,82 +392,29 @@ export function LiveCatalogClient({ mcs }: LiveCatalogClientProps) {
               )}
             </>
           ) : (
-            /* ── List View: Alphabetical Directory ── */
-            <div className="relative flex gap-6">
-              {/* Main list */}
-              <div ref={listRef} className="flex-1 min-w-0 flex flex-col">
-                {filtered.length > 0 ? (
-                  Array.from(letterGroups.entries()).map(([letter, groupMCs]) => (
-                    <section key={letter} className="flex flex-col">
-                      {/* Sticky letter header */}
-                      <div
-                        ref={(el) => {
-                          if (el) letterRefs.current.set(letter, el);
-                        }}
-                        data-letter={letter}
-                        className="sticky top-0 z-10 flex items-center gap-4 py-2 bg-background/95 backdrop-blur-sm"
-                      >
-                        <span className="text-4xl font-black tracking-tighter text-muted-foreground/40 select-none">
-                          {letter}
-                        </span>
-                        <div className="flex-1 h-px bg-border/50" />
-                        <span className="text-xs text-muted-foreground font-mono">
-                          {groupMCs.length}
-                        </span>
-                      </div>
-
-                      {/* MCs in this letter group */}
-                      <div className="flex flex-col divide-y divide-border/30">
-                        {groupMCs.map((mc, idx) => (
-                          <MCListItem
-                            key={mc.id}
-                            mc={mc}
-                            isSelected={selectedMC?.id === mc.id}
-                            isPlaying={playingId === mc.id}
-                            hasVideo={mc.videos.length > 0}
-                            isSelectionMode={isSelectionMode}
-                            isChecked={selectedIds.has(mc.id)}
-                            onSelect={() => handleSelect(mc.id)}
-                            onPlay={() => handlePlay(mc.id)}
-                            onToggleCheck={() => handleToggleCheck(mc.id)}
-                            index={idx}
-                          />
-                        ))}
-                      </div>
-                    </section>
-                  ))
-                ) : (
-                  <EmptyState />
-                )}
-              </div>
-
-              {/* Alphabet jump sidebar — desktop only */}
-              {!showDetail && availableLetters.length > 0 && (
-                <div className="hidden lg:flex flex-col items-center gap-0.5 shrink-0 w-8 sticky top-4 h-fit">
-                  {ALPHABET.map((letter) => {
-                    const hasItems = letterGroups.has(letter);
-                    const isActive = activeLetter === letter;
-                    return (
-                      <button
-                        key={letter}
-                        onClick={() => hasItems && scrollToLetter(letter)}
-                        disabled={!hasItems}
-                        className={cn(
-                          "w-7 h-7 rounded-md text-[11px] font-bold transition-all flex items-center justify-center",
-                          isActive
-                            ? "bg-primary text-primary-foreground shadow-sm scale-110"
-                            : hasItems
-                              ? "text-muted-foreground hover:text-foreground hover:bg-muted"
-                              : "text-muted-foreground/20 cursor-default"
-                        )}
-                      >
-                        {letter}
-                      </button>
-                    );
-                  })}
+            /* ── List View: Compact Card Grid ── */
+            <>
+              {filtered.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                  {filtered.map((mc) => (
+                    <MCListItem
+                      key={mc.id}
+                      mc={mc}
+                      isSelected={selectedMC?.id === mc.id}
+                      isPlaying={playingId === mc.id}
+                      hasVideo={mc.videos.length > 0}
+                      isSelectionMode={isSelectionMode}
+                      isChecked={selectedIds.has(mc.id)}
+                      onSelect={() => handleSelect(mc.id)}
+                      onPlay={() => handlePlay(mc.id)}
+                      onToggleCheck={() => handleToggleCheck(mc.id)}
+                    />
+                  ))}
                 </div>
+              ) : (
+                <EmptyState />
               )}
-            </div>
+            </>
           )}
         </div>
 
