@@ -1,16 +1,9 @@
 import type { Metadata } from "next";
-import dynamic from "next/dynamic";
 import { notFound } from "next/navigation";
 import { loadKOLProfile } from "@/lib/record-mappers";
+import { KOLProfileClient } from "./kol-profile-client";
 
-// Dynamically load KOL profile (ships recharts) only on this route.
-// Keeps recharts out of the shared vendor chunk consumed by /kols and /live.
-const KOLProfileClient = dynamic(
-  () => import("./kol-profile-client").then((m) => m.KOLProfileClient),
-  { ssr: true }
-);
-
-export const revalidate = 300;
+export const revalidate = 300; // = REVALIDATE_SECONDS
 
 export async function generateMetadata({
   params,
@@ -57,5 +50,35 @@ export default async function KOLProfilePage({
   const kol = await loadKOLProfile(kolId);
   if (!kol) notFound();
 
-  return <KOLProfileClient kol={kol} />;
+  // Schema.org Person structured data for rich snippets
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: kol.name,
+    alternateName: kol.handle,
+    description:
+      kol.bio?.en || kol.bio?.th || `${kol.name} is a ${kol.tier} ${kol.platform} creator`,
+    image: kol.image,
+    url: `https://hype-kol-dashboard.vercel.app/kols/${kol.id}`,
+    jobTitle: kol.kolType,
+    sameAs: kol.channel ? [kol.channel] : undefined,
+    knowsAbout: kol.categories,
+    aggregateRating: kol.qualityScore > 0
+      ? {
+          "@type": "AggregateRating",
+          ratingValue: kol.qualityScore.toFixed(1),
+          bestRating: "5",
+        }
+      : undefined,
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <KOLProfileClient kol={kol} />
+    </>
+  );
 }

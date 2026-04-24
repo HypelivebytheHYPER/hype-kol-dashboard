@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   },
 };
 
-export const revalidate = 300;
+export const revalidate = 300; // = REVALIDATE_SECONDS
 
 // `loadKOLCatalog` fetches + parses the full catalog. Underlying fetch()
 // uses Next.js cache tags, so HTTP responses are deduped across pages.

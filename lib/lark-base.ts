@@ -10,8 +10,9 @@ const APP_TOKEN = "H2GQbZBFqaUW2usqPswlczYggWg";
 // ============ Lark Base Table Registry ============
 
 export const TABLES = {
-  ALL_KOLS:    "tbl5864QVOiEokTQ",  // Main table — filter by KOLs Type or Inferred Categories
-  LIVE_MC_LIST:"tblozhTWBHelXqRR",  // Live MC portfolio with video refs
+  ALL_KOLS:         "tbl5864QVOiEokTQ",  // Main table — filter by KOLs Type or Inferred Categories
+  LIVE_MC_LIST:     "tblozhTWBHelXqRR",  // Live MC portfolio with video refs
+  DASHBOARD_SUMMARY:"tblOwkSqf5rci6zq",  // Pre-computed dashboard KPIs for fast UI loading
 } as const;
 
 type TableId = (typeof TABLES)[keyof typeof TABLES];
@@ -232,4 +233,47 @@ export function buildMediaUrls(
   return Object.fromEntries(
     tokens.map((t) => [t, buildMediaUrl(t, tableId)])
   );
+}
+
+// ── Record mutations ───────────────────────────────────────────────
+
+interface BatchUpdateRecord {
+  record_id: string;
+  fields: Record<string, unknown>;
+}
+
+interface BatchUpdatePayload {
+  app_token: string;
+  table_id: string;
+  records: BatchUpdateRecord[];
+}
+
+/** Batch update records via the Lark worker.
+ *  Endpoint: POST /records/batch_update */
+export async function updateRecords(
+  tableId: TableId,
+  records: BatchUpdateRecord[]
+): Promise<{ success: boolean; updated?: number; error?: string }> {
+  const payload: BatchUpdatePayload = {
+    app_token: APP_TOKEN,
+    table_id: tableId,
+    records,
+  };
+
+  const res = await fetch(`${LARK_API_URL}/records/batch_update`, {
+    method: "POST",
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "Unknown error");
+    return { success: false, error: `${res.status}: ${text}` };
+  }
+
+  const json = await res.json().catch(() => ({}) as Record<string, unknown>);
+  return {
+    success: true,
+    updated: (json as { records?: unknown[] }).records?.length ?? records.length,
+  };
 }

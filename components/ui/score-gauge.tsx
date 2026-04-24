@@ -57,8 +57,9 @@ export function ScoreGauge({ score, size = 48 }: ScoreGaugeProps) {
 }
 
 function getScoreColor(score: number): string {
-  if (score >= 4.5) return "#22c55e"; // green-500
-  if (score >= 3.5) return "#3b82f6"; // blue-500
-  if (score >= 2.5) return "#f59e0b"; // amber-500
-  return "#ef4444"; // red-500
+  // Use theme chart tokens so colors adapt if the palette changes.
+  if (score >= 4.5) return "var(--chart-2)";   // green
+  if (score >= 3.5) return "var(--chart-1)";   // blue
+  if (score >= 2.5) return "var(--chart-5)";   // amber
+  return "var(--chart-3)";                     // red
 }

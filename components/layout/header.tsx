@@ -36,11 +36,11 @@ export function Header() {
             onClick={openPalette}
           >
             <div className="flex items-center gap-2 overflow-hidden">
-              <Search className="shrink-0 w-4 h-4" />
+              <Search className="shrink-0 size-4" />
               <span className="text-sm truncate">{t("header.searchPlaceholder")}</span>
             </div>
             <kbd className="hidden md:inline-flex h-5 items-center gap-1 rounded border border-border/40 bg-muted/30 px-1.5 font-mono text-[10px] font-medium shrink-0">
-              <Command className="w-3 h-3" />K
+              <Command className="size-3" />K
             </kbd>
           </Button>
         </div>

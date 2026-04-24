@@ -12,12 +12,12 @@ export default function GlobalError({ error, reset }: ErrorProps) {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="max-w-md w-full text-center space-y-6">
-        <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto">
-          <AlertCircle className="w-8 h-8 text-destructive" />
+      <div className="flex flex-col max-w-md w-full text-center gap-6">
+        <div className="size-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto">
+          <AlertCircle className="size-8 text-destructive" />
         </div>
 
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2">
           <h1 className="text-2xl font-bold">Something went wrong</h1>
           <p className="text-muted-foreground">
             We encountered an unexpected error. Please try again or contact support if the problem
@@ -31,7 +31,7 @@ export default function GlobalError({ error, reset }: ErrorProps) {
 
         <div className="flex gap-3 justify-center">
           <Button onClick={reset} className="gap-2">
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw className="size-4" />
             Try again
           </Button>
           <Button variant="outline" onClick={() => (window.location.href = "/")}>

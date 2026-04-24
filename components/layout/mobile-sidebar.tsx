@@ -17,8 +17,8 @@ export function MobileSidebar() {
     <header className="h-14 border-b border-border/40 bg-background/60 backdrop-blur-xl flex items-center justify-between px-4 shrink-0">
       <div className="flex items-center gap-3">
         <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger className="h-10 w-10 inline-flex items-center justify-center rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-            <Menu className="w-5 h-5 text-foreground" />
+          <SheetTrigger className="size-10 inline-flex items-center justify-center rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+            <Menu className="size-5 text-foreground" />
           </SheetTrigger>
           <SheetContent side="left" className="w-72 p-0 bg-sidebar/80 backdrop-blur-xl border-r border-sidebar-border">
             <SheetTitle className="sr-only">{t("nav.menu")}</SheetTitle>

@@ -46,11 +46,11 @@ export function KOLFeedCard({ kol }: KOLFeedCardProps) {
 
   const typeIcon =
     typeKey === "live" ? (
-      <Video className={cn("w-3 h-3", TYPE_ICON_COLORS.live)} />
+      <Video className={cn("size-3", TYPE_ICON_COLORS.live)} />
     ) : typeKey === "video" ? (
-      <Video className={cn("w-3 h-3", TYPE_ICON_COLORS.video)} />
+      <Video className={cn("size-3", TYPE_ICON_COLORS.video)} />
     ) : (
-      <BarChart3 className={cn("w-3 h-3", TYPE_ICON_COLORS.default)} />
+      <BarChart3 className={cn("size-3", TYPE_ICON_COLORS.default)} />
     );
 
   const primaryValue =
@@ -129,7 +129,7 @@ export function KOLFeedCard({ kol }: KOLFeedCardProps) {
             </span>
             {kol.location && (
               <span className="flex items-center gap-0.5 text-[10px] truncate ml-1">
-                <MapPin className="w-2.5 h-2.5 shrink-0" />
+                <MapPin className="size-2.5 shrink-0" />
                 {kol.location.split(",")[0]}
               </span>
             )}
@@ -177,7 +177,7 @@ export function KOLFeedCard({ kol }: KOLFeedCardProps) {
               size="sm"
               className="w-full h-9 rounded-xl text-xs font-medium gap-1.5 hover:bg-muted/50 transition-all duration-200"
             >
-              <Eye className="w-3.5 h-3.5 shrink-0" />
+              <Eye className="size-3.5 shrink-0" />
               <span className="truncate hidden xs:inline">{t("kol.actions.viewProfile")}</span>
               <span className="truncate xs:hidden">{t("kol.actions.view")}</span>
             </Button>
@@ -213,7 +213,7 @@ function MetricCol({
           </p>
           <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5 inline-flex items-center gap-0.5">
             <span className="truncate max-w-[50px] sm:max-w-none">{label}</span>
-            {tooltip && <Info className="w-2.5 h-2.5 opacity-40 shrink-0" />}
+            {tooltip && <Info className="size-2.5 opacity-40 shrink-0" />}
           </p>
         </div>
       </TooltipTrigger>

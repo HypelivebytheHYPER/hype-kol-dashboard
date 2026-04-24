@@ -1,0 +1,23 @@
+[
+  {"fields":{"Period":"2026-04","Dashboard Type":"overview","Metric Key":"total_creators","Metric Label":"Total Creators","Metric Value":1439,"Metric Unit":"count","Change":12,"Trend":"up"}},
+  {"fields":{"Period":"2026-04","Dashboard Type":"overview","Metric Key":"total_gmv","Metric Label":"Total GMV","Metric Value":46860022,"Metric Unit":"THB","Change":8.4,"Trend":"up"}},
+  {"fields":{"Period":"2026-04","Dashboard Type":"overview","Metric Key":"avg_engagement","Metric Label":"Avg Engagement Rate","Metric Value":47.28,"Metric Unit":"%","Change":-0.3,"Trend":"down"}},
+  {"fields":{"Period":"2026-04","Dashboard Type":"overview","Metric Key":"active_campaigns","Metric Label":"Active Campaigns","Metric Value":36,"Metric Unit":"count","Change":4,"Trend":"up"}},
+  {"fields":{"Period":"2026-04","Dashboard Type":"overview","Metric Key":"total_followers","Metric Label":"Total Followers","Metric Value":432186180,"Metric Unit":"count","Change":15,"Trend":"up"}},
+  {"fields":{"Period":"2026-04","Dashboard Type":"overview","Metric Key":"avg_quality","Metric Label":"Avg Quality Score","Metric Value":1.56,"Metric Unit":"","Change":2.1,"Trend":"up"}},
+  {"fields":{"Period":"2026-04","Dashboard Type":"performance","Metric Key":"roas","Metric Label":"ROAS","Metric Value":4.2,"Metric Unit":"x","Change":0.3,"Trend":"up"}},
+  {"fields":{"Period":"2026-04","Dashboard Type":"performance","Metric Key":"cpa","Metric Label":"CPA","Metric Value":320,"Metric Unit":"THB","Change":-8,"Trend":"up"}},
+  {"fields":{"Period":"2026-04","Dashboard Type":"performance","Metric Key":"conversion_rate","Metric Label":"Conversion Rate","Metric Value":3.2,"Metric Unit":"%","Change":0.4,"Trend":"up"}},
+  {"fields":{"Period":"2026-04","Dashboard Type":"performance","Metric Key":"total_revenue","Metric Label":"Total Revenue","Metric Value":582193991,"Metric Unit":"THB","Change":11,"Trend":"up"}},
+  {"fields":{"Period":"2026-04","Dashboard Type":"performance","Metric Key":"total_products","Metric Label":"Products Promoted","Metric Value":4633,"Metric Unit":"count","Change":18,"Trend":"up"}},
+  {"fields":{"Period":"2026-04","Dashboard Type":"gmv","Metric Key":"total_revenue","Metric Label":"Total Revenue","Metric Value":582193991,"Metric Unit":"THB","Change":15,"Trend":"up"}},
+  {"fields":{"Period":"2026-04","Dashboard Type":"gmv","Metric Key":"net_gmv","Metric Label":"Net GMV","Metric Value":46860022,"Metric Unit":"THB","Change":11,"Trend":"up"}},
+  {"fields":{"Period":"2026-04","Dashboard Type":"gmv","Metric Key":"live_gmv","Metric Label":"Live GMV","Metric Value":19873724,"Metric Unit":"THB","Change":22,"Trend":"up"}},
+  {"fields":{"Period":"2026-04","Dashboard Type":"gmv","Metric Key":"video_gmv","Metric Label":"Video GMV","Metric Value":562320267,"Metric Unit":"THB","Change":9,"Trend":"up"}},
+  {"fields":{"Period":"2026-04","Dashboard Type":"gmv","Metric Key":"commission","Metric Label":"Commission","Metric Value":7029003,"Metric Unit":"THB","Change":9,"Trend":"up"}},
+  {"fields":{"Period":"2026-04","Dashboard Type":"engagement","Metric Key":"avg_likes","Metric Label":"Avg Likes","Metric Value":12400,"Metric Unit":"count","Change":22,"Trend":"up"}},
+  {"fields":{"Period":"2026-04","Dashboard Type":"engagement","Metric Key":"avg_comments","Metric Label":"Avg Comments","Metric Value":3100,"Metric Unit":"count","Change":15,"Trend":"up"}},
+  {"fields":{"Period":"2026-04","Dashboard Type":"engagement","Metric Key":"avg_shares","Metric Label":"Avg Shares","Metric Value":890,"Metric Unit":"count","Change":-5,"Trend":"down"}},
+  {"fields":{"Period":"2026-04","Dashboard Type":"engagement","Metric Key":"avg_saves","Metric Label":"Avg Saves","Metric Value":4500,"Metric Unit":"count","Change":30,"Trend":"up"}},
+  {"fields":{"Period":"2026-04","Dashboard Type":"engagement","Metric Key":"engagement_rate","Metric Label":"Engagement Rate","Metric Value":47.28,"Metric Unit":"%","Change":1.2,"Trend":"up"}}
+]

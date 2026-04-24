@@ -69,7 +69,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
           <CommandGroup heading="Smart Search">
             {smartSearchExamples.map((example) => (
               <CommandItem key={example.query} onSelect={() => handleSearch(example.query)}>
-                <Sparkles className="mr-2 h-4 w-4 text-amber-500" />
+                <Sparkles className="mr-2 size-4 text-amber-500" />
                 <span>{example.query}</span>
                 <span className="ml-2 text-xs text-muted-foreground">{example.description}</span>
               </CommandItem>
@@ -82,7 +82,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         <CommandGroup heading="Navigation">
           {navigation.map((item) => (
             <CommandItem key={item.name} onSelect={() => handleSelect(item.href)}>
-              <item.icon className="mr-2 h-4 w-4" />
+              <item.icon className="mr-2 size-4" />
               <span>{item.name}</span>
               {item.shortcut && <CommandShortcut>{item.shortcut}</CommandShortcut>}
             </CommandItem>
@@ -94,7 +94,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             <CommandSeparator />
             <CommandGroup heading="Search">
               <CommandItem onSelect={() => handleSearch(search)}>
-                <Users className="mr-2 h-4 w-4" />
+                <Users className="mr-2 size-4" />
                 <span>Search &quot;{search}&quot; in Creators</span>
               </CommandItem>
             </CommandGroup>

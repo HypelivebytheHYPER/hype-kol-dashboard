@@ -54,7 +54,7 @@ export function MobileSearchOverlay({
         <div className="flex items-center gap-3 p-4 border-b">
           <form onSubmit={handleSearch} className="flex-1">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
               <Input
                 autoFocus
                 value={searchQuery}
@@ -65,15 +65,15 @@ export function MobileSearchOverlay({
           </form>
           <button
             onClick={onClose}
-            className="h-10 w-10 inline-flex items-center justify-center rounded-lg bg-muted hover:bg-muted/80 transition-colors shrink-0"
+            className="size-10 inline-flex items-center justify-center rounded-lg bg-muted hover:bg-muted/80 transition-colors shrink-0"
             aria-label="Close"
           >
-            <X className="w-5 h-5" />
+            <X className="size-5" />
           </button>
         </div>
 
         {/* Quick Actions */}
-        <div className="p-4 space-y-4">
+        <div className="flex flex-col p-4 gap-4">
           <p className="text-sm font-medium text-muted-foreground">{t("search.quick")}</p>
           <div className="flex flex-wrap gap-2">
             {QUICK_TAGS.map((tag) => (
@@ -93,7 +93,7 @@ export function MobileSearchOverlay({
 
         <div className="flex-1 p-4">
           <p className="text-sm font-medium text-muted-foreground mb-3">{t("search.popular")}</p>
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             {POPULAR_SEARCHES.map((item) => (
               <Link
                 key={item.label}
@@ -101,7 +101,7 @@ export function MobileSearchOverlay({
                 onClick={onClose}
                 className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors"
               >
-                <Command className="w-4 h-4 text-muted-foreground" />
+                <Command className="size-4 text-muted-foreground" />
                 <span>{item.label}</span>
               </Link>
             ))}

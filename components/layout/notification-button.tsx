@@ -19,7 +19,7 @@ export function NotificationButton({ className }: NotificationButtonProps) {
       title={t("header.notifications")}
     >
       <Bell />
-      <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full" />
+      <span className="absolute top-1 right-1 size-2 bg-destructive rounded-full" />
     </Button>
   );
 }

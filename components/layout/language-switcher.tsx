@@ -42,7 +42,7 @@ export function LanguageSwitcher() {
           >
             <span className="text-base">{localeFlags[loc]}</span>
             <span className="flex-1">{localeLabels[loc]}</span>
-            {locale === loc && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
+            {locale === loc && <span className="size-1.5 rounded-full bg-primary" />}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

@@ -121,7 +121,7 @@ export function TikTokProfileEmbed({ handle, name }: TikTokProfileEmbedProps) {
     <Card className="overflow-hidden border-t-2 border-t-chart-5">
       <CardHeader className="pb-3 flex flex-row items-center justify-between">
         <CardTitle className="text-sm font-semibold flex items-center gap-2">
-          <span className="inline-block w-1.5 h-1.5 rounded-full bg-chart-5" />
+          <span className="inline-block size-1.5 rounded-full bg-chart-5" />
           {data.author_name || name || `@${handle}`}
         </CardTitle>
         <a
@@ -130,7 +130,7 @@ export function TikTokProfileEmbed({ handle, name }: TikTokProfileEmbedProps) {
           rel="noopener noreferrer"
           className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
         >
-          <ExternalLink className="w-3 h-3" />
+          <ExternalLink className="size-3" />
           Open in TikTok
         </a>
       </CardHeader>

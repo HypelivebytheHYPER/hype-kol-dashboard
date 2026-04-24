@@ -2,13 +2,15 @@
 // collapse multi-row creators down to one entry per KOL.
 
 import { unstable_cache } from "next/cache";
-import { str, num, arr, url, attachments, buildMediaUrl, fetchAllRecords, TABLES, type LarkRecord, type LarkAttachment } from "./lark-base";
+import { str, num, arr, url, attachments, buildMediaUrl, fetchRecords, fetchAllRecords, TABLES, type LarkRecord, type LarkAttachment } from "./lark-base";
 import {
   normalizeCategories,
   CATEGORY_FIELD,
   getMCContentCategories,
 } from "./taxonomy";
-import type { Creator, LiveMC } from "./types/catalog";
+import type { Creator, LiveMC, DashboardMetric } from "./types/catalog";
+
+
 
 /* ── KOL Record Parsing ─────────────────────────────────────────────── */
 
@@ -48,9 +50,16 @@ function recordToCreator(r: LarkRecord): Creator {
   };
   if (accountType) creator.accountType = accountType;
 
+  // 1. Prefer Lark Base attachment (uploaded image)
   const att = attachments(f, "Attachment");
   const img = att.find((a: LarkAttachment) => a.type?.startsWith("image/"));
-  if (img) creator.image = buildMediaUrl(img.file_token, TABLES.ALL_KOLS);
+  if (img) {
+    creator.image = buildMediaUrl(img.file_token, TABLES.ALL_KOLS);
+  } else {
+    // 2. Fall back to "Avatar URL" field (scraped from TikTok profile, stored in Lark)
+    const avatarUrl = str(f, "Avatar URL");
+    if (avatarUrl) creator.image = avatarUrl;
+  }
 
   return creator;
 }
@@ -140,3 +149,117 @@ export function recordToLiveMC(r: LarkRecord): LiveMC {
       .map((v: LarkAttachment) => ({ token: v.file_token, name: v.name })),
   };
 }
+
+/* ── Dashboard Summary Record Parsing ───────────────────────────────── */
+
+const VALID_DASHBOARD_TYPES = ["overview", "performance", "gmv", "engagement"] as const;
+const VALID_TRENDS = ["up", "down", "neutral"] as const;
+
+function parseDashboardType(v: string): DashboardMetric["dashboardType"] {
+  return VALID_DASHBOARD_TYPES.includes(v as DashboardMetric["dashboardType"])
+    ? (v as DashboardMetric["dashboardType"])
+    : "overview";
+}
+
+function parseTrend(v: string): DashboardMetric["trend"] {
+  return VALID_TRENDS.includes(v as DashboardMetric["trend"])
+    ? (v as DashboardMetric["trend"])
+    : "neutral";
+}
+
+export function recordToDashboardMetric(r: LarkRecord): DashboardMetric {
+  const f = r.fields;
+  return {
+    id: r.record_id,
+    period: str(f, "Period"),
+    dashboardType: parseDashboardType(str(f, "Dashboard Type")),
+    metricKey: str(f, "Metric Key"),
+    metricLabel: str(f, "Metric Label"),
+    metricValue: num(f, "Metric Value"),
+    metricUnit: str(f, "Metric Unit"),
+    change: num(f, "Change"),
+    trend: parseTrend(str(f, "Trend")),
+  };
+}
+
+/** Load dashboard metrics for a given type and period.
+ *  If no period is specified, defaults to the latest period available.
+ *  Cached via Next.js unstable_cache — fast lookup from pre-computed summary table. */
+export const loadDashboardMetrics = unstable_cache(
+  async (dashboardType: DashboardMetric["dashboardType"], period?: string) => {
+    let targetPeriod = period;
+
+    // Default to the latest period when none specified
+    if (!targetPeriod) {
+      const latest = await fetchRecords(TABLES.DASHBOARD_SUMMARY, {
+        filter: {
+          conjunction: "and",
+          conditions: [{ fieldName: "Dashboard Type", operator: "is", value: [dashboardType] }],
+        },
+        sort: [{ fieldName: "Period", desc: true }],
+        pageSize: 1,
+        fieldNames: ["Period"],
+      });
+      targetPeriod = latest.data[0] ? str(latest.data[0].fields, "Period") : undefined;
+    }
+
+    const filter: {
+      conjunction: "and";
+      conditions: Array<{
+        fieldName: string;
+        operator: "is" | "isNot" | "contains" | "doesNotContain" | "isEmpty" | "isNotEmpty";
+        value: string[];
+      }>;
+    } = {
+      conjunction: "and",
+      conditions: [
+        { fieldName: "Dashboard Type", operator: "is", value: [dashboardType] },
+      ],
+    };
+    if (targetPeriod) {
+      filter.conditions.push({ fieldName: "Period", operator: "is", value: [targetPeriod] });
+    }
+    const records = await fetchAllRecords(TABLES.DASHBOARD_SUMMARY, {
+      filter,
+      tags: ["dashboard"],
+    });
+    return records.map(recordToDashboardMetric);
+  },
+  ["dashboard-metrics"],
+  { revalidate: 300, tags: ["dashboard"] }
+);
+
+/** Load all historical metrics for a given dashboard type (all periods).
+ *  Used by charts to render multi-period trends. */
+export const loadDashboardMetricsHistory = unstable_cache(
+  async (dashboardType: DashboardMetric["dashboardType"]) => {
+    const records = await fetchAllRecords(TABLES.DASHBOARD_SUMMARY, {
+      filter: {
+        conjunction: "and",
+        conditions: [{ fieldName: "Dashboard Type", operator: "is", value: [dashboardType] }],
+      },
+      sort: [{ fieldName: "Period", desc: false }],
+      tags: ["dashboard"],
+    });
+    return records.map(recordToDashboardMetric);
+  },
+  ["dashboard-metrics-history"],
+  { revalidate: 300, tags: ["dashboard"] }
+);
+
+/** Load all distinct periods available in the Dashboard Summary table.
+ *  Used by the period selector dropdown. */
+export const loadDashboardPeriods = unstable_cache(
+  async () => {
+    const records = await fetchAllRecords(TABLES.DASHBOARD_SUMMARY, {
+      fieldNames: ["Period"],
+      tags: ["dashboard"],
+    });
+    const periods = Array.from(new Set(records.map((r) => str(r.fields, "Period"))))
+      .filter(Boolean)
+      .sort();
+    return periods;
+  },
+  ["dashboard-periods"],
+  { revalidate: 300, tags: ["dashboard"] }
+);

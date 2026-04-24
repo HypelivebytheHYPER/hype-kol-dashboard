@@ -57,11 +57,11 @@ interface PremiumAvatarProps {
 }
 
 const SIZE_MAP = {
-  xs: "w-6 h-6 text-[10px]",
-  sm: "w-8 h-8 text-xs",
-  md: "w-10 h-10 text-sm",
-  lg: "w-12 h-12 text-base",
-  xl: "w-16 h-16 text-lg",
+  xs: "size-6 text-[10px]",
+  sm: "size-8 text-xs",
+  md: "size-10 text-sm",
+  lg: "size-12 text-base",
+  xl: "size-16 text-lg",
 };
 
 export function PremiumAvatar({

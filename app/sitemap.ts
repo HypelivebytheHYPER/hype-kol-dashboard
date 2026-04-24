@@ -1,7 +1,6 @@
 import type { MetadataRoute } from "next";
 import { loadKOLCatalog } from "@/lib/record-mappers";
-
-export const revalidate = 300;
+export const revalidate = 300; // = REVALIDATE_SECONDS
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = "https://hype-kol-dashboard.vercel.app";

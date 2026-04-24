@@ -50,12 +50,12 @@ export function normalizeCategories(raw: string[]): CreatorCategoryId[] {
 // ============ 2. Content categories (derived from brand portfolio) ============
 
 export const CONTENT_CATEGORIES = [
-  { id: "cosmetics", label: "Cosmetics & Beauty", color: "#f472b6" },
-  { id: "health", label: "Health & Supplements", color: "#34d399" },
-  { id: "food", label: "Food & Beverage", color: "#fbbf24" },
-  { id: "home", label: "Home & Living", color: "#60a5fa" },
-  { id: "fashion", label: "Fashion & Apparel", color: "#a78bfa" },
-  { id: "personal-care", label: "Personal Care", color: "#fb923c" },
+  { id: "cosmetics",     label: "Cosmetics & Beauty" },
+  { id: "health",        label: "Health & Supplements" },
+  { id: "food",          label: "Food & Beverage" },
+  { id: "home",          label: "Home & Living" },
+  { id: "fashion",       label: "Fashion & Apparel" },
+  { id: "personal-care", label: "Personal Care" },
 ] as const;
 
 export type ContentCategoryId = (typeof CONTENT_CATEGORIES)[number]["id"];

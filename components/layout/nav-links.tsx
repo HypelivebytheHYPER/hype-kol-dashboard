@@ -14,7 +14,7 @@ export function NavLinks({ onNavigate, linkClassName }: NavLinksProps) {
   const pathname = usePathname();
 
   return (
-    <nav className="flex-1 px-3 space-y-0.5">
+    <nav className="flex-1 px-3 gap-0.5">
       {PRIMARY_NAV.map((item) => {
         const isActive =
           pathname === item.href || pathname?.startsWith(`${item.href}/`);
@@ -36,7 +36,7 @@ export function NavLinks({ onNavigate, linkClassName }: NavLinksProps) {
             )}
             <item.icon
               className={cn(
-                "w-4 h-4 transition-colors duration-200",
+                "size-4 transition-colors duration-200",
                 isActive
                   ? "text-foreground"
                   : "text-muted-foreground group-hover:text-foreground"

@@ -1,0 +1,35 @@
+{
+  "fields": [
+    "Period",
+    "Dashboard Type",
+    "Metric Key",
+    "Metric Label",
+    "Metric Value",
+    "Metric Unit",
+    "Change",
+    "Trend"
+  ],
+  "rows": [
+    ["2026-04", "overview", "total_creators", "Total Creators", 1439, "count", 12, "up"],
+    ["2026-04", "overview", "total_gmv", "Total GMV", 46860022, "THB", 8.4, "up"],
+    ["2026-04", "overview", "avg_engagement", "Avg Engagement Rate", 47.28, "%", -0.3, "down"],
+    ["2026-04", "overview", "active_campaigns", "Active Campaigns", 36, "count", 4, "up"],
+    ["2026-04", "overview", "total_followers", "Total Followers", 432186180, "count", 15, "up"],
+    ["2026-04", "overview", "avg_quality", "Avg Quality Score", 1.56, "", 2.1, "up"],
+    ["2026-04", "performance", "roas", "ROAS", 4.2, "x", 0.3, "up"],
+    ["2026-04", "performance", "cpa", "CPA", 320, "THB", -8, "up"],
+    ["2026-04", "performance", "conversion_rate", "Conversion Rate", 3.2, "%", 0.4, "up"],
+    ["2026-04", "performance", "total_revenue", "Total Revenue", 582193991, "THB", 11, "up"],
+    ["2026-04", "performance", "total_products", "Products Promoted", 4633, "count", 18, "up"],
+    ["2026-04", "gmv", "total_revenue", "Total Revenue", 582193991, "THB", 15, "up"],
+    ["2026-04", "gmv", "net_gmv", "Net GMV", 46860022, "THB", 11, "up"],
+    ["2026-04", "gmv", "live_gmv", "Live GMV", 19873724, "THB", 22, "up"],
+    ["2026-04", "gmv", "video_gmv", "Video GMV", 562320267, "THB", 9, "up"],
+    ["2026-04", "gmv", "commission", "Commission", 7029003, "THB", 9, "up"],
+    ["2026-04", "engagement", "avg_likes", "Avg Likes", 12400, "count", 22, "up"],
+    ["2026-04", "engagement", "avg_comments", "Avg Comments", 3100, "count", 15, "up"],
+    ["2026-04", "engagement", "avg_shares", "Avg Shares", 890, "count", -5, "down"],
+    ["2026-04", "engagement", "avg_saves", "Avg Saves", 4500, "count", 30, "up"],
+    ["2026-04", "engagement", "engagement_rate", "Engagement Rate", 47.28, "%", 1.2, "up"]
+  ]
+}

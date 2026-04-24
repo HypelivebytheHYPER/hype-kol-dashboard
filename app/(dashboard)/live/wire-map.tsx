@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useEffect, useState } from "react";
 import { CONTENT_CATEGORIES, getBrandCategories, type ContentCategoryId } from "@/lib/taxonomy";
+import { mcHue, oklch, canvasColors } from "@/lib/design-tokens";
 import type { LiveMC } from "@/lib/types/catalog";
 
 interface WireMapProps {
@@ -24,24 +25,48 @@ interface Edge {
   to: string;
 }
 
-const MC_COLORS = [
-  "#f472b6", "#a78bfa", "#60a5fa", "#34d399",
-  "#fbbf24", "#fb923c", "#f87171", "#2dd4bf",
-  "#818cf8", "#e879f9",
-];
+// ── Layout constants ─────────────────────────────────────────────
+
+const LAYOUT = {
+  col: { mc: 0.15, cat: 0.48, brand: 0.82 },
+  radius: { mc: 16, cat: 22, brand: 4 },
+  gap: { mc: 12, cat: 50, brand: 26 },
+  header: 30,
+  padY: 20,
+  minHeight: 400,
+  maxHeight: 1200,
+} as const;
 
 export function WireMap({ mcs, selectedCategory }: WireMapProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   const [dimensions, setDimensions] = useState({ width: 900, height: 600 });
+  const [isDark, setIsDark] = useState(false);
+
+  // Detect color scheme for canvas rendering
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    setIsDark(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsDark(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  // Also watch for .dark class on html (manual toggle)
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains("dark"));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
 
   // Build three-tier graph: MC → Category → Brand
   const { nodes, edges } = useMemo(() => {
     const nodeMap = new Map<string, Node>();
     const edgeList: Edge[] = [];
 
-    // Collect which categories + brands are in the data
     const activeCatIds = new Set<ContentCategoryId>();
     const activeBrands = new Map<string, { categories: ContentCategoryId[]; count: number }>();
 
@@ -59,29 +84,41 @@ export function WireMap({ mcs, selectedCategory }: WireMapProps) {
     });
 
     const activeCats = CONTENT_CATEGORIES.filter((c) => activeCatIds.has(c.id));
+    const brandList = [...activeBrands.entries()].sort((a, b) => b[1].count - a[1].count);
 
-    // --- MC nodes (left column, circle layout) ---
-    const mcCenterX = dimensions.width * 0.15;
-    const mcCenterY = dimensions.height / 2;
-    const mcRadius = Math.min(dimensions.height * 0.35, 180);
+    // Compute canvas height from the tallest column
+    const mcCircumferenceNeeded = mcs.length * (LAYOUT.radius.mc * 2 + LAYOUT.gap.mc);
+    const mcCircleRadius = Math.max(100, mcCircumferenceNeeded / (2 * Math.PI));
+    const mcColumnNeed = mcCircleRadius * 2 + LAYOUT.radius.mc * 2 + LAYOUT.header + LAYOUT.padY;
+
+    const catColumnNeed = activeCats.length * LAYOUT.gap.cat + LAYOUT.header + LAYOUT.padY;
+    const brandColumnNeed = brandList.length * LAYOUT.gap.brand + LAYOUT.header + LAYOUT.padY;
+
+    const needHeight = Math.max(mcColumnNeed, catColumnNeed, brandColumnNeed);
+    const height = Math.max(LAYOUT.minHeight, Math.min(LAYOUT.maxHeight, needHeight));
+    const centerY = (height + LAYOUT.header) / 2;
+
+    // ── MC nodes (left column, circle layout) ────────────────────
+    const mcCenterX = dimensions.width * LAYOUT.col.mc;
 
     mcs.forEach((mc, i) => {
       const angle = (i / mcs.length) * Math.PI * 2 - Math.PI / 2;
+      const hue = mcHue(mc.handle);
       nodeMap.set(mc.id, {
         id: mc.id,
         label: mc.handle,
         type: "mc",
-        x: mcCenterX + Math.cos(angle) * mcRadius,
-        y: mcCenterY + Math.sin(angle) * mcRadius,
-        color: MC_COLORS[i % MC_COLORS.length],
-        radius: 16,
+        x: mcCenterX + Math.cos(angle) * mcCircleRadius,
+        y: centerY + Math.sin(angle) * mcCircleRadius,
+        color: oklch(null, 0.60, hue, 0.14),
+        radius: LAYOUT.radius.mc,
       });
     });
 
-    // --- Category nodes (center column) ---
-    const catX = dimensions.width * 0.48;
-    const catSpacing = Math.min(dimensions.height / (activeCats.length + 1), 80);
-    const catStartY = mcCenterY - ((activeCats.length - 1) * catSpacing) / 2;
+    // ── Category nodes (center column) ───────────────────────────
+    const catX = dimensions.width * LAYOUT.col.cat;
+    const catSpan = (activeCats.length - 1) * LAYOUT.gap.cat;
+    const catStartY = centerY - catSpan / 2;
 
     activeCats.forEach((cat, i) => {
       nodeMap.set(`cat:${cat.id}`, {
@@ -89,17 +126,16 @@ export function WireMap({ mcs, selectedCategory }: WireMapProps) {
         label: cat.label,
         type: "category",
         x: catX,
-        y: catStartY + i * catSpacing,
-        color: cat.color,
-        radius: 22,
+        y: catStartY + i * LAYOUT.gap.cat,
+        color: oklch(cat.id, 0.62),
+        radius: LAYOUT.radius.cat,
       });
     });
 
-    // --- Brand nodes (right column) ---
-    const brandX = dimensions.width * 0.82;
-    const brandList = [...activeBrands.entries()].sort((a, b) => b[1].count - a[1].count);
-    const brandSpacing = Math.min(dimensions.height / (brandList.length + 1), 28);
-    const brandStartY = mcCenterY - ((brandList.length - 1) * brandSpacing) / 2;
+    // ── Brand nodes (right column) ───────────────────────────────
+    const brandX = dimensions.width * LAYOUT.col.brand;
+    const brandSpan = (brandList.length - 1) * LAYOUT.gap.brand;
+    const brandStartY = centerY - brandSpan / 2;
 
     brandList.forEach(([brand], i) => {
       nodeMap.set(`brand:${brand}`, {
@@ -107,13 +143,13 @@ export function WireMap({ mcs, selectedCategory }: WireMapProps) {
         label: brand,
         type: "brand",
         x: brandX,
-        y: brandStartY + i * brandSpacing,
-        color: "#64748b",
-        radius: 4,
+        y: brandStartY + i * LAYOUT.gap.brand,
+        color: oklch(null, 0.55),
+        radius: LAYOUT.radius.brand,
       });
     });
 
-    // --- Edges: MC → Category ---
+    // ── Edges: MC → Category ─────────────────────────────────────
     mcs.forEach((mc) => {
       mc.contentCategories.forEach((catId) => {
         if (nodeMap.has(`cat:${catId}`)) {
@@ -122,7 +158,7 @@ export function WireMap({ mcs, selectedCategory }: WireMapProps) {
       });
     });
 
-    // --- Edges: Category → Brand ---
+    // ── Edges: Category → Brand ──────────────────────────────────
     brandList.forEach(([brand, { categories }]) => {
       categories.forEach((catId) => {
         if (nodeMap.has(`cat:${catId}`)) {
@@ -134,17 +170,27 @@ export function WireMap({ mcs, selectedCategory }: WireMapProps) {
     return { nodes: [...nodeMap.values()], edges: edgeList };
   }, [mcs, dimensions]);
 
-  // Resize
+  // Resize observer
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
     const ro = new ResizeObserver((entries) => {
       const { width } = entries[0].contentRect;
-      setDimensions({ width, height: Math.max(450, Math.min(700, mcs.length * 55)) });
+      setDimensions((prev) => ({ ...prev, width }));
     });
     ro.observe(container);
     return () => ro.disconnect();
-  }, [mcs.length]);
+  }, []);
+
+  // Sync computed height into dimensions
+  useEffect(() => {
+    if (nodes.length === 0) return;
+    const maxY = Math.max(...nodes.map((n) => n.y + n.radius));
+    const needHeight = Math.max(LAYOUT.minHeight, Math.min(LAYOUT.maxHeight, maxY + LAYOUT.padY));
+    setDimensions((prev) =>
+      prev.height !== needHeight ? { ...prev, height: needHeight } : prev
+    );
+  }, [nodes]);
 
   // Draw
   useEffect(() => {
@@ -160,16 +206,14 @@ export function WireMap({ mcs, selectedCategory }: WireMapProps) {
     ctx.clearRect(0, 0, dimensions.width, dimensions.height);
 
     const nodeById = new Map(nodes.map((n) => [n.id, n]));
+    const theme = canvasColors();
 
-    // Two-hop connectivity for hover (MC → its categories → their brands)
     const isConnected2Hop = (nodeId: string): boolean => {
       if (!hoveredNode && !selectedCategory) return true;
       const focus = hoveredNode || (selectedCategory ? `cat:${selectedCategory}` : null);
       if (!focus) return true;
       if (nodeId === focus) return true;
-      // Direct connection
       if (edges.some((e) => (e.from === focus && e.to === nodeId) || (e.to === focus && e.from === nodeId))) return true;
-      // Two-hop: find intermediate nodes
       const intermediates = edges
         .filter((e) => e.from === focus || e.to === focus)
         .map((e) => (e.from === focus ? e.to : e.from));
@@ -206,7 +250,7 @@ export function WireMap({ mcs, selectedCategory }: WireMapProps) {
       ctx.moveTo(from.x, from.y);
       const cpX = (from.x + to.x) / 2;
       ctx.bezierCurveTo(cpX, from.y, cpX, to.y, to.x, to.y);
-      ctx.strokeStyle = highlighted ? "rgba(96, 165, 250, 0.6)" : "rgba(100, 116, 139, 0.12)";
+      ctx.strokeStyle = highlighted ? theme.edgeHighlight : theme.edgeDefault;
       ctx.lineWidth = highlighted ? 1.5 : 0.5;
       ctx.stroke();
     });
@@ -225,7 +269,7 @@ export function WireMap({ mcs, selectedCategory }: WireMapProps) {
       ctx.fill();
 
       if (node.id === hoveredNode) {
-        ctx.strokeStyle = "#fff";
+        ctx.strokeStyle = theme.nodeStroke;
         ctx.lineWidth = 2;
         ctx.stroke();
       }
@@ -234,7 +278,11 @@ export function WireMap({ mcs, selectedCategory }: WireMapProps) {
       const fontSize = node.type === "category" ? 11 : node.type === "mc" ? 10 : 9;
       const fontWeight = node.type === "category" || node.id === hoveredNode ? "bold " : "";
       ctx.font = `${fontWeight}${fontSize}px system-ui, sans-serif`;
-      ctx.fillStyle = dimmed ? "rgba(148, 163, 184, 0.2)" : node.type === "brand" ? "#94a3b8" : "#e2e8f0";
+      ctx.fillStyle = dimmed
+        ? theme.textDimmed
+        : node.type === "brand"
+          ? theme.textMuted
+          : theme.textPrimary;
 
       if (node.type === "brand") {
         ctx.textAlign = "left";
@@ -252,12 +300,12 @@ export function WireMap({ mcs, selectedCategory }: WireMapProps) {
 
     // Column headers
     ctx.font = "bold 10px system-ui, sans-serif";
-    ctx.fillStyle = "rgba(148, 163, 184, 0.5)";
+    ctx.fillStyle = theme.textMuted;
     ctx.textAlign = "center";
-    ctx.fillText("MCs", dimensions.width * 0.15, 20);
-    ctx.fillText("Categories", dimensions.width * 0.48, 20);
-    ctx.fillText("Brands", dimensions.width * 0.82, 20);
-  }, [nodes, edges, hoveredNode, selectedCategory, dimensions]);
+    ctx.fillText("MCs", dimensions.width * LAYOUT.col.mc, 20);
+    ctx.fillText("Categories", dimensions.width * LAYOUT.col.cat, 20);
+    ctx.fillText("Brands", dimensions.width * LAYOUT.col.brand, 20);
+  }, [nodes, edges, hoveredNode, selectedCategory, dimensions, isDark]);
 
   // Mouse hover
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -291,13 +339,13 @@ export function WireMap({ mcs, selectedCategory }: WireMapProps) {
         </div>
         <div className="flex gap-3 text-[10px] text-muted-foreground">
           <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-pink-400 inline-block" /> MC
+            <span className="size-2.5 rounded-full inline-block" style={{ backgroundColor: oklch("cosmetics", 0.60) }} /> MC
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block" /> Category
+            <span className="size-2.5 rounded-full inline-block" style={{ backgroundColor: oklch("health", 0.62) }} /> Category
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-slate-400 inline-block" /> Brand
+            <span className="size-2.5 rounded-full inline-block bg-muted-foreground" /> Brand
           </span>
         </div>
       </div>

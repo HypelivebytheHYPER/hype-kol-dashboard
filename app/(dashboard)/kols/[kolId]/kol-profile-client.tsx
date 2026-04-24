@@ -89,13 +89,13 @@ export function KOLProfileClient({ kol }: KOLProfileClientProps) {
   ].filter((d) => d.value > 0);
 
   return (
-    <div className="space-y-6 pb-8">
+    <div className="flex flex-col gap-6 pb-8">
       {/* Back */}
       <Link
         href={ROUTES.KOLS}
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
-        <ArrowLeft className="w-4 h-4" />
+        <ArrowLeft className="size-4" />
         Back to KOLs
       </Link>
 
@@ -112,7 +112,7 @@ export function KOLProfileClient({ kol }: KOLProfileClientProps) {
                 src={kol.image}
                 name={kol.name}
                 size="xl"
-                className="border-4 border-card shadow-xl w-24 h-24 text-2xl"
+                className="border-4 border-card shadow-xl size-24 text-2xl"
               />
               <div className="pb-1">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -145,7 +145,7 @@ export function KOLProfileClient({ kol }: KOLProfileClientProps) {
               {kol.channel && (
                 <a href={kol.channel} target="_blank" rel="noopener noreferrer">
                   <Button variant="outline" size="sm" className="gap-1.5">
-                    <ExternalLink className="w-3.5 h-3.5" />
+                    <ExternalLink className="size-3.5" />
                     Channel
                   </Button>
                 </a>
@@ -164,7 +164,7 @@ export function KOLProfileClient({ kol }: KOLProfileClientProps) {
                       className="text-xs cursor-help"
                     >
                       {kol.accountType === "Main" && (
-                        <Star className="w-3 h-3 fill-current mr-1" />
+                        <Star className="size-3 fill-current mr-1" />
                       )}
                       {kol.accountType}
                     </Badge>
@@ -189,13 +189,13 @@ export function KOLProfileClient({ kol }: KOLProfileClientProps) {
           <TooltipProvider delay={300}>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mt-6 pt-5 border-t border-border">
               <KpiTile
-                icon={<Users className="w-4 h-4" />}
+                icon={<Users className="size-4" />}
                 label="Followers"
                 value={formatNumber(kol.followers)}
                 hint="Total number of followers / subscribers on their primary platform."
               />
               <KpiTile
-                icon={<TrendingUp className="w-4 h-4" />}
+                icon={<TrendingUp className="size-4" />}
                 label="Engagement"
                 value={formatEngagement(kol.engagementRate)}
                 hint={
@@ -205,13 +205,13 @@ export function KOLProfileClient({ kol }: KOLProfileClientProps) {
                 }
               />
               <KpiTile
-                icon={<ShoppingBag className="w-4 h-4" />}
+                icon={<ShoppingBag className="size-4" />}
                 label="Avg GMV"
                 value={numOrDash(kol.avgGMV, formatCurrency)}
                 hint="Average Gross Merchandise Value generated per month across all content types."
               />
               <KpiTile
-                icon={<Star className="w-4 h-4" />}
+                icon={<Star className="size-4" />}
                 label="Quality Score"
                 value={kol.qualityScore > 0 ? `${kol.qualityScore.toFixed(1)} / 5` : "—"}
                 hint={`Composite score out of 5 based on engagement consistency, GMV performance, and content output. ${
@@ -225,13 +225,13 @@ export function KOLProfileClient({ kol }: KOLProfileClientProps) {
                 }`}
               />
               <KpiTile
-                icon={<Eye className="w-4 h-4" />}
+                icon={<Eye className="size-4" />}
                 label="Total Views"
                 value={numOrDash(kol.stats.views)}
                 hint="Cumulative video/live views across all tracked content in the database."
               />
               <KpiTile
-                icon={<Video className="w-4 h-4" />}
+                icon={<Video className="size-4" />}
                 label="Content Output"
                 value={
                   `${kol.stats.liveNum > 0 ? `${kol.stats.liveNum} Live` : ""}${kol.stats.liveNum > 0 && kol.stats.videoNum > 0 ? " \u00b7 " : ""}${kol.stats.videoNum > 0 ? `${kol.stats.videoNum} Videos` : ""}` ||
@@ -270,7 +270,7 @@ export function KOLProfileClient({ kol }: KOLProfileClientProps) {
         <TabsContent value="analytics" className="mt-5">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             {/* Main column: analytics content */}
-            <div className="lg:col-span-2 space-y-5">
+            <div className="flex flex-col lg:col-span-2 gap-5">
               {/* Row 1: Totals */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <Card>
@@ -423,7 +423,7 @@ export function KOLProfileClient({ kol }: KOLProfileClientProps) {
             </div>
 
             {/* Sidebar: social preview */}
-            <div className="lg:col-span-1 space-y-5">
+            <div className="flex flex-col lg:col-span-1 gap-5">
               {kol.platform?.toLowerCase().includes("tiktok") && kol.handle && (
                 <TikTokProfileEmbed handle={kol.handle} name={kol.name} />
               )}
@@ -437,10 +437,10 @@ export function KOLProfileClient({ kol }: KOLProfileClientProps) {
             <CardHeader>
               <CardTitle className="text-sm font-semibold">Contact Information</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="flex flex-col gap-3">
               {kol.contact.lineId?.trim() && (
                 <ContactRow
-                  icon={<MessageCircle className="w-4 h-4 text-green-500" />}
+                  icon={<MessageCircle className="size-4 text-green-500" />}
                   label="LINE ID"
                   value={kol.contact.lineId}
                   href={`https://line.me/ti/p/~${encodeURIComponent(kol.contact.lineId)}`}
@@ -449,7 +449,7 @@ export function KOLProfileClient({ kol }: KOLProfileClientProps) {
               )}
               {kol.contact.phone?.trim() && (
                 <ContactRow
-                  icon={<Phone className="w-4 h-4" />}
+                  icon={<Phone className="size-4" />}
                   label="Phone"
                   value={kol.contact.phone}
                   href={`tel:${kol.contact.phone.replace(/\s/g, "")}`}
@@ -457,7 +457,7 @@ export function KOLProfileClient({ kol }: KOLProfileClientProps) {
               )}
               {kol.contact.email?.trim() && (
                 <ContactRow
-                  icon={<Mail className="w-4 h-4" />}
+                  icon={<Mail className="size-4" />}
                   label="Email"
                   value={kol.contact.email}
                   href={`mailto:${kol.contact.email}`}
@@ -465,7 +465,7 @@ export function KOLProfileClient({ kol }: KOLProfileClientProps) {
               )}
               {kol.channel && (
                 <ContactRow
-                  icon={<ExternalLink className="w-4 h-4" />}
+                  icon={<ExternalLink className="size-4" />}
                   label="Channel"
                   value={kol.channel}
                   href={kol.channel}
@@ -510,7 +510,7 @@ function KpiTile({
         {hint && (
           <Tooltip>
             <TooltipTrigger render={<span className="inline-flex cursor-help" />}>
-              <Info className="w-3 h-3 shrink-0 opacity-50 hover:opacity-100 transition-opacity" />
+              <Info className="size-3 shrink-0 opacity-50 hover:opacity-100 transition-opacity" />
             </TooltipTrigger>
             <TooltipContent side="top" className="max-w-[220px] text-xs leading-relaxed">
               {hint}

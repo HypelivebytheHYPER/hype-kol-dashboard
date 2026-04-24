@@ -189,7 +189,7 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       {/* === HEADER === */}
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div>
@@ -235,7 +235,7 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
           </Tabs>
 
           <div className="flex-1 relative min-w-0" ref={suggestionsRef}>
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
               value={searchQuery}
               onChange={(e) => {
@@ -255,7 +255,7 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
                 onClick={() => setSearchQuery("")}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="size-3.5" />
               </button>
             )}
 
@@ -274,7 +274,7 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
                         onClick={() => handleSearchSubmit(search)}
                         className="w-full text-left px-2 py-1.5 text-sm hover:bg-muted/40 rounded-md flex items-center gap-2 transition-colors"
                       >
-                        <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                        <Clock className="size-3.5 text-muted-foreground" />
                         {search}
                       </button>
                     ))}
@@ -293,7 +293,7 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
                         onClick={() => handleSearchSubmit(suggestion)}
                         className="w-full text-left px-2 py-1.5 text-sm hover:bg-muted/40 rounded-md flex items-center gap-2 transition-colors"
                       >
-                        <Search className="w-3.5 h-3.5 text-muted-foreground" />
+                        <Search className="size-3.5 text-muted-foreground" />
                         {suggestion}
                       </button>
                     ))}
@@ -304,7 +304,7 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
                 {searchQuery && suggestions.length === 0 && (
                   <div className="px-3 py-2 text-muted-foreground">
                     <p className="text-[10px] uppercase tracking-wider mb-2 font-medium">Smart Search Tips</p>
-                    <div className="text-xs space-y-1">
+                    <div className="flex flex-col text-xs gap-1">
                       <p>• &quot;beauty bangkok&quot; — category + location</p>
                       <p>• &quot;&gt;100k followers&quot; — follower threshold</p>
                       <p>• &quot;&gt;3% engagement&quot; — engagement threshold</p>
@@ -322,7 +322,7 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
             onClick={() => setShowFilters(!showFilters)}
             className="h-10 rounded-xl gap-1.5"
           >
-            <SlidersHorizontal className="w-3.5 h-3.5" />
+            <SlidersHorizontal className="size-3.5" />
             Filters
             {activeFilterCount > 0 && (
               <span className="ml-0.5 px-1.5 py-0.5 text-[10px] bg-white/20 rounded-full min-w-[18px] inline-flex items-center justify-center">
@@ -334,7 +334,7 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
 
         {/* Filters panel */}
         {showFilters && (
-          <div className="rounded-xl border border-dashed border-border/30 p-3 sm:p-4 bg-muted/20 space-y-4 animate-fade-in">
+          <div className="flex flex-col rounded-xl border border-dashed border-border/30 p-3 sm:p-4 bg-muted/20 gap-4 animate-fade-in">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               <FilterGroup
                 label="Tier"
@@ -364,7 +364,7 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
                         aria-label={`Remove ${v} filter`}
                         className="hover:text-destructive transition-colors"
                       >
-                        <X className="w-3 h-3" />
+                        <X className="size-3" />
                       </button>
                     </Badge>
                   ))}
@@ -404,7 +404,7 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
                 {opt.label}
                 {sortBy === opt.key && (
                   <ChevronDown
-                    className={`w-3 h-3 ml-0.5 inline transition-transform duration-200 ${!sortDesc ? "rotate-180" : ""}`}
+                    className={`size-3 ml-0.5 inline transition-transform duration-200 ${!sortDesc ? "rotate-180" : ""}`}
                   />
                 )}
               </button>
@@ -440,7 +440,7 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
       {sorted.length === 0 && (
         <div className="text-center py-20 animate-fade-in">
           <div className="text-4xl mb-3 opacity-30">
-            <Users className="w-12 h-12 mx-auto" />
+            <Users className="size-12 mx-auto" />
           </div>
           <p className="text-lg font-medium text-muted-foreground">
             No creators match your filters

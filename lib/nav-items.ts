@@ -1,4 +1,4 @@
-import { Users, Video, Radio, Search, type LucideIcon } from "lucide-react";
+import { Users, Video, Radio, Search, LayoutDashboard, type LucideIcon } from "lucide-react";
 import { ROUTES } from "./constants";
 
 interface NavItem {
@@ -11,6 +11,7 @@ interface NavItem {
 // Primary navigation — used by Sidebar (desktop) + MobileSidebar (drawer).
 // Single source of truth; adding a route here shows up in both.
 export const PRIMARY_NAV: readonly NavItem[] = [
+  { name: "Dashboard", href: ROUTES.DASHBOARD, icon: LayoutDashboard },
   { name: "Creators", href: ROUTES.KOLS, icon: Users },
   { name: "Live Catalog", href: ROUTES.LIVE, icon: Video },
 ] as const;

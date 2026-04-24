@@ -71,7 +71,7 @@ export function MobileBottomNav() {
                   className={cn(
                     "flex flex-col items-center justify-center gap-1 min-w-[60px] h-14 rounded-xl transition-all",
                     item.isAction
-                      ? "bg-primary text-primary-foreground -mt-6 shadow-lg shadow-primary/30 h-14 w-14 min-w-[56px] rounded-full"
+                      ? "bg-primary text-primary-foreground -mt-6 shadow-lg shadow-primary/30 size-14 min-w-[56px] rounded-full"
                       : isActive
                         ? "text-primary bg-primary/10"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -80,7 +80,7 @@ export function MobileBottomNav() {
                   <Icon
                     className={cn(
                       "transition-transform",
-                      item.isAction ? "w-6 h-6" : "w-5 h-5",
+                      item.isAction ? "size-6" : "size-5",
                       isActive && !item.isAction && "scale-110"
                     )}
                   />

@@ -43,7 +43,7 @@ export function Pagination({
           size="icon"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="h-9 w-9 rounded-full"
+          className="size-9 rounded-full"
         >
           <ChevronLeft />
         </Button>
@@ -59,7 +59,7 @@ export function Pagination({
                 key={page}
                 onClick={() => onPageChange(page)}
                 className={cn(
-                  "relative h-9 w-9 rounded-full text-sm font-medium transition-all hover:scale-105 active:scale-95",
+                  "relative size-9 rounded-full text-sm font-medium transition-all hover:scale-105 active:scale-95",
                   currentPage === page ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                 )}
               >
@@ -74,7 +74,7 @@ export function Pagination({
           size="icon"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="h-9 w-9 rounded-full"
+          className="size-9 rounded-full"
         >
           <ChevronRight />
         </Button>

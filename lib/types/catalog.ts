@@ -57,4 +57,21 @@ export interface LiveMC {
   categories: string[];
   contentCategories: string[];
   videos: { token: string; name: string }[];
+  /** Cross-referenced avatar from ALL_KOLS table (when handle matches) */
+  image?: string;
+}
+
+// DASHBOARD_SUMMARY (tblOwkSqf5rci6zq)
+// Pre-computed KPI metrics for fast dashboard loading.
+// One row per metric per dashboard type per period.
+export interface DashboardMetric {
+  id: string;
+  period: string;
+  dashboardType: "overview" | "performance" | "gmv" | "engagement";
+  metricKey: string;
+  metricLabel: string;
+  metricValue: number;
+  metricUnit: string;
+  change: number;
+  trend: "up" | "down" | "neutral";
 }
