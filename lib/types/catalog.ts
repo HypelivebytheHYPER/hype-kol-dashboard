@@ -57,7 +57,9 @@ export interface LiveMC {
   categories: string[];
   contentCategories: string[];
   videos: { token: string; name: string }[];
-  /** Cross-referenced avatar from ALL_KOLS table (when handle matches) */
+  /** All image attachments from LIVE Reference field (proper token URLs) */
+  images: { token: string; url: string; name: string }[];
+  /** First image — used as avatar */
   image?: string;
 }
 

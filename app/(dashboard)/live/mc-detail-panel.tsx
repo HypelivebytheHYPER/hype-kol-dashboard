@@ -13,6 +13,7 @@ import {
   Loader2,
   Briefcase,
   Film,
+  Image,
   Radio,
   ChevronLeft,
 } from "lucide-react";
@@ -38,18 +39,19 @@ export function MCDetailPanel({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [muted, setMuted] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [src, setSrc] = useState<string | null>(null);
   const [activeVideoIndex, setActiveVideoIndex] = useState(0);
+  const [videoError, setVideoError] = useState(false);
 
   // Reset video index when MC changes
   useEffect(() => {
     setActiveVideoIndex(0);
-    setSrc(null);
+    setVideoError(false);
     setLoading(false);
   }, [mc.id]);
 
   const activeVideo = mc.videos[activeVideoIndex];
   const videoUrl = activeVideo ? videoUrls[activeVideo.token] : null;
+  const hasVideo = !!videoUrl;
 
   const firstCatId = useMemo(() => {
     return (mc.contentCategories[0] as ContentCategoryId) ?? null;
@@ -57,23 +59,19 @@ export function MCDetailPanel({
 
   const catStyle = firstCatId ? CATEGORY_STYLES[firstCatId] : null;
 
-  // Video playback control
+  // Sync muted state
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
     video.muted = muted;
   }, [muted]);
 
+  // Play / pause control
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || !hasVideo || videoError) return;
 
     if (isPlaying) {
-      if (!src && videoUrl) {
-        setSrc(`${videoUrl}#t=0.1`);
-        setLoading(true);
-        return;
-      }
       setLoading(video.readyState < 3);
       video.play().catch(() => {
         video.muted = true;
@@ -85,16 +83,11 @@ export function MCDetailPanel({
       video.currentTime = 0;
       setMuted(true);
     }
-  }, [isPlaying, src, videoUrl]);
-
-  // Reset src when switching videos
-  useEffect(() => {
-    setSrc(null);
-    setLoading(false);
-  }, [activeVideoIndex]);
+  }, [isPlaying, hasVideo, videoError]);
 
   const handleVideoSwitch = (index: number) => {
     setActiveVideoIndex(index);
+    setVideoError(false);
     if (!isPlaying) onTogglePlay();
   };
 
@@ -115,20 +108,20 @@ export function MCDetailPanel({
       {/* Video Player Area */}
       <div className="relative bg-card border-b border-border">
         <div className="relative aspect-video max-h-[360px]">
-          {src ? (
+          {hasVideo && !videoError ? (
             <video
               ref={videoRef}
-              src={src}
-              preload="auto"
+              src={videoUrl}
+              preload="metadata"
               playsInline
               loop
               muted
               onLoadedData={() => setLoading(false)}
+              onError={() => setVideoError(true)}
               className="absolute inset-0 size-full object-cover"
             />
           ) : (
             <div className="absolute inset-0 bg-card flex items-center justify-center overflow-hidden">
-              {/* Avatar placeholder */}
               <div className="relative flex flex-col items-center gap-3">
                 <div
                   className={cn(
@@ -170,7 +163,7 @@ export function MCDetailPanel({
           )}
 
           {/* Play button overlay */}
-          {!isPlaying && mc.videos.length > 0 && (
+          {!isPlaying && hasVideo && (
             <button
               onClick={onTogglePlay}
               className="absolute inset-0 flex items-center justify-center z-20 group/play"
@@ -229,25 +222,44 @@ export function MCDetailPanel({
         {/* Video thumbnail strip */}
         {mc.videos.length > 1 && (
           <div className="flex gap-2 p-3 overflow-x-auto scrollbar-hide">
-            {mc.videos.map((video, i) => (
-              <button
-                key={video.token}
-                onClick={() => handleVideoSwitch(i)}
-                className={cn(
-                  "relative shrink-0 rounded-lg border overflow-hidden transition-all duration-200",
-                  activeVideoIndex === i
-                    ? "border-primary ring-1 ring-primary/30"
-                    : "border-border hover:border-foreground/20"
-                )}
-              >
-                <div className="size-16 bg-muted flex items-center justify-center">
-                  <Film className="size-5 text-muted-foreground/40" />
-                </div>
-                <span className="absolute bottom-1 left-1 right-1 truncate text-[9px] text-foreground bg-background/70 backdrop-blur-sm rounded px-1">
-                  {video.name}
-                </span>
-              </button>
-            ))}
+            {mc.videos.map((video, i) => {
+              const url = videoUrls[video.token];
+              return (
+                <button
+                  key={video.token}
+                  onClick={() => handleVideoSwitch(i)}
+                  className={cn(
+                    "relative shrink-0 rounded-lg border overflow-hidden transition-all duration-200",
+                    activeVideoIndex === i
+                      ? "border-primary ring-1 ring-primary/30"
+                      : "border-border hover:border-foreground/20"
+                  )}
+                >
+                  <div className="size-16 bg-muted">
+                    {url ? (
+                      <video
+                        src={url}
+                        preload="metadata"
+                        muted
+                        playsInline
+                        className="size-full object-cover"
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          target.style.display = "none";
+                        }}
+                      />
+                    ) : (
+                      <div className="size-full flex items-center justify-center">
+                        <Film className="size-5 text-muted-foreground/40" />
+                      </div>
+                    )}
+                  </div>
+                  <span className="absolute bottom-1 left-1 right-1 truncate text-[9px] text-foreground bg-background/70 backdrop-blur-sm rounded px-1">
+                    {video.name}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
@@ -333,6 +345,39 @@ export function MCDetailPanel({
                 >
                   {brand}
                 </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Images */}
+        {mc.images.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <Image className="size-3.5 text-muted-foreground" />
+              <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                Photos ({mc.images.length})
+              </h3>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {mc.images.map((img) => (
+                <a
+                  key={img.token}
+                  href={img.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="relative shrink-0 size-16 rounded-lg border overflow-hidden hover:border-primary/40 transition-colors"
+                >
+                  <img
+                    src={img.url}
+                    alt={img.name}
+                    className="size-full object-cover"
+                    loading="lazy"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                </a>
               ))}
             </div>
           </div>

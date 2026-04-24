@@ -88,10 +88,10 @@ export function MCListItem({
         ) : (
           initial
         )}
-        {isPlaying && (
+        {isPlaying && catStyle && (
           <span className="absolute -top-0.5 -right-0.5 flex size-3">
-            <span className="animate-ping absolute inline-flex size-full rounded-full bg-chart-2 opacity-75" />
-            <span className="relative inline-flex rounded-full size-3 bg-chart-2" />
+            <span className={cn("animate-ping absolute inline-flex size-full rounded-full opacity-75", catStyle.dot)} />
+            <span className={cn("relative inline-flex rounded-full size-3", catStyle.dot)} />
           </span>
         )}
       </div>

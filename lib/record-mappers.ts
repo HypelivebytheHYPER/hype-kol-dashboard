@@ -138,18 +138,25 @@ export function recordToLiveMC(r: LarkRecord): LiveMC {
   const f = r.fields;
   const refs = attachments(f, "LIVE Reference");
   const brandList = arr(f, "Brand");
-  const img = refs.find((a: LarkAttachment) => a.type?.startsWith("image/"));
+  const images = refs
+    .filter((a: LarkAttachment) => a.type?.startsWith("image/"))
+    .map((img: LarkAttachment) => ({
+      token: img.file_token,
+      url: buildMediaUrl(img.file_token, TABLES.LIVE_MC_LIST),
+      name: img.name,
+    }));
   const mc: LiveMC = {
     id: r.record_id,
     handle: str(f, "Handle"),
     brands: brandList,
     categories: normalizeCategories(arr(f, CATEGORY_FIELD)),
     contentCategories: getMCContentCategories(brandList),
+    images,
     videos: refs
       .filter((a: LarkAttachment) => a.type?.startsWith("video/"))
       .map((v: LarkAttachment) => ({ token: v.file_token, name: v.name })),
   };
-  if (img) mc.image = buildMediaUrl(img.file_token, TABLES.LIVE_MC_LIST);
+  if (images[0]) mc.image = images[0].url;
   return mc;
 }
 
