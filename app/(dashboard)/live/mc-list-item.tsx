@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/cn";
 import { CONTENT_CATEGORIES, type ContentCategoryId } from "@/lib/taxonomy";
-import { CATEGORY_STYLES } from "@/lib/design-tokens";
+import { CATEGORY_STYLES, UNCATEGORIZED_STYLE } from "@/lib/design-tokens";
 import type { LiveMC } from "@/lib/types/catalog";
 import { Play, Briefcase } from "lucide-react";
 
@@ -36,7 +36,7 @@ export function MCListItem({
 }: MCListItemProps) {
   const initial = getInitials(mc.handle);
   const firstCatId = getFirstCategoryId(mc);
-  const catStyle = firstCatId ? CATEGORY_STYLES[firstCatId] : null;
+  const catStyle = firstCatId ? CATEGORY_STYLES[firstCatId] : UNCATEGORIZED_STYLE;
   const mainCategories = mc.contentCategories.slice(0, 3);
   const brandCount = mc.brands.length;
   const videoCount = mc.videos.length;
@@ -62,9 +62,7 @@ export function MCListItem({
           "group-hover:scale-105",
           mc.image
             ? "bg-muted"
-            : catStyle
-              ? [catStyle.avatarBg, catStyle.avatarBorder, catStyle.avatarText]
-              : "bg-muted border-border text-muted-foreground"
+            : [catStyle.avatarBg, catStyle.avatarBorder, catStyle.avatarText]
         )}
       >
         {mc.image ? (
@@ -79,8 +77,8 @@ export function MCListItem({
               if (target.parentElement) {
                 target.parentElement.textContent = initial;
                 target.parentElement.classList.add(
-                  catStyle?.avatarBg ?? "bg-muted",
-                  catStyle?.avatarText ?? "text-muted-foreground"
+                  catStyle.avatarBg,
+                  catStyle.avatarText
                 );
               }
             }}
@@ -88,7 +86,7 @@ export function MCListItem({
         ) : (
           initial
         )}
-        {isPlaying && catStyle && (
+        {isPlaying && (
           <span className="absolute -top-0.5 -right-0.5 flex size-3">
             <span className={cn("animate-ping absolute inline-flex size-full rounded-full opacity-75", catStyle.dot)} />
             <span className={cn("relative inline-flex rounded-full size-3", catStyle.dot)} />
@@ -111,7 +109,7 @@ export function MCListItem({
               className={cn(
                 "shrink-0 size-6 rounded-full flex items-center justify-center transition-colors",
                 isPlaying
-                  ? cn(catStyle?.playButtonBg, catStyle?.playButtonText)
+                  ? cn(catStyle.playButtonBg, catStyle.playButtonText)
                   : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"
               )}
               aria-label={isPlaying ? "Pause video" : "Play video"}
@@ -167,7 +165,7 @@ export function MCListItem({
           "shrink-0 size-4 rounded-full border-2 transition-all duration-200",
           isSelected
             ? "border-primary bg-primary"
-            : "border-muted-foreground/30 group-hover:border-muted-foreground/50"
+            : "border-muted-foreground/25 group-hover:border-muted-foreground/40"
         )}
       >
         {isSelected && (

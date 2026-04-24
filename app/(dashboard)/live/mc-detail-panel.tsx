@@ -165,7 +165,7 @@ export function MCDetailPanel({
                     aria-label={`Play ${mc.handle}`}
                   >
                     <div className={cn("absolute inset-0 rounded-full blur-xl scale-150 opacity-40 group-hover/play:opacity-70 transition-opacity duration-300", catStyle.playGlow)} />
-                    <div className="relative size-14 rounded-full bg-background/70 backdrop-blur-md border border-foreground/15 flex items-center justify-center hover:bg-background/90 transition-colors shadow-lg">
+                    <div className="relative size-14 rounded-full bg-background/70 backdrop-blur-md border border-foreground/10 flex items-center justify-center hover:bg-background/90 transition-colors shadow-lg">
                       <Play className="size-6 text-foreground fill-foreground ml-0.5" />
                     </div>
                   </button>
@@ -216,7 +216,7 @@ export function MCDetailPanel({
           {/* LIVE badge — only when actually playing */}
           {isPlaying && (
             <div className="absolute top-3 left-3 right-3 flex items-start justify-between z-10 pointer-events-none">
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-background/60 backdrop-blur-md border border-foreground/10 text-[10px] font-bold text-foreground tracking-wide">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-background/70 backdrop-blur-md border border-foreground/10 text-[10px] font-bold text-foreground tracking-wide">
                 <Radio className="size-2.5 text-destructive" />
                 LIVE
               </span>
@@ -258,9 +258,7 @@ export function MCDetailPanel({
                 "size-12 rounded-xl flex items-center justify-center border text-lg font-bold shrink-0 overflow-hidden",
                 mc.image
                   ? "bg-muted"
-                  : catStyle
-                    ? [catStyle.avatarBg, catStyle.avatarBorder, catStyle.avatarText]
-                    : "bg-muted border-border text-muted-foreground"
+                  : [catStyle.avatarBg, catStyle.avatarBorder, catStyle.avatarText]
               )}
             >
               {mc.image ? (

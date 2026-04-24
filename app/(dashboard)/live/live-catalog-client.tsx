@@ -143,8 +143,8 @@ export function LiveCatalogClient({ mcs }: LiveCatalogClientProps) {
     <div className="flex flex-col gap-5 animate-fade-in">
       {/* ── Hero Header ── */}
       <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-card via-card to-background">
-        <div className="absolute top-0 right-0 size-96 bg-foreground/[0.02] rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 size-64 bg-foreground/[0.015] rounded-full blur-3xl translate-y-1/2 -translate-x-1/4 pointer-events-none" />
+        <div className="absolute top-0 right-0 size-96 bg-foreground/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 size-64 bg-foreground/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4 pointer-events-none" />
 
         <div className="relative p-5 sm:p-6">
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5">
@@ -229,7 +229,7 @@ export function LiveCatalogClient({ mcs }: LiveCatalogClientProps) {
                 "px-3.5 py-2 text-xs font-medium flex items-center gap-1.5 transition-all duration-200",
                 view === "list"
                   ? "bg-foreground/10 text-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-foreground/5"
+                  : "text-muted-foreground hover:text-foreground hover:bg-foreground/10"
               )}
             >
               <LayoutGrid className="size-3.5" /> List
@@ -240,7 +240,7 @@ export function LiveCatalogClient({ mcs }: LiveCatalogClientProps) {
                 "px-3.5 py-2 text-xs font-medium flex items-center gap-1.5 transition-all duration-200",
                 view === "wiremap"
                   ? "bg-foreground/10 text-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-foreground/5"
+                  : "text-muted-foreground hover:text-foreground hover:bg-foreground/10"
               )}
             >
               <Network className="size-3.5" /> Wire Map
