@@ -17,7 +17,6 @@ export const metadata: Metadata = {
 };
 
 export const revalidate = 300; // = REVALIDATE_SECONDS
-export const dynamic = "force-dynamic"; // SSR — batch avatar fetch too slow for static gen
 
 // `loadKOLCatalog` fetches + parses the full catalog. Underlying fetch()
 // uses Next.js cache tags, so HTTP responses are deduped across pages.

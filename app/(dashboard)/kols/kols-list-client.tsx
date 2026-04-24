@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import {
   Search,
   X,
@@ -114,6 +114,46 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
   const paginated = sorted.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   const withPhotoCount = useMemo(() => initialKOLs.filter((k) => !!k.image).length, [initialKOLs]);
+
+  // Batch fetch fresh avatars for the current page
+  const [freshPhotos, setFreshPhotos] = useState<Record<string, string>>({});
+  const pageKey = paginated.map((k) => k.id).join(",");
+
+  useEffect(() => {
+    const needFetch = paginated
+      .filter((k) => {
+        const img = k.image;
+        if (!img) return false;
+        return img.includes("tiktokcdn") && img.includes("x-signature");
+      })
+      .map((k) => ({
+        id: k.id,
+        url: k.channel || (k.handle ? `https://www.tiktok.com/@${k.handle}` : ""),
+      }))
+      .filter((item) => item.url);
+
+    if (needFetch.length === 0) return;
+
+    let cancelled = false;
+    fetch("/api/profile-photos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items: needFetch }),
+    })
+      .then((res) => (res.ok ? res.json() : Promise.resolve({ photos: {} })))
+      .then((data: { photos?: Record<string, string | null> }) => {
+        if (cancelled) return;
+        const valid: Record<string, string> = {};
+        for (const [id, url] of Object.entries(data.photos ?? {})) {
+          if (url) valid[id] = url;
+        }
+        setFreshPhotos((prev) => ({ ...prev, ...valid }));
+      })
+      .catch(() => {});
+
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageKey]);
 
   const toggleFilter = useCallback(
     (setter: React.Dispatch<React.SetStateAction<string[]>>, value: string) => {
@@ -380,8 +420,8 @@ export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
         {/* Card Grid */}
         {paginated.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4">
-            {paginated.map((kol, index) => (
-              <KOLFeedCard key={kol.id} kol={kol} priority={index < 12} />
+            {paginated.map((kol) => (
+              <KOLFeedCard key={kol.id} kol={kol} freshPhoto={freshPhotos[kol.id]} />
             ))}
           </div>
         ) : (

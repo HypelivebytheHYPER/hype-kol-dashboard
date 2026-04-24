@@ -7,6 +7,7 @@ import { formatCurrency, formatFeeRange, formatNumber } from "@/lib/format";
 import { getTierColor } from "@/lib/tier";
 import { kolProfilePath } from "@/lib/constants";
 import { cn } from "@/lib/cn";
+import { useProfilePhoto } from "@/lib/profile-photo";
 import type { Creator } from "@/lib/types/catalog";
 
 /* ── Platform-aware placeholder gradients ── */
@@ -23,11 +24,14 @@ function getPlatformGradient(platform: string) {
 
 interface KOLFeedCardProps {
   kol: Creator;
+  priority?: boolean;
+  freshPhoto?: string;
 }
 
-export function KOLFeedCard({ kol, priority = false }: KOLFeedCardProps & { priority?: boolean }) {
+export function KOLFeedCard({ kol, priority = false, freshPhoto }: KOLFeedCardProps) {
   const [imgError, setImgError] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const { imageUrl } = useProfilePhoto(kol, freshPhoto);
 
   const primaryValue =
     kol.stats?.revenue > 0
@@ -35,7 +39,7 @@ export function KOLFeedCard({ kol, priority = false }: KOLFeedCardProps & { prio
       : formatCurrency(kol.avgGMV || kol.avgLiveGMV);
 
   const initial = (kol.name?.[0] ?? kol.handle?.[0] ?? "?").toUpperCase();
-  const displayImage = !!kol.image && !imgError;
+  const displayImage = !!imageUrl && !imgError;
 
   return (
     <Link
@@ -47,9 +51,9 @@ export function KOLFeedCard({ kol, priority = false }: KOLFeedCardProps & { prio
       {/* Profile photo or placeholder */}
       {displayImage ? (
         <img
-          src={kol.image}
+          src={imageUrl}
           alt={kol.name || kol.handle || "Creator"}
-          className="absolute inset-0 size-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+          className="absolute inset-0 size-full object-cover transition-transform duration-500 ease-out motion-safe:group-hover:scale-[1.04]"
           loading={priority ? "eager" : "lazy"}
           fetchPriority={priority ? "high" : "auto"}
           decoding="async"
@@ -62,10 +66,9 @@ export function KOLFeedCard({ kol, priority = false }: KOLFeedCardProps & { prio
             getPlatformGradient(kol.platform)
           )}
         >
-          <div className="absolute inset-0 opacity-[0.06]" style={{
-            backgroundImage: "radial-gradient(circle, var(--foreground) 1px, transparent 1px)",
-            backgroundSize: "20px 20px",
-          }} />
+          <div
+            className="absolute inset-0 opacity-[0.06] bg-[radial-gradient(circle,hsl(var(--foreground))_1px,transparent_1px)] bg-[length:20px_20px]"
+          />
           <div className="size-14 rounded-full bg-foreground/10 border border-foreground/15 flex items-center justify-center text-xl font-bold text-foreground/60">
             {initial}
           </div>
@@ -77,13 +80,13 @@ export function KOLFeedCard({ kol, priority = false }: KOLFeedCardProps & { prio
 
       {/* Top badges */}
       <div className="absolute top-3 left-3 right-3 flex justify-between items-start z-10">
-        <span className="px-2 py-0.5 rounded-full bg-background/40 backdrop-blur-md text-foreground/80 text-[10px] font-semibold tracking-wide uppercase border border-foreground/10">
+        <span className="px-2 py-0.5 rounded-full bg-background/40 backdrop-blur-md text-foreground/80 text-2xs font-semibold tracking-wide uppercase border border-foreground/10">
           {kol.platform}
         </span>
         <span
           className={cn(
             getTierColor(kol.tier),
-            "text-foreground text-[10px] px-2 py-0.5 rounded-full font-semibold shadow-lg"
+            "text-foreground text-2xs px-2 py-0.5 rounded-full font-semibold shadow-lg"
           )}
         >
           {kol.tier?.replace(" KOL", "")}
@@ -99,7 +102,7 @@ export function KOLFeedCard({ kol, priority = false }: KOLFeedCardProps & { prio
           @{kol.handle}
         </p>
         {kol.location && (
-          <p className="text-foreground/40 text-[10px] mt-0.5 flex items-center gap-0.5">
+          <p className="text-foreground/40 text-2xs mt-0.5 flex items-center gap-0.5">
             <MapPin className="size-2.5" />
             {kol.location.split(",")[0]}
           </p>
@@ -109,21 +112,21 @@ export function KOLFeedCard({ kol, priority = false }: KOLFeedCardProps & { prio
       {/* Hover overlay — stats */}
       <div
         className={cn(
-          "absolute inset-0 bg-background/60 backdrop-blur-sm flex flex-col items-center justify-center gap-3 z-20 transition-opacity duration-300",
+          "absolute inset-0 bg-background/60 backdrop-blur-sm flex flex-col items-center justify-center gap-3 z-20 transition-opacity duration-300 motion-safe:duration-300",
           isHovered ? "opacity-100" : "opacity-0 pointer-events-none",
           "group-focus-visible:opacity-100 group-focus-visible:pointer-events-auto"
         )}
       >
         <div className="text-center">
-          <p className="text-foreground/50 text-[10px] uppercase tracking-wider font-medium">Followers</p>
+          <p className="text-foreground/50 text-2xs uppercase tracking-wider font-medium">Followers</p>
           <p className="text-foreground font-bold text-lg font-mono tabular-nums">{formatNumber(kol.followers)}</p>
         </div>
         <div className="text-center">
-          <p className="text-foreground/50 text-[10px] uppercase tracking-wider font-medium">Revenue</p>
+          <p className="text-foreground/50 text-2xs uppercase tracking-wider font-medium">Revenue</p>
           <p className="text-foreground font-bold text-lg font-mono tabular-nums">{primaryValue}</p>
         </div>
         <div className="text-center">
-          <p className="text-foreground/50 text-[10px] uppercase tracking-wider font-medium">Engagement</p>
+          <p className="text-foreground/50 text-2xs uppercase tracking-wider font-medium">Engagement</p>
           <p className="text-foreground font-bold text-lg font-mono tabular-nums">
             {kol.engagementRate > 100 ? formatNumber(kol.engagementRate) : `${kol.engagementRate.toFixed(1)}%`}
           </p>

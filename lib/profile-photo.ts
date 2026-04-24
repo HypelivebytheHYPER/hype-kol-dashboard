@@ -57,19 +57,34 @@ async function fetchPhoto(profileUrl: string): Promise<string | null> {
 }
 
 /** React hook that returns the best available profile photo for a KOL.
- *  Eagerly fetches fresh avatars for expired TikTok CDN URLs. */
-export function useProfilePhoto(kol: Creator): { imageUrl: string | null; isLoading: boolean } {
+ *  Eagerly fetches fresh avatars for expired TikTok CDN URLs.
+ *  If `freshPhoto` is provided (from batch fetch), uses it directly. */
+export function useProfilePhoto(
+  kol: Creator,
+  freshPhoto?: string
+): { imageUrl: string | null; isLoading: boolean } {
   const storedImage = kol.image || null;
   const canUseStored = storedImage && !isExpiredTikTokCdn(storedImage);
 
   const cacheKey = `${kol.platform}-${kol.handle}`;
   const cached = photoCache.get(cacheKey);
+  const profileUrl = getProfilePageUrl(kol);
 
-  const [imageUrl, setImageUrl] = useState<string | null>(canUseStored ? storedImage : cached ?? null);
-  const [isLoading, setIsLoading] = useState(!canUseStored && cached === undefined);
+  const [imageUrl, setImageUrl] = useState<string | null>(
+    freshPhoto ? freshPhoto : canUseStored ? storedImage : cached ?? null
+  );
+  const [isLoading, setIsLoading] = useState(
+    freshPhoto ? false : !canUseStored && cached === undefined
+  );
   const fetchedRef = useRef(false);
 
   useEffect(() => {
+    if (freshPhoto) {
+      setImageUrl(freshPhoto);
+      setIsLoading(false);
+      return;
+    }
+
     if (canUseStored) {
       setImageUrl(storedImage);
       setIsLoading(false);
@@ -85,7 +100,6 @@ export function useProfilePhoto(kol: Creator): { imageUrl: string | null; isLoad
     if (fetchedRef.current) return;
     fetchedRef.current = true;
 
-    const profileUrl = getProfilePageUrl(kol);
     if (!profileUrl) {
       photoCache.set(cacheKey, null);
       setImageUrl(null);
@@ -99,7 +113,7 @@ export function useProfilePhoto(kol: Creator): { imageUrl: string | null; isLoad
       setImageUrl(url);
       setIsLoading(false);
     });
-  }, [kol.id, canUseStored, storedImage, cacheKey]);
+  }, [kol.id, canUseStored, storedImage, cacheKey, profileUrl, freshPhoto]);
 
   return { imageUrl, isLoading };
 }

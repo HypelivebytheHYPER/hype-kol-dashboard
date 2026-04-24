@@ -8,7 +8,6 @@ import {
   CATEGORY_FIELD,
   getMCContentCategories,
 } from "./taxonomy";
-import { batchFetchAvatars } from "./profile-photo-server";
 import type { Creator, LiveMC, DashboardMetric, Studio } from "./types/catalog";
 
 
@@ -141,52 +140,13 @@ export function parseKOLRecords(records: LarkRecord[]) {
 
 /* ── Cached Loaders (Next.js Data Cache) ────────────────────────────── */
 
-/** Check if a stored image URL is usable (not an expired TikTok CDN URL). */
-function isUsableImageUrl(url: string | undefined): boolean {
-  if (!url) return false;
-  // TikTok CDN URLs with x-signature expire quickly
-  if (url.includes("tiktokcdn") && url.includes("x-signature")) return false;
-  return true;
-}
-
-/** Build a profile page URL from creator data for avatar fetching. */
-function buildProfileUrl(creator: Creator): string | null {
-  if (creator.channel) return creator.channel;
-  if (creator.handle && creator.platform?.toLowerCase().includes("tiktok")) {
-    return `https://www.tiktok.com/@${creator.handle}`;
-  }
-  if (creator.handle && creator.platform?.toLowerCase().includes("instagram")) {
-    return `https://www.instagram.com/${creator.handle}/`;
-  }
-  return null;
-}
-
 /** Load the full KOL catalog (list view).
  *  Cached via Next.js unstable_cache — survives across requests, cold starts,
- *  and Vercel edge regions. Revalidates every 5 minutes.
- *  Also fetches fresh avatar URLs for creators with expired/missing images. */
+ *  and Vercel edge regions. Revalidates every 5 minutes. */
 export const loadKOLCatalog = unstable_cache(
   async () => {
     const records = await fetchAllRecords(TABLES.ALL_KOLS, { tags: ["kols"] });
-    const { creators, byId } = parseKOLRecords(records);
-
-    // Identify creators that need fresh avatar URLs
-    const needAvatars = creators
-      .filter((c) => !isUsableImageUrl(c.image))
-      .map((c) => ({ key: c.id, profileUrl: buildProfileUrl(c) }))
-      .filter((e): e is { key: string; profileUrl: string } => Boolean(e.profileUrl));
-
-    if (needAvatars.length > 0) {
-      const avatars = await batchFetchAvatars(needAvatars, 8);
-      for (const [id, freshUrl] of avatars) {
-        if (freshUrl) {
-          const creator = byId[id];
-          if (creator) creator.image = freshUrl;
-        }
-      }
-    }
-
-    return { creators, byId };
+    return parseKOLRecords(records);
   },
   ["kol-catalog-v3"],
   { revalidate: 300, tags: ["kols"] }
