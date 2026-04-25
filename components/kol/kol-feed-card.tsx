@@ -8,7 +8,6 @@ import { getTierColor } from "@/lib/tier";
 import { kolProfilePath } from "@/lib/constants";
 import { cn } from "@/lib/cn";
 import { DURATION, OVERLAY, TEXT_OPACITY, FG_OPACITY } from "@/lib/design-tokens";
-import { useProfilePhoto } from "@/lib/profile-photo";
 import type { Creator } from "@/lib/types/catalog";
 
 /* ── Platform-aware placeholder gradients ── */
@@ -23,27 +22,12 @@ function getPlatformGradient(platform: string) {
   return PLATFORM_GRADIENTS[platform.toLowerCase()] ?? "from-muted via-muted-foreground/30 to-muted-foreground/20";
 }
 
-/** Proxy TikTok CDN images through our API to avoid IP-bound 403s.
- *  TikTok CDN URLs are signed per-requesting-IP and fail when loaded
- *  from a different IP (e.g. user's browser vs Vercel server). */
-function proxiedImageUrl(url: string | null): string | null {
-  if (!url) return null;
-  if (url.includes("tiktokcdn") && !url.startsWith("/api/proxy-image")) {
-    return `/api/proxy-image?url=${encodeURIComponent(url)}`;
-  }
-  return url;
-}
-
 interface KOLFeedCardProps {
   kol: Creator;
-  priority?: boolean;
-  freshPhoto?: string;
 }
 
-export function KOLFeedCard({ kol, priority = false, freshPhoto }: KOLFeedCardProps) {
-  const [imgError, setImgError] = useState(false);
+export function KOLFeedCard({ kol }: KOLFeedCardProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const { imageUrl } = useProfilePhoto(kol, freshPhoto);
 
   const primaryValue =
     kol.stats?.revenue > 0
@@ -51,7 +35,6 @@ export function KOLFeedCard({ kol, priority = false, freshPhoto }: KOLFeedCardPr
       : formatCurrency(kol.avgGMV || kol.avgLiveGMV);
 
   const initial = (kol.name?.[0] ?? kol.handle?.[0] ?? "?").toUpperCase();
-  const displayImage = !!imageUrl && !imgError;
 
   return (
     <Link
@@ -60,32 +43,20 @@ export function KOLFeedCard({ kol, priority = false, freshPhoto }: KOLFeedCardPr
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Profile photo or placeholder */}
-      {displayImage ? (
-        <img
-          src={proxiedImageUrl(imageUrl)!}
-          alt={kol.name || kol.handle || "Creator"}
-          className={`absolute inset-0 size-full object-cover transition-transform ${DURATION.slow} ease-out motion-safe:group-hover:scale-[1.04]`}
-          loading={priority ? "eager" : "lazy"}
-          fetchPriority={priority ? "high" : "auto"}
-          decoding="async"
-          onError={() => setImgError(true)}
-        />
-      ) : (
+      {/* Gradient placeholder with initials */}
+      <div
+        className={cn(
+          "absolute inset-0 bg-gradient-to-br flex flex-col items-center justify-center",
+          getPlatformGradient(kol.platform)
+        )}
+      >
         <div
-          className={cn(
-            "absolute inset-0 bg-gradient-to-br flex flex-col items-center justify-center",
-            getPlatformGradient(kol.platform)
-          )}
-        >
-          <div
-            className="absolute inset-0 opacity-[0.06] bg-[radial-gradient(circle,hsl(var(--foreground))_1px,transparent_1px)] bg-[length:20px_20px]"
-          />
-          <div className={`size-14 rounded-full ${FG_OPACITY.subtle} border border-foreground/15 flex items-center justify-center text-xl font-bold ${TEXT_OPACITY.muted}`}>
-            {initial}
-          </div>
+          className="absolute inset-0 opacity-[0.06] bg-[radial-gradient(circle,hsl(var(--foreground))_1px,transparent_1px)] bg-[length:20px_20px]"
+        />
+        <div className={`size-14 rounded-full ${FG_OPACITY.subtle} border border-foreground/15 flex items-center justify-center text-xl font-bold ${TEXT_OPACITY.muted}`}>
+          {initial}
         </div>
-      )}
+      </div>
 
       {/* Bottom gradient — always visible for text readability */}
       <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-background/10 to-transparent pointer-events-none" />
