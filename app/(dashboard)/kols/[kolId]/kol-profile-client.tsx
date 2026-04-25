@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -45,7 +45,6 @@ import { TikTokProfileEmbed } from "@/components/tiktok-profile-embed";
 import { TikTokVideoCarousel } from "@/components/tiktok-video-carousel";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import Link from "next/link";
-import { useProfilePhoto } from "@/lib/profile-photo";
 import type { Creator } from "@/lib/types/catalog";
 
 const radarConfig = {
@@ -63,8 +62,6 @@ interface KOLProfileClientProps {
 }
 
 export function KOLProfileClient({ kol }: KOLProfileClientProps) {
-  const { imageUrl: profilePhoto } = useProfilePhoto(kol);
-  const [imgError, setImgError] = useState(false);
 
   // Performance radar (normalised 0–100)
   const radarData = [
@@ -116,18 +113,9 @@ export function KOLProfileClient({ kol }: KOLProfileClientProps) {
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div className="flex items-end gap-4">
               <div className="relative border-4 border-card shadow-xl size-24 rounded-full overflow-hidden bg-muted flex items-center justify-center text-2xl font-semibold">
-                {profilePhoto && !imgError ? (
-                  <img
-                    src={profilePhoto}
-                    alt={kol.name}
-                    className="absolute inset-0 size-full object-cover"
-                    onError={() => setImgError(true)}
-                  />
-                ) : (
-                  <span className="text-lg font-semibold">
-                    {kol.name?.slice(0, 2).toUpperCase() || "?"}
-                  </span>
-                )}
+                <span className="text-lg font-semibold">
+                  {kol.name?.slice(0, 2).toUpperCase() || "?"}
+                </span>
               </div>
               <div className="pb-1">
                 <div className="flex items-center gap-2 flex-wrap">
