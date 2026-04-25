@@ -23,6 +23,17 @@ function getPlatformGradient(platform: string) {
   return PLATFORM_GRADIENTS[platform.toLowerCase()] ?? "from-muted via-muted-foreground/30 to-muted-foreground/20";
 }
 
+/** Proxy TikTok CDN images through our API to avoid IP-bound 403s.
+ *  TikTok CDN URLs are signed per-requesting-IP and fail when loaded
+ *  from a different IP (e.g. user's browser vs Vercel server). */
+function proxiedImageUrl(url: string | null): string | null {
+  if (!url) return null;
+  if (url.includes("tiktokcdn") && !url.startsWith("/api/proxy-image")) {
+    return `/api/proxy-image?url=${encodeURIComponent(url)}`;
+  }
+  return url;
+}
+
 interface KOLFeedCardProps {
   kol: Creator;
   priority?: boolean;
@@ -52,7 +63,7 @@ export function KOLFeedCard({ kol, priority = false, freshPhoto }: KOLFeedCardPr
       {/* Profile photo or placeholder */}
       {displayImage ? (
         <img
-          src={imageUrl}
+          src={proxiedImageUrl(imageUrl)!}
           alt={kol.name || kol.handle || "Creator"}
           className={`absolute inset-0 size-full object-cover transition-transform ${DURATION.slow} ease-out motion-safe:group-hover:scale-[1.04]`}
           loading={priority ? "eager" : "lazy"}

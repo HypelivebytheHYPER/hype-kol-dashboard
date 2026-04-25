@@ -1,9 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   ChartContainer,
@@ -64,6 +64,7 @@ interface KOLProfileClientProps {
 
 export function KOLProfileClient({ kol }: KOLProfileClientProps) {
   const { imageUrl: profilePhoto } = useProfilePhoto(kol);
+  const [imgError, setImgError] = useState(false);
 
   // Performance radar (normalised 0–100)
   const radarData = [
@@ -114,12 +115,20 @@ export function KOLProfileClient({ kol }: KOLProfileClientProps) {
         <CardContent className="px-6 pb-6 -mt-12 relative">
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div className="flex items-end gap-4">
-              <Avatar className="border-4 border-card shadow-xl size-24 text-2xl">
-                <AvatarImage src={profilePhoto || undefined} alt={kol.name} />
-                <AvatarFallback className="bg-muted text-lg font-semibold">
-                  {kol.name?.slice(0, 2).toUpperCase() || "?"}
-                </AvatarFallback>
-              </Avatar>
+              <div className="relative border-4 border-card shadow-xl size-24 rounded-full overflow-hidden bg-muted flex items-center justify-center text-2xl font-semibold">
+                {profilePhoto && !imgError ? (
+                  <img
+                    src={profilePhoto}
+                    alt={kol.name}
+                    className="absolute inset-0 size-full object-cover"
+                    onError={() => setImgError(true)}
+                  />
+                ) : (
+                  <span className="text-lg font-semibold">
+                    {kol.name?.slice(0, 2).toUpperCase() || "?"}
+                  </span>
+                )}
+              </div>
               <div className="pb-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h1 className="text-2xl font-bold">{kol.name}</h1>

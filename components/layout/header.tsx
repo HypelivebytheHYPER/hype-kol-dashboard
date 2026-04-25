@@ -3,7 +3,6 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import { Search, Command } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { useI18n } from "@/contexts/i18n-context";
@@ -51,9 +50,7 @@ export function Header() {
           <LanguageSwitcher />
           <NotificationButton className="relative" />
           <div className="flex items-center gap-3 pl-3 border-l border-border/30">
-            <Avatar className="size-10">
-              <AvatarFallback className="bg-muted text-sm font-semibold">H</AvatarFallback>
-            </Avatar>
+            <div className="size-10 rounded-full bg-muted flex items-center justify-center text-sm font-semibold">H</div>
           </div>
         </div>
       </header>
