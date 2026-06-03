@@ -19,7 +19,7 @@ import { join } from "node:path";
 
 // ─── Configuration ──────────────────────────────────────────────────────────
 
-const BASE_TOKEN: string = process.env["LARK_BASE_TOKEN"] ?? "";
+const BASE_TOKEN: string = process.env["LARK_BASE_TOKEN"] ?? process.env["LARK_APP_TOKEN"] ?? "";
 
 export const DASHBOARD_ID = process.env["LARK_DASHBOARD_ID"] ?? "";
 
