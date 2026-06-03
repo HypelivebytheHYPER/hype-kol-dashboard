@@ -4,6 +4,7 @@
   "private": true,
   "pnpm": {
     "onlyBuiltDependencies": [
+      "@larksuite/cli",
       "@parcel/watcher",
       "@swc/core",
       "esbuild",

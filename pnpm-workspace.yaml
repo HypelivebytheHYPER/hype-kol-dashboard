@@ -1,0 +1,14 @@
+allowBuilds:
+  '@larksuite/cli': true
+  esbuild: true
+  sharp: true
+  unrs-resolver: true
+onlyBuiltDependencies:
+  - "@larksuite/cli"
+  - "@parcel/watcher"
+  - "@swc/core"
+  - "esbuild"
+  - "msw"
+  - "sharp"
+  - "unrs-resolver"
+useLockfile: true
