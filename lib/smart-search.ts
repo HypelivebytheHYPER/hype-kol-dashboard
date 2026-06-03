@@ -1,6 +1,6 @@
 "use client";
 
-import type { Creator } from "./types/catalog";
+import type { Creator } from "./types";
 
 interface SearchFilters {
   query?: string;

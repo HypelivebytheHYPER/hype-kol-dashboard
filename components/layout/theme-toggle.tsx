@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sun, Moon } from "lucide-react";
-import { useToggleTheme } from "@/contexts/theme-provider";
+import { useToggleTheme } from "@/components/providers";
 import { cn } from "@/lib/cn";
 
 interface ThemeToggleProps {

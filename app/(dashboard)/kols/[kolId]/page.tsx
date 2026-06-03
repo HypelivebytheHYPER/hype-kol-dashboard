@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { loadKOLProfile } from "@/lib/record-mappers";
-import { KOLProfileClient } from "./kol-profile-client";
+import { KOLProfileClient } from "./_components/kol-profile-client";
 
 export const revalidate = 300; // = REVALIDATE_SECONDS
 

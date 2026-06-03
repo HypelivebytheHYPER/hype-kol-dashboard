@@ -1,39 +1,103 @@
 /**
- * Semantic design token system.
+ * Semantic Design Token System — shadcn/ui aligned
  *
- * Maps domain concepts (categories, studios, trends) to Tailwind v4 semantic
- * color tokens (chart-1 … chart-5 + primary + studio-accent). Colors are
- * defined in globals.css via @theme inline and automatically adapt to
- * light/dark mode.
+ * Architecture:
+ *   1. PRIMITIVES: CSS custom properties from globals.css (colors, radius, etc.)
+ *   2. SEMANTIC: Domain-meaningful names that map to primitives (TREND.up → text-chart-2)
+ *   3. COMPONENT: Ready-to-use class combinations (CHIP.base + CHIP.md)
  *
- * Every exported class string is a complete literal so Tailwind's scanner
- * picks it up — no dynamic concatenation at the call site.
+ * Every export is a complete literal string for Tailwind v4 scanner compatibility.
+ * No dynamic concatenation at call sites.
  *
  * @example
- *   import { CATEGORY_STYLES, STUDIO, TREND } from "@/lib/design-tokens";
- *
- *   <span className={CATEGORY_STYLES.cosmetics.dot} />
- *   <span className={STUDIO.text}>HypeStudio</span>
- *   <span className={TREND.up}>+12%</span>
+ *   import { CATEGORY_STYLES, STUDIO, TREND, RADIUS, SHADOW } from "@/lib/design-tokens";
+ *   <span className={`${CATEGORY_STYLES.cosmetics.dot} ${RADIUS.full}`} />
  */
 
 import type { ContentCategoryId } from "./taxonomy";
 
-// ═════════════════════════════════════════════════════════════════
-//  CATEGORY COLORS
-// ═════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════════
+//  1. PRIMITIVE TOKEN REFERENCES (map to CSS vars in globals.css)
+// ═══════════════════════════════════════════════════════════════════════════════
 
-/** Tailwind semantic color token name for each content category. */
-const CATEGORY_COLOR: Record<ContentCategoryId, string> = {
-  cosmetics: "chart-5", // pink
-  health: "chart-2", // green
-  food: "chart-1", // orange
-  home: "chart-3", // purple/blue
-  fashion: "chart-4", // lime/yellow-green
-  "personal-care": "primary", // dark / accent
+/** Primitive color tokens — these map directly to CSS custom properties.
+ *  Use for one-offs; prefer SEMANTIC tokens for most cases. */
+export const COLOR = {
+  background: "bg-background",
+  foreground: "text-foreground",
+  card: "bg-card",
+  "card-foreground": "text-card-foreground",
+  popover: "bg-popover",
+  "popover-foreground": "text-popover-foreground",
+  primary: "bg-primary",
+  "primary-foreground": "text-primary-foreground",
+  secondary: "bg-secondary",
+  "secondary-foreground": "text-secondary-foreground",
+  muted: "bg-muted",
+  "muted-foreground": "text-muted-foreground",
+  accent: "bg-accent",
+  "accent-foreground": "text-accent-foreground",
+  destructive: "bg-destructive",
+  "destructive-foreground": "text-destructive-foreground",
+  border: "border-border",
+  input: "border-input",
+  ring: "ring-ring",
+  // Chart colors for data visualization
+  "chart-1": "bg-chart-1",
+  "chart-2": "bg-chart-2",
+  "chart-3": "bg-chart-3",
+  "chart-4": "bg-chart-4",
+  "chart-5": "bg-chart-5",
+  // Sidebar
+  sidebar: "bg-sidebar",
+  "sidebar-foreground": "text-sidebar-foreground",
+  "sidebar-primary": "bg-sidebar-primary",
+  "sidebar-accent": "bg-sidebar-accent",
+  // Studio accent
+  "studio-accent": "bg-studio-accent",
 } as const;
 
-/** Style keys available for every category. */
+/** Text color shortcuts */
+export const TEXT = {
+  primary: "text-foreground",
+  secondary: "text-muted-foreground",
+  disabled: "text-muted-foreground/50",
+  inverse: "text-background",
+  brand: "text-primary",
+  success: "text-chart-2",
+  warning: "text-chart-1",
+  danger: "text-destructive",
+  info: "text-chart-3",
+  cardTitle: "text-foreground font-semibold text-sm leading-tight truncate",
+} as const;
+
+/** Background color shortcuts */
+export const BG = {
+  surface: "bg-background",
+  elevated: "bg-card",
+  overlay: "bg-background/80",
+  muted: "bg-muted",
+  accent: "bg-accent",
+  brand: "bg-primary",
+  success: "bg-chart-2/10",
+  warning: "bg-chart-1/10",
+  danger: "bg-destructive/10",
+  info: "bg-chart-3/10",
+} as const;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  2. SEMANTIC DOMAIN TOKENS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const CATEGORY_COLOR: Record<ContentCategoryId, string> = {
+  cosmetics: "chart-5",
+  health: "chart-2",
+  food: "chart-1",
+  home: "chart-3",
+  fashion: "chart-4",
+  "personal-care": "primary",
+} as const;
+
 export interface CategoryStyle {
   dot: string;
   chipBg: string;
@@ -53,150 +117,180 @@ export interface CategoryStyle {
   ring: string;
 }
 
-/** Complete Tailwind class bundles per category.
- *  Spread the properties you need instead of inline styles. */
-export const CATEGORY_STYLES: Record<ContentCategoryId, CategoryStyle> = {
-  cosmetics: {
-    dot: "bg-chart-5",
-    chipBg: "bg-chart-5/10",
-    chipBorder: "border-chart-5/20",
-    chipText: "text-chart-5",
-    avatarBg: "bg-chart-5/15",
-    avatarBorder: "border-chart-5/25",
-    avatarText: "text-chart-5",
-    filterActiveBg: "bg-chart-5/15",
-    filterActiveBorder: "border-chart-5/30",
-    filterActiveShadow: "shadow-chart-5/10",
-    playButtonBg: "bg-chart-5/15",
-    playButtonText: "text-chart-5",
-    playGlow: "bg-chart-5/30",
-    activeBorder: "border-chart-5/20",
-    mediaHoverBorder: "hover:border-chart-5/40",
-    ring: "ring-chart-5/30",
-  },
-  health: {
-    dot: "bg-chart-2",
-    chipBg: "bg-chart-2/10",
-    chipBorder: "border-chart-2/20",
-    chipText: "text-chart-2",
-    avatarBg: "bg-chart-2/15",
-    avatarBorder: "border-chart-2/25",
-    avatarText: "text-chart-2",
-    filterActiveBg: "bg-chart-2/15",
-    filterActiveBorder: "border-chart-2/30",
-    filterActiveShadow: "shadow-chart-2/10",
-    playButtonBg: "bg-chart-2/15",
-    playButtonText: "text-chart-2",
-    playGlow: "bg-chart-2/30",
-    activeBorder: "border-chart-2/20",
-    mediaHoverBorder: "hover:border-chart-2/40",
-    ring: "ring-chart-2/30",
-  },
-  food: {
-    dot: "bg-chart-1",
-    chipBg: "bg-chart-1/10",
-    chipBorder: "border-chart-1/20",
-    chipText: "text-chart-1",
-    avatarBg: "bg-chart-1/15",
-    avatarBorder: "border-chart-1/25",
-    avatarText: "text-chart-1",
-    filterActiveBg: "bg-chart-1/15",
-    filterActiveBorder: "border-chart-1/30",
-    filterActiveShadow: "shadow-chart-1/10",
-    playButtonBg: "bg-chart-1/15",
-    playButtonText: "text-chart-1",
-    playGlow: "bg-chart-1/30",
-    activeBorder: "border-chart-1/20",
-    mediaHoverBorder: "hover:border-chart-1/40",
-    ring: "ring-chart-1/30",
-  },
-  home: {
-    dot: "bg-chart-3",
-    chipBg: "bg-chart-3/10",
-    chipBorder: "border-chart-3/20",
-    chipText: "text-chart-3",
-    avatarBg: "bg-chart-3/15",
-    avatarBorder: "border-chart-3/25",
-    avatarText: "text-chart-3",
-    filterActiveBg: "bg-chart-3/15",
-    filterActiveBorder: "border-chart-3/30",
-    filterActiveShadow: "shadow-chart-3/10",
-    playButtonBg: "bg-chart-3/15",
-    playButtonText: "text-chart-3",
-    playGlow: "bg-chart-3/30",
-    activeBorder: "border-chart-3/20",
-    mediaHoverBorder: "hover:border-chart-3/40",
-    ring: "ring-chart-3/30",
-  },
-  fashion: {
-    dot: "bg-chart-4",
-    chipBg: "bg-chart-4/10",
-    chipBorder: "border-chart-4/20",
-    chipText: "text-chart-4",
-    avatarBg: "bg-chart-4/15",
-    avatarBorder: "border-chart-4/25",
-    avatarText: "text-chart-4",
-    filterActiveBg: "bg-chart-4/15",
-    filterActiveBorder: "border-chart-4/30",
-    filterActiveShadow: "shadow-chart-4/10",
-    playButtonBg: "bg-chart-4/15",
-    playButtonText: "text-chart-4",
-    playGlow: "bg-chart-4/30",
-    activeBorder: "border-chart-4/20",
-    mediaHoverBorder: "hover:border-chart-4/40",
-    ring: "ring-chart-4/30",
-  },
-  "personal-care": {
-    dot: "bg-primary",
-    chipBg: "bg-primary/10",
-    chipBorder: "border-primary/20",
-    chipText: "text-primary",
-    avatarBg: "bg-primary/15",
-    avatarBorder: "border-primary/25",
-    avatarText: "text-primary",
-    filterActiveBg: "bg-primary/15",
-    filterActiveBorder: "border-primary/30",
-    filterActiveShadow: "shadow-primary/10",
-    playButtonBg: "bg-primary/15",
-    playButtonText: "text-primary",
-    playGlow: "bg-primary/30",
-    activeBorder: "border-primary/20",
-    mediaHoverBorder: "hover:border-primary/40",
-    ring: "ring-primary/30",
-  },
-} as const satisfies Record<ContentCategoryId, CategoryStyle>;
-
-/** @deprecated Not used in any source file. Prefer CATEGORY_STYLES[catId] directly. */
-export function categoryColorName(catId: ContentCategoryId | null): string {
-  return catId ? CATEGORY_COLOR[catId] ?? "muted-foreground" : "muted-foreground";
+/** Static category styles — every value is a literal string so Tailwind v4's
+ *  scanner can see and generate all utility classes. Do NOT use dynamic
+ *  concatenation here. */
+function catStyle(color: string): CategoryStyle {
+  // This switch is evaluated at build time by the TypeScript compiler;
+  // each branch returns a fully literal object.
+  switch (color) {
+    case "chart-1":
+      return {
+        dot: "bg-chart-1",
+        chipBg: "bg-chart-1/10",
+        chipBorder: "border-chart-1/20",
+        chipText: "text-chart-1",
+        avatarBg: "bg-chart-1/15",
+        avatarBorder: "border-chart-1/25",
+        avatarText: "text-chart-1",
+        filterActiveBg: "bg-chart-1/15",
+        filterActiveBorder: "border-chart-1/30",
+        filterActiveShadow: "shadow-chart-1/10",
+        playButtonBg: "bg-chart-1/15",
+        playButtonText: "text-chart-1",
+        playGlow: "bg-chart-1/30",
+        activeBorder: "border-chart-1/20",
+        mediaHoverBorder: "hover:border-chart-1/40",
+        ring: "ring-chart-1/30",
+      };
+    case "chart-2":
+      return {
+        dot: "bg-chart-2",
+        chipBg: "bg-chart-2/10",
+        chipBorder: "border-chart-2/20",
+        chipText: "text-chart-2",
+        avatarBg: "bg-chart-2/15",
+        avatarBorder: "border-chart-2/25",
+        avatarText: "text-chart-2",
+        filterActiveBg: "bg-chart-2/15",
+        filterActiveBorder: "border-chart-2/30",
+        filterActiveShadow: "shadow-chart-2/10",
+        playButtonBg: "bg-chart-2/15",
+        playButtonText: "text-chart-2",
+        playGlow: "bg-chart-2/30",
+        activeBorder: "border-chart-2/20",
+        mediaHoverBorder: "hover:border-chart-2/40",
+        ring: "ring-chart-2/30",
+      };
+    case "chart-3":
+      return {
+        dot: "bg-chart-3",
+        chipBg: "bg-chart-3/10",
+        chipBorder: "border-chart-3/20",
+        chipText: "text-chart-3",
+        avatarBg: "bg-chart-3/15",
+        avatarBorder: "border-chart-3/25",
+        avatarText: "text-chart-3",
+        filterActiveBg: "bg-chart-3/15",
+        filterActiveBorder: "border-chart-3/30",
+        filterActiveShadow: "shadow-chart-3/10",
+        playButtonBg: "bg-chart-3/15",
+        playButtonText: "text-chart-3",
+        playGlow: "bg-chart-3/30",
+        activeBorder: "border-chart-3/20",
+        mediaHoverBorder: "hover:border-chart-3/40",
+        ring: "ring-chart-3/30",
+      };
+    case "chart-4":
+      return {
+        dot: "bg-chart-4",
+        chipBg: "bg-chart-4/10",
+        chipBorder: "border-chart-4/20",
+        chipText: "text-chart-4",
+        avatarBg: "bg-chart-4/15",
+        avatarBorder: "border-chart-4/25",
+        avatarText: "text-chart-4",
+        filterActiveBg: "bg-chart-4/15",
+        filterActiveBorder: "border-chart-4/30",
+        filterActiveShadow: "shadow-chart-4/10",
+        playButtonBg: "bg-chart-4/15",
+        playButtonText: "text-chart-4",
+        playGlow: "bg-chart-4/30",
+        activeBorder: "border-chart-4/20",
+        mediaHoverBorder: "hover:border-chart-4/40",
+        ring: "ring-chart-4/30",
+      };
+    case "chart-5":
+      return {
+        dot: "bg-chart-5",
+        chipBg: "bg-chart-5/10",
+        chipBorder: "border-chart-5/20",
+        chipText: "text-chart-5",
+        avatarBg: "bg-chart-5/15",
+        avatarBorder: "border-chart-5/25",
+        avatarText: "text-chart-5",
+        filterActiveBg: "bg-chart-5/15",
+        filterActiveBorder: "border-chart-5/30",
+        filterActiveShadow: "shadow-chart-5/10",
+        playButtonBg: "bg-chart-5/15",
+        playButtonText: "text-chart-5",
+        playGlow: "bg-chart-5/30",
+        activeBorder: "border-chart-5/20",
+        mediaHoverBorder: "hover:border-chart-5/40",
+        ring: "ring-chart-5/30",
+      };
+    case "primary":
+      return {
+        dot: "bg-primary",
+        chipBg: "bg-primary/10",
+        chipBorder: "border-primary/20",
+        chipText: "text-primary",
+        avatarBg: "bg-primary/15",
+        avatarBorder: "border-primary/25",
+        avatarText: "text-primary",
+        filterActiveBg: "bg-primary/15",
+        filterActiveBorder: "border-primary/30",
+        filterActiveShadow: "shadow-primary/10",
+        playButtonBg: "bg-primary/15",
+        playButtonText: "text-primary",
+        playGlow: "bg-primary/30",
+        activeBorder: "border-primary/20",
+        mediaHoverBorder: "hover:border-primary/40",
+        ring: "ring-primary/30",
+      };
+    case "muted-foreground":
+      return {
+        dot: "bg-muted-foreground",
+        chipBg: "bg-muted-foreground/10",
+        chipBorder: "border-muted-foreground/20",
+        chipText: "text-muted-foreground",
+        avatarBg: "bg-muted-foreground/15",
+        avatarBorder: "border-muted-foreground/25",
+        avatarText: "text-muted-foreground",
+        filterActiveBg: "bg-muted-foreground/15",
+        filterActiveBorder: "border-muted-foreground/30",
+        filterActiveShadow: "shadow-muted-foreground/10",
+        playButtonBg: "bg-muted-foreground/15",
+        playButtonText: "text-muted-foreground",
+        playGlow: "bg-muted-foreground/30",
+        activeBorder: "border-muted-foreground/20",
+        mediaHoverBorder: "hover:border-muted-foreground/40",
+        ring: "ring-muted-foreground/30",
+      };
+    default:
+      // Fallback — should never hit in practice
+      return {
+        dot: "bg-muted-foreground",
+        chipBg: "bg-muted-foreground/10",
+        chipBorder: "border-muted-foreground/20",
+        chipText: "text-muted-foreground",
+        avatarBg: "bg-muted-foreground/15",
+        avatarBorder: "border-muted-foreground/25",
+        avatarText: "text-muted-foreground",
+        filterActiveBg: "bg-muted-foreground/15",
+        filterActiveBorder: "border-muted-foreground/30",
+        filterActiveShadow: "shadow-muted-foreground/10",
+        playButtonBg: "bg-muted-foreground/15",
+        playButtonText: "text-muted-foreground",
+        playGlow: "bg-muted-foreground/30",
+        activeBorder: "border-muted-foreground/20",
+        mediaHoverBorder: "hover:border-muted-foreground/40",
+        ring: "ring-muted-foreground/30",
+      };
+  }
 }
 
-/** Fallback style when an MC has no category. Uses neutral muted tokens. */
-export const UNCATEGORIZED_STYLE: CategoryStyle = {
-  dot: "bg-muted-foreground",
-  chipBg: "bg-muted",
-  chipBorder: "border-border",
-  chipText: "text-muted-foreground",
-  avatarBg: "bg-muted",
-  avatarBorder: "border-border",
-  avatarText: "text-muted-foreground",
-  filterActiveBg: "bg-muted",
-  filterActiveBorder: "border-border",
-  filterActiveShadow: "shadow-foreground/10",
-  playButtonBg: "bg-muted",
-  playButtonText: "text-muted-foreground",
-  playGlow: "bg-primary/30",
-  activeBorder: "border-border",
-  mediaHoverBorder: "hover:border-foreground/20",
-  ring: "ring-primary/30",
-} as const satisfies CategoryStyle;
+export const CATEGORY_STYLES: Record<ContentCategoryId, CategoryStyle> = {
+  cosmetics: catStyle("chart-5"),
+  health: catStyle("chart-2"),
+  food: catStyle("chart-1"),
+  home: catStyle("chart-3"),
+  fashion: catStyle("chart-4"),
+  "personal-care": catStyle("primary"),
+} as const;
 
-// ═════════════════════════════════════════════════════════════════
-//  STUDIO TOKENS
-// ═════════════════════════════════════════════════════════════════
+export const UNCATEGORIZED_STYLE: CategoryStyle = catStyle("muted-foreground");
 
-/** HypeStudio brand accent — used across the studio showcase page.
- *  Compose with these tokens instead of hard-coding `studio-accent` classes. */
 export const STUDIO = {
   text: "text-studio-accent",
   bg: "bg-studio-accent",
@@ -212,41 +306,35 @@ export const STUDIO = {
   progress: "bg-studio-accent",
 } as const;
 
-// ═════════════════════════════════════════════════════════════════
-//  TREND / DELTA TOKENS
-// ═════════════════════════════════════════════════════════════════
-
-/** Trend direction colors — positive, negative, neutral. */
 export const TREND = {
   up: "text-chart-2",
   down: "text-destructive",
   neutral: "text-muted-foreground",
 } as const;
 
-/** Trend badge/chip backgrounds — for Badge components. */
 export const TREND_CHIP = {
   up: "bg-chart-2/10 text-chart-2 hover:bg-chart-2/20",
   down: "bg-destructive/10 text-destructive hover:bg-destructive/20",
   neutral: "bg-muted text-muted-foreground hover:bg-muted/80",
 } as const;
 
-/** Accent color for monetary values (fees, rate cards, pricing). */
+export const TREND_BG = {
+  up: "bg-chart-2/10",
+  down: "bg-destructive/10",
+  neutral: "bg-muted",
+} as const;
+
 export const VALUE_ACCENT = "text-chart-4" as const;
 
-// ═════════════════════════════════════════════════════════════════
-//  UI PATTERN TOKENS
-// ═════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════════
+//  3. SHAPE & LAYOUT TOKENS
+// ═══════════════════════════════════════════════════════════════════════════════
 
-/** Glassmorphism button / badge — play controls, badges, overlays.
- *  @example `<div className={cn(GLASS.base, GLASS.hover, "size-9 rounded-full")} />` */
 export const GLASS = {
   base: "bg-background/70 backdrop-blur-md border border-foreground/10",
   hover: "hover:bg-background/90 transition-colors",
 } as const;
 
-/** Chip base — category chips, brand chips, filter chips.
- *  Compose with color tokens from CATEGORY_STYLES.
- *  @example `<span className={cn(CHIP.base, CHIP.md, categoryStyle.chipBg)} />` */
 export const CHIP = {
   base: "inline-flex items-center font-medium border",
   sm: "gap-1 px-1.5 py-0.5 rounded-md text-2xs",
@@ -254,153 +342,26 @@ export const CHIP = {
   lg: "gap-1.5 px-3.5 py-1.5 rounded-xl text-xs",
 } as const;
 
-/** Profile photo placeholder — initial-letter or image fallback.
- *  @example `<div className={cn(AVATAR.base, AVATAR.hover, "size-12", style.avatarBg)} />` */
 export const AVATAR = {
   base: "relative shrink-0 rounded-xl flex items-center justify-center border font-bold overflow-hidden",
   hover: "transition-transform duration-200 group-hover:scale-105",
 } as const;
 
-/** Card container — reusable card shell. */
 export const CARD = {
   base: "border border-border rounded-2xl overflow-hidden bg-card",
+  interactive: "border border-border rounded-2xl overflow-hidden bg-card cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5",
 } as const;
 
-/** Section header — icon + uppercase label pattern.
- *  @example
- *   <div className={SECTION_HEADER.base}>
- *     <Icon className={SECTION_HEADER.icon} />
- *     <h3 className={SECTION_HEADER.label}>{title}</h3>
- *   </div>
- */
-export const SECTION_HEADER = {
-  base: "flex items-center gap-2",
-  label: "text-xs font-semibold uppercase tracking-widest text-muted-foreground",
-  icon: "size-3.5 text-muted-foreground",
-} as const;
-
-/** Stats label — uppercase micro label (MCs, Brands, etc). */
-export const STAT_LABEL = "text-2xs uppercase tracking-widest font-semibold" as const;
-
-// ═════════════════════════════════════════════════════════════════
-//  LAYOUT & SPACING TOKENS
-// ═════════════════════════════════════════════════════════════════
-
-/** Section layout — horizontal padding, container width, vertical spacing.
- *  @example `<section className={cn(SECTION.paddingX, SECTION.py)}>` */
-export const SECTION = {
-  paddingX: "px-6 md:px-12 lg:px-20",
-  container: "max-w-7xl mx-auto",
-  py: "py-20 md:py-32",
-  pyLg: "py-24 md:py-40",
-} as const;
-
-// ═════════════════════════════════════════════════════════════════
-//  TYPOGRAPHY TOKENS
-// ═════════════════════════════════════════════════════════════════
-
-/** Heading scale — consistent hierarchy across pages.
- *  @example `<h2 className={HEADING.section}>Title</h2>` */
-export const HEADING = {
-  hero: "text-[clamp(3.5rem,10vw,8rem)] font-black tracking-[-0.05em] leading-[0.82]",
-  section: "text-4xl md:text-6xl font-black tracking-tight",
-  sectionLg: "text-4xl md:text-6xl lg:text-7xl font-black tracking-tight leading-[0.9]",
-  card: "text-2xl md:text-3xl font-black tracking-tight leading-tight",
-} as const;
-
-/** Micro label — uppercase eyebrow text above headings.
- *  @example `<span className={LABEL.micro}>What We Do</span>` */
-export const LABEL = {
-  micro: "text-xs uppercase tracking-widest text-muted-foreground font-medium",
-} as const;
-
-// ═════════════════════════════════════════════════════════════════
-//  ANIMATION & MOTION TOKENS
-// ═════════════════════════════════════════════════════════════════
-
-/** Cubic-bezier easing curves used throughout the app.
- *  @example `transition-all duration-500 ${EASING.emphasized}` */
-export const EASING = {
-  default: "ease-out",
-  emphasized: "[transition-timing-function:cubic-bezier(0.16,1,0.3,1)]",
-  smooth: "[transition-timing-function:cubic-bezier(0.4,0,0.2,1)]",
-  bounce: "[transition-timing-function:cubic-bezier(0.34,1.56,0.64,1)]",
-} as const;
-
-/** Duration presets for consistent motion.
- *  @example `transition-all ${DURATION.fast} ease-out` */
-export const DURATION = {
-  fast: "duration-150",
-  normal: "duration-300",
-  slow: "duration-500",
-  slower: "duration-700",
-  slowest: "duration-1000",
-  heroFade: "duration-[2000ms]",
-  heroZoom: "duration-[8000ms]",
-} as const;
-
-/** Reusable animation class combinations.
- *  @example `<div className={cn(FADE_IN_UP, "delay-100")} />` */
-export const FADE_IN_UP = "animate-fade-in-up" as const;
-export const FADE_IN = "animate-fade-in" as const;
-export const SCALE_IN = "animate-scale-in" as const;
-
-/** Background overlay opacity presets.
- *  @example `<div className={cn("absolute inset-0", OVERLAY.medium)} />` */
-export const OVERLAY = {
-  subtle: "bg-background/30",
-  light: "bg-background/40",
-  medium: "bg-background/50",
-  heavy: "bg-background/60",
-  solid: "bg-background/80",
-} as const;
-
-/** Text opacity presets for foreground color.
- *  @example `<span className={cn(TEXT_OPACITY.muted)}>Subtitle</span>` */
-export const TEXT_OPACITY = {
-  dim: "text-foreground/50",
-  muted: "text-foreground/60",
-  normal: "text-foreground/90",
-} as const;
-
-/** Border opacity presets.
- *  @example `<div className={cn("border", BORDER_OPACITY.medium)} />` */
-export const BORDER_OPACITY = {
-  subtle: "border-border/20",
-  light: "border-border/30",
-  medium: "border-border/40",
-} as const;
-
-/** Foreground opacity presets for bg/text on dark/light surfaces.
- *  @example `<div className={cn("bg-foreground", FG_OPACITY.solid)} />` */
-export const FG_OPACITY = {
-  subtle: "bg-foreground/10",
-  light: "bg-foreground/20",
-  medium: "bg-foreground/50",
-  heavy: "bg-foreground/90",
-} as const;
-
-// ═════════════════════════════════════════════════════════════════
-//  SHADOW & ELEVATION TOKENS
-// ═════════════════════════════════════════════════════════════════
-
-/** Shadow presets for elevation system.
- *  @example `<Card className={SHADOW.md} />` */
 export const SHADOW = {
   sm: "shadow-sm",
   md: "shadow-md",
   lg: "shadow-lg",
   xl: "shadow-xl",
+  "2xl": "shadow-2xl",
   glow: "shadow-studio-accent/10",
   glowLg: "shadow-studio-accent/20",
 } as const;
 
-// ═════════════════════════════════════════════════════════════════
-//  GRADIENT TOKENS
-// ═════════════════════════════════════════════════════════════════
-
-/** Reusable gradient patterns.
- *  @example `<div className={GRADIENT.heroOverlay} />` */
 export const GRADIENT = {
   heroOverlay: "bg-gradient-to-t from-background via-background/40 to-transparent",
   cardOverlay: "bg-gradient-to-t from-background/70 via-transparent to-transparent",
@@ -410,38 +371,221 @@ export const GRADIENT = {
   featuredRight: "bg-gradient-to-r from-transparent via-transparent to-background/60",
 } as const;
 
-// ═════════════════════════════════════════════════════════════════
-//  DEPRECATED — kept for backward compatibility
-// ═════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════════
+//  4. SPACE & TYPOGRAPHY TOKENS
+// ═══════════════════════════════════════════════════════════════════════════════
 
-/** @deprecated Not used in any source file. Use CATEGORY_STYLES or STUDIO tokens. */
-export const TOGGLE = {
-  base: "px-3.5 py-2 text-xs font-medium flex items-center gap-1.5 transition-all duration-200",
-  active: "bg-foreground/10 text-foreground",
-  inactive: "text-muted-foreground hover:text-foreground hover:bg-foreground/10",
+export const SECTION = {
+  paddingX: "px-6 md:px-12 lg:px-20",
+  container: "max-w-7xl mx-auto",
+  py: "py-20 md:py-32",
+  pyLg: "py-24 md:py-40",
 } as const;
 
-/** @deprecated Not used in any source file. Use CHIP + CATEGORY_STYLES instead. */
-export const FILTER_INACTIVE = "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80 border border-border" as const;
-
-/** @deprecated Not used in any source file. */
-export const EMPTY_ICON = {
-  sm: "size-16 rounded-full bg-muted border border-border flex items-center justify-center",
-  lg: "size-20 rounded-2xl bg-muted border border-border flex items-center justify-center",
+export const SECTION_HEADER = {
+  base: "flex items-center gap-2",
+  label: "text-xs font-semibold uppercase tracking-widest text-muted-foreground",
+  icon: "size-3.5 text-muted-foreground",
 } as const;
 
-/** @deprecated Not used in any source file. */
-export const VIDEO_COVER = "absolute inset-0 size-full object-cover" as const;
+export const HEADING = {
+  hero: "text-[clamp(3.5rem,10vw,8rem)] font-black tracking-[-0.05em] leading-[0.82]",
+  section: "text-4xl md:text-6xl font-black tracking-tight",
+  sectionLg: "text-4xl md:text-6xl lg:text-7xl font-black tracking-tight leading-[0.9]",
+  card: "text-2xl md:text-3xl font-black tracking-tight leading-tight",
+} as const;
 
-/** @deprecated Not used in any source file. Use CARD.base instead. */
-export const CARD_HERO = "relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-card via-card to-background" as const;
+export const LABEL = {
+  micro: "text-xs uppercase tracking-widest text-muted-foreground font-medium",
+} as const;
 
-// ═════════════════════════════════════════════════════════════════
-//  CANVAS HELPERS
-// ═════════════════════════════════════════════════════════════════
+export const STAT_LABEL = "text-2xs uppercase tracking-widest font-semibold" as const;
 
-/** Read a CSS custom property value for use in Canvas 2D.
- *  Safe to call inside useEffect (browser only). */
+// ═══════════════════════════════════════════════════════════════════════════════
+//  5. MOTION TOKENS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const EASING = {
+  default: "ease-out",
+  emphasized: "[transition-timing-function:cubic-bezier(0.16,1,0.3,1)]",
+  smooth: "[transition-timing-function:cubic-bezier(0.4,0,0.2,1)]",
+  bounce: "[transition-timing-function:cubic-bezier(0.34,1.56,0.64,1)]",
+} as const;
+
+export const DURATION = {
+  fast: "duration-150",
+  moderate: "duration-200",
+  normal: "duration-300",
+  slow: "duration-500",
+  slower: "duration-700",
+  slowest: "duration-1000",
+  heroFade: "duration-[2000ms]",
+  heroZoom: "duration-[8000ms]",
+} as const;
+
+export const FADE_IN_UP = "animate-fade-in-up" as const;
+export const FADE_IN = "animate-fade-in" as const;
+export const SCALE_IN = "animate-scale-in" as const;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  6. OPACITY & OVERLAY TOKENS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const OVERLAY = {
+  subtle: "bg-background/30",
+  light: "bg-background/40",
+  medium: "bg-background/50",
+  heavy: "bg-background/60",
+  solid: "bg-background/80",
+} as const;
+
+export const TEXT_OPACITY = {
+  dim: "text-foreground/50",
+  muted: "text-foreground/60",
+  normal: "text-foreground/90",
+} as const;
+
+export const BORDER_OPACITY = {
+  subtle: "border-border/20",
+  light: "border-border/30",
+  medium: "border-border/40",
+} as const;
+
+export const FG_OPACITY = {
+  subtle: "bg-foreground/10",
+  light: "bg-foreground/20",
+  medium: "bg-foreground/50",
+  heavy: "bg-foreground/90",
+} as const;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  7. INTERACTIVE STATE TOKENS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const SELECTION_CHECKBOX = {
+  base: "absolute z-20 size-6 rounded-full border-2 flex items-center justify-center transition-all",
+  checked: "bg-primary border-primary text-primary-foreground",
+  unchecked: `${OVERLAY.light} border-foreground/50 text-foreground/70 hover:bg-background/60`,
+} as const;
+
+export const RING = {
+  selected: "ring-2 ring-primary ring-offset-2 ring-offset-background",
+  focus: "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+} as const;
+
+export const ELEVATION = {
+  hover: "hover:shadow-lg hover:-translate-y-0.5 transition-all",
+  hoverSm: "hover:shadow-md hover:-translate-y-0.5 transition-all",
+} as const;
+
+export const PLAY_BUTTON = {
+  wrapper: "absolute inset-0 flex items-center justify-center z-10 opacity-100 pointer-events-auto lg:opacity-0 lg:pointer-events-none lg:group-hover:opacity-100 lg:group-hover:pointer-events-auto transition-opacity",
+  base: "rounded-full flex items-center justify-center backdrop-blur-md border transition-transform active:scale-90",
+  active: "bg-primary/80 border-primary/30 text-primary-foreground",
+  inactive: `${OVERLAY.light} border-foreground/20 text-foreground`,
+} as const;
+
+export const MEDIA = {
+  cover: "absolute inset-0 size-full object-cover",
+} as const;
+
+export const BADGE = {
+  glass: "inline-flex items-center gap-1 rounded-full backdrop-blur-md text-foreground/80 text-2xs font-semibold border border-foreground/10",
+} as const;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  8. DIMENSION TOKENS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const ASPECT = {
+  portrait: "aspect-[3/4]",
+  video: "aspect-[9/16]",
+  wide: "aspect-[4/3]",
+  studio: "aspect-[4/5]",
+  chart: "aspect-[16/9]",
+  square: "aspect-square",
+} as const;
+
+export const MAX_HEIGHT = {
+  card: "max-h-[480px]",
+  video: "max-h-[520px]",
+  videoLg: "max-h-[640px]",
+  videoPlayer: "max-h-[520px] lg:max-h-[640px]",
+} as const;
+
+export const WIDTH = {
+  contentMax: "max-w-[1200px]",
+  studioCard: "w-[280px] sm:w-[300px] md:w-[340px]",
+  detailPanel: "w-full sm:w-[420px] lg:w-[480px]",
+  detailPanelSm: "sm:w-[420px]",
+  detailPanelLg: "lg:w-[480px]",
+  detailPanelMin: "min-w-[320px]",
+  tooltipMax: "max-w-[220px]",
+  dropdownMin: "min-w-[180px]",
+} as const;
+
+export const HERO = {
+  height: "h-[100dvh]",
+} as const;
+
+export const SCALE = {
+  hover: "scale-[1.04]",
+  active: "active:scale-[0.98]",
+  press: "active:scale-95",
+} as const;
+
+export const RADIUS = {
+  sm: "rounded-md",
+  md: "rounded-lg",
+  lg: "rounded-xl",
+  xl: "rounded-2xl",
+  "2xl": "rounded-3xl",
+  full: "rounded-full",
+} as const;
+
+export const Z_INDEX = {
+  base: "z-0",
+  gradient: "z-[1]",
+  content: "z-10",
+  controls: "z-30",
+  overlay: "z-40",
+  modal: "z-50",
+} as const;
+
+export const DROP_SHADOW = {
+  sm: "drop-shadow-sm",
+  md: "drop-shadow-md",
+  lg: "drop-shadow-lg",
+} as const;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  9. DATA VISUALIZATION TOKENS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const CHART = {
+  // Bar colors by trend
+  barUp: "var(--chart-2)",
+  barDown: "var(--destructive)",
+  barNeutral: "var(--chart-5)",
+  // Area fill opacity
+  areaFillOpacity: 0.15,
+  areaFillOpacityActive: 0.25,
+  // Stroke widths
+  strokeWidth: 2,
+  strokeWidthActive: 3,
+  // Grid
+  gridStroke: "var(--border)",
+  gridDash: "3 3",
+  // Tooltip
+  tooltipBg: "var(--popover)",
+  tooltipFg: "var(--popover-foreground)",
+  tooltipBorder: "var(--border)",
+} as const;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  10. CANVAS & UTILITY
+// ═══════════════════════════════════════════════════════════════════════════════
+
 export function cssVar(name: string): string {
   if (typeof document === "undefined") return "";
   return (
@@ -451,8 +595,6 @@ export function cssVar(name: string): string {
   );
 }
 
-/** Semantic canvas colors derived from the current CSS theme.
- *  Called inside useEffect (browser only) so document is always available. */
 export function canvasColors() {
   return {
     textPrimary: cssVar("--foreground"),
@@ -464,7 +606,6 @@ export function canvasColors() {
   } as const;
 }
 
-/** Deterministic hue for an MC based on their handle (for wire-map nodes). */
 export function mcHue(handle: string): number {
   let hash = 0;
   for (let i = 0; i < handle.length; i++) {
@@ -472,8 +613,6 @@ export function mcHue(handle: string): number {
   }
   return Math.abs(hash) % 360;
 }
-
-// ── OKLCH Parsing ───────────────────────────────────────────────
 
 function parseOklch(value: string): { l: number; c: number; h: number } | null {
   const m = value
@@ -483,19 +622,6 @@ function parseOklch(value: string): { l: number; c: number; h: number } | null {
   return { l: parseFloat(m[1]), c: parseFloat(m[2]), h: parseFloat(m[3]) };
 }
 
-/** Generate an OKLCH color string for canvas rendering.
- *  Reads live CSS custom properties so canvas stays in sync with the theme.
- *
- *  @param catId    Category to derive hue from, or null for grayscale.
- *  @param lightness  Target lightness (0–1). If omitted, uses the parsed
- *                    lightness from the CSS variable.
- *  @param hue      Manual hue override ( bypasses catId lookup ).
- *  @param chroma   Manual chroma override ( bypasses catId lookup ).
- *
- *  @example
- *   oklch("food", 0.7)           // oklch with food hue at 70% lightness
- *   oklch(null, 0.65, 200, 0.2)  // custom hue + chroma
- */
 export function oklch(
   catId: ContentCategoryId | null,
   lightness?: number
@@ -512,28 +638,19 @@ export function oklch(
   hue?: number,
   chroma?: number
 ): string {
-  // Manual override path
   if (hue != null && chroma != null) {
     return `oklch(${lightness ?? 0.65} ${chroma} ${hue})`;
   }
-
-  // Grayscale fallback
   if (!catId) return `oklch(${lightness ?? 0.65} 0 0)`;
-
-  // Read from CSS custom property
   const cssValue = cssVar(`--${CATEGORY_COLOR[catId]}`);
   const parsed = parseOklch(cssValue);
-
   if (parsed) {
-    // Use caller lightness if provided, otherwise fall back to CSS value
     const l = lightness ?? parsed.l;
     return `oklch(${l} ${parsed.c} ${parsed.h})`;
   }
-
   return `oklch(${lightness ?? 0.65} 0 0)`;
 }
 
-/** OKLCH with alpha — for canvas only. */
 export function oklcha(
   catId: ContentCategoryId | null,
   lightness?: number,
@@ -544,3 +661,70 @@ export function oklcha(
   const base = oklch(catId, lightness);
   return base.replace(")", ` / ${alpha})`);
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  DESIGN_TOKENS — Structured single export for programmatic access
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const DESIGN_TOKENS = {
+  color: {
+    primitive: COLOR,
+    category: CATEGORY_STYLES,
+    uncategorized: UNCATEGORIZED_STYLE,
+    trend: TREND,
+    trendChip: TREND_CHIP,
+    trendBg: TREND_BG,
+    studio: STUDIO,
+    valueAccent: VALUE_ACCENT,
+    text: TEXT,
+    bg: BG,
+  },
+  shape: {
+    glass: GLASS,
+    chip: CHIP,
+    avatar: AVATAR,
+    card: CARD,
+    shadow: SHADOW,
+    gradient: GRADIENT,
+    radius: RADIUS,
+  },
+  selection: {
+    checkbox: SELECTION_CHECKBOX,
+  },
+  space: {
+    section: SECTION,
+    sectionHeader: SECTION_HEADER,
+    heading: HEADING,
+    label: LABEL,
+    statLabel: STAT_LABEL,
+  },
+  motion: {
+    easing: EASING,
+    duration: DURATION,
+    fadeInUp: FADE_IN_UP,
+    fadeIn: FADE_IN,
+    scaleIn: SCALE_IN,
+  },
+  opacity: {
+    overlay: OVERLAY,
+    text: TEXT_OPACITY,
+    border: BORDER_OPACITY,
+    foreground: FG_OPACITY,
+  },
+  dimension: {
+    aspect: ASPECT,
+    maxHeight: MAX_HEIGHT,
+    width: WIDTH,
+    hero: HERO,
+  },
+  zIndex: Z_INDEX,
+  dropShadow: DROP_SHADOW,
+  chart: CHART,
+  canvas: {
+    cssVar,
+    colors: canvasColors,
+    mcHue,
+    oklch,
+    oklcha,
+  },
+} as const;

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { loadKOLCatalog } from "@/lib/record-mappers";
-import { KOLsListClient } from "./kols-list-client";
+import { KOLsListClient } from "./_components/kols-list-client";
 
 export const metadata: Metadata = {
   title: "Creators",

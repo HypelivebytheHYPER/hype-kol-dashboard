@@ -1,7 +1,6 @@
 import type { NextConfig } from "next";
 import { SERVICES, hostOf } from "./lib/external-services";
 
-const LARK_WORKER_HOST = hostOf(SERVICES.larkWorker);
 const R2_BRAND_HOST = hostOf(SERVICES.r2Brand);
 const R2_STUDIO_HOST = hostOf(SERVICES.r2Studio);
 
@@ -20,7 +19,6 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: R2_BRAND_HOST, pathname: "/**" },
       { protocol: "https", hostname: R2_STUDIO_HOST, pathname: "/**" },
-      { protocol: "https", hostname: LARK_WORKER_HOST, pathname: "/api/image/**" },
       { protocol: "https", hostname: "*.larksuite.com", pathname: "/**" },
       { protocol: "https", hostname: "*.tiktokcdn.com", pathname: "/**" },
       { protocol: "https", hostname: "*.tiktokcdn-eu.com", pathname: "/**" },
@@ -32,19 +30,11 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       { source: "/", destination: "/kols" },
+      { source: "/dashboard", destination: "/dashboard/overview" },
     ];
   },
   async headers() {
     return [
-      {
-        source: "/api/lark/:path*",
-        headers: [
-          {
-            key: "Cache-Control",
-            value: "public, s-maxage=60, stale-while-revalidate=300",
-          },
-        ],
-      },
       {
         source: "/:path*\\.(jpg|jpeg|png|webp|avif|svg|ico|woff|woff2)",
         headers: [
@@ -79,9 +69,9 @@ const nextConfig: NextConfig = {
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline' https://www.tiktok.com/embed.js *.tiktok.com *.ttwstatic.com",
               "style-src 'self' 'unsafe-inline' *.ttwstatic.com",
-              `img-src 'self' blob: data: https: ${LARK_WORKER_HOST} ${R2_BRAND_HOST} ${R2_STUDIO_HOST} *.tiktokcdn.com *.tiktokcdn-eu.com`,
-              `media-src 'self' ${LARK_WORKER_HOST} ${R2_STUDIO_HOST} ${SERVICES.larkCDNHost}`,
-              `connect-src 'self' ${LARK_WORKER_HOST} ${SERVICES.larkCDNHost} *.tiktok.com`,
+              `img-src 'self' blob: data: https: ${R2_BRAND_HOST} ${R2_STUDIO_HOST} *.tiktokcdn.com *.tiktokcdn-eu.com`,
+              `media-src 'self' ${R2_STUDIO_HOST} *.larksuite.com`,
+              `connect-src 'self' *.larksuite.com *.tiktok.com`,
               "font-src 'self'",
               "object-src 'none'",
               "child-src 'self' *.tiktok.com *.ttwstatic.com",

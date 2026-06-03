@@ -1,1 +1,1 @@
-export { KOLFeedCard } from "./kol-feed-card";
+export { KOLFeedCard } from "./feed-card";

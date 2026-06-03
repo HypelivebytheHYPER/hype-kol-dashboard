@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
-import { useI18n } from "@/contexts/i18n-context";
+import { RADIUS } from "@/lib/design-tokens";
+import { useI18n } from "@/components/providers";
 import { BrandLogo } from "./brand-logo";
 import { NavLinks } from "./nav-links";
 import { ThemeToggle } from "./theme-toggle";
@@ -18,7 +19,7 @@ export function MobileSidebar() {
     <header className={`h-14 border-b border-border/40 ${OVERLAY.heavy} backdrop-blur-xl flex items-center justify-between px-4 shrink-0`}>
       <div className="flex items-center gap-3">
         <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger aria-label="Open navigation menu" className="size-10 inline-flex items-center justify-center rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+          <SheetTrigger aria-label="Open navigation menu" className={`size-10 inline-flex items-center justify-center ${RADIUS.md} bg-muted/30 hover:bg-muted/50 transition-colors`}>
             <Menu className="size-5 text-foreground" aria-hidden="true" />
           </SheetTrigger>
           <SheetContent side="left" className="w-72 p-0 bg-sidebar/80 backdrop-blur-xl border-r border-sidebar-border">

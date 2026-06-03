@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Search, Command, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useI18n } from "@/contexts/i18n-context";
+import { Z_INDEX, DURATION, RADIUS } from "@/lib/design-tokens";
+import { useI18n } from "@/components/providers";
 
 interface MobileSearchOverlayProps {
   open: boolean;
@@ -48,7 +49,7 @@ export function MobileSearchOverlay({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 lg:hidden animate-in fade-in duration-200">
+    <div className={`fixed inset-0 bg-background/95 backdrop-blur-sm ${Z_INDEX.modal} lg:hidden animate-in fade-in ${DURATION.moderate}`}>
       <div className="flex flex-col h-full">
         {/* Search Header */}
         <div className="flex items-center gap-3 p-4 border-b">
@@ -65,7 +66,7 @@ export function MobileSearchOverlay({
           </form>
           <button
             onClick={onClose}
-            className="size-10 inline-flex items-center justify-center rounded-lg bg-muted hover:bg-muted/80 transition-colors shrink-0"
+            className={`size-10 inline-flex items-center justify-center ${RADIUS.md} bg-muted hover:bg-muted/80 transition-colors shrink-0`}
             aria-label="Close"
           >
             <X className="size-5" />
@@ -83,7 +84,7 @@ export function MobileSearchOverlay({
                   router.push(`/kols?category=${encodeURIComponent(tag)}`);
                   onClose();
                 }}
-                className="px-4 py-2 rounded-full bg-muted text-sm hover:bg-primary/10 hover:text-primary transition-colors"
+                className={`px-4 py-2 ${RADIUS.full} bg-muted text-sm hover:bg-primary/10 hover:text-primary transition-colors`}
               >
                 {tag}
               </button>
@@ -99,7 +100,7 @@ export function MobileSearchOverlay({
                 key={item.label}
                 href={item.href}
                 onClick={onClose}
-                className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors"
+                className={`flex items-center gap-3 p-3 ${RADIUS.md} hover:bg-muted transition-colors`}
               >
                 <Command className="size-4 text-muted-foreground" />
                 <span>{item.label}</span>

@@ -5,7 +5,7 @@ import {
   loadDashboardMetricsHistory,
   loadDashboardPeriods,
 } from "@/lib/record-mappers";
-import { DashboardClient } from "./dashboard-client";
+import { DashboardClient } from "./_components/dashboard-client";
 
 interface DashboardPageProps {
   params: Promise<{ "dashboard-type": string }>;

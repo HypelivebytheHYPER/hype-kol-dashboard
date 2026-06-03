@@ -1,15 +1,11 @@
 "use client";
 
 import { type DashboardType } from "@/lib/constants";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-} from "@/components/ui/dropdown-menu";
+  Tabs, TabsList, TabsTrigger,
+  Button,
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem,
+} from "@/components/ui";
 import { CalendarDays } from "lucide-react";
 
 interface DashboardShellProps {

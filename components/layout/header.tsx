@@ -4,10 +4,10 @@ import { useState } from "react";
 import dynamic from "next/dynamic";
 import { Search, Command } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { LanguageSwitcher } from "@/components/layout/language-switcher";
-import { useI18n } from "@/contexts/i18n-context";
+import { LanguageSwitcher } from "./language-switcher";
+import { useI18n } from "@/components/providers";
 import { ThemeToggle } from "./theme-toggle";
-import { OVERLAY } from "@/lib/design-tokens";
+import { OVERLAY, DURATION, RADIUS } from "@/lib/design-tokens";
 import { NotificationButton } from "./notification-button";
 
 const CommandPalette = dynamic(
@@ -32,7 +32,7 @@ export function Header() {
         <div className="flex items-center gap-4 flex-1 min-w-0">
           <Button
             variant="outline"
-            className="w-full max-w-sm justify-between text-muted-foreground border-border/30 hover:border-border/60 hover:bg-muted/30 transition-all duration-200"
+            className={`w-full max-w-sm justify-between text-muted-foreground border-border/30 hover:border-border/60 hover:bg-muted/30 transition-all ${DURATION.moderate}`}
             onClick={openPalette}
           >
             <div className="flex items-center gap-2 overflow-hidden">
@@ -50,7 +50,7 @@ export function Header() {
           <LanguageSwitcher />
           <NotificationButton className="relative" />
           <div className="flex items-center gap-3 pl-3 border-l border-border/30">
-            <div className="size-10 rounded-full bg-muted flex items-center justify-center text-sm font-semibold">H</div>
+            <div className={`size-10 ${RADIUS.full} bg-muted flex items-center justify-center text-sm font-semibold`}>H</div>
           </div>
         </div>
       </header>

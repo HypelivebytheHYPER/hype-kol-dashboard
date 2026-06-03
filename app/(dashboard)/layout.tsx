@@ -1,7 +1,4 @@
-import { Sidebar } from "@/components/layout/sidebar";
-import { MobileSidebar } from "@/components/layout/mobile-sidebar";
-import { Header } from "@/components/layout/header";
-import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
+import { Sidebar, MobileSidebar, Header, MobileBottomNav } from "@/components/layout";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { HypeStudioClient } from "./hypestudio-client";
+import { HypeStudioClient } from "./_components/hypestudio-client";
 import { loadStudioList } from "@/lib/record-mappers";
+import { MAX_STUDIO_PREVIEW, OG_IMAGE_WIDTH, OG_IMAGE_HEIGHT } from "@/lib/constants";
 
 const OG_IMAGE =
   "https://pub-6b552d9c3c0f4ef0ba8e32adfb058578.r2.dev/Hypestudio01.jpg";
@@ -21,8 +22,8 @@ export const metadata: Metadata = {
     images: [
       {
         url: OG_IMAGE,
-        width: 1200,
-        height: 630,
+        width: OG_IMAGE_WIDTH,
+        height: OG_IMAGE_HEIGHT,
         alt: "HypeStudio creative production space in Bangkok",
       },
     ],
@@ -37,7 +38,7 @@ export const metadata: Metadata = {
 };
 
 export default async function HypeStudioPage() {
-  const studios = await loadStudioList();
+  const studios = (await loadStudioList()).slice(0, MAX_STUDIO_PREVIEW);
 
   return (
     <>

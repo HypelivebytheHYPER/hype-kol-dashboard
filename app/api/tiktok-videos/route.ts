@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
@@ -52,7 +52,7 @@ async function fetchVideoOembed(videoUrl: string): Promise<{
 export async function GET(request: NextRequest) {
   const handle = request.nextUrl.searchParams.get("handle");
   if (!handle) {
-    return Response.json({ error: "Missing handle" }, { status: 400 });
+    return NextResponse.json({ error: "Missing handle" }, { status: 400 });
   }
 
   try {
@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!res.ok) {
-      return Response.json(
+      return NextResponse.json(
         { error: `TikTok returned ${res.status}`, videos: [] },
         { status: 502 }
       );
@@ -75,25 +75,26 @@ export async function GET(request: NextRequest) {
     const videoIds = extractVideoIds(html);
 
     if (videoIds.length === 0) {
-      return Response.json({ videos: [] });
+      return NextResponse.json({ videos: [] });
     }
 
-    // Fetch oEmbed data for each video
-    const videos: TikTokVideo[] = [];
-    for (const id of videoIds) {
-      const url = `https://www.tiktok.com/@${handle}/video/${id}`;
-      const oembed = await fetchVideoOembed(url);
-      videos.push({
-        id,
-        url,
-        ...(oembed?.thumbnail ? { thumbnail: oembed.thumbnail } : {}),
-        ...(oembed?.title ? { title: oembed.title } : {}),
-        ...(oembed?.authorName ? { authorName: oembed.authorName } : {}),
-        ...(oembed?.html ? { html: oembed.html } : {}),
-      });
-    }
+    // Fetch oEmbed data for all videos in parallel
+    const videos: TikTokVideo[] = await Promise.all(
+      videoIds.map(async (id) => {
+        const url = `https://www.tiktok.com/@${handle}/video/${id}`;
+        const oembed = await fetchVideoOembed(url);
+        return {
+          id,
+          url,
+          ...(oembed?.thumbnail ? { thumbnail: oembed.thumbnail } : {}),
+          ...(oembed?.title ? { title: oembed.title } : {}),
+          ...(oembed?.authorName ? { authorName: oembed.authorName } : {}),
+          ...(oembed?.html ? { html: oembed.html } : {}),
+        };
+      })
+    );
 
-    return Response.json(
+    return NextResponse.json(
       { videos },
       {
         headers: {
@@ -102,7 +103,7 @@ export async function GET(request: NextRequest) {
       }
     );
   } catch {
-    return Response.json(
+    return NextResponse.json(
       { error: "Failed to fetch videos", videos: [] },
       { status: 500 }
     );

@@ -4,9 +4,8 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(req: NextRequest) {
   const secret = req.nextUrl.searchParams.get("secret");
   const path = req.nextUrl.searchParams.get("path") ?? "/live";
-  const expected = process.env["REVALIDATE_SECRET"] ?? "dev-secret";
-
-  if (secret !== expected) {
+  const expected = process.env["REVALIDATE_SECRET"];
+  if (!expected || secret !== expected) {
     return NextResponse.json({ error: "Invalid secret" }, { status: 401 });
   }
 

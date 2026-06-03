@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { RADIUS, DROP_SHADOW } from "@/lib/design-tokens";
 import Image from "next/image";
-import { BRAND } from "@/lib/brand";
-import { ROUTES } from "@/lib/constants";
+import { BRAND, ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/cn";
 
 interface BrandLogoProps {
@@ -26,7 +26,7 @@ export function BrandLogo({ size = "md", onClick, className }: BrandLogoProps) {
         alt=""
         width={isSmall ? 28 : 36}
         height={isSmall ? 28 : 36}
-        className="rounded-lg drop-shadow-md"
+        className={`${RADIUS.md} ${DROP_SHADOW.md}`}
         aria-hidden="true"
       />
       <span className={cn("font-bold tracking-tight", isSmall ? "text-base" : "text-lg")}>

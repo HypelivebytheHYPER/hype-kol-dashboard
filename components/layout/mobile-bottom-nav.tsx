@@ -5,7 +5,8 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
-import { MOBILE_BOTTOM_NAV as navItems } from "@/lib/nav-items";
+import { MOBILE_BOTTOM_NAV as navItems } from "@/lib/constants";
+import { Z_INDEX, SHADOW, RADIUS } from "@/lib/design-tokens";
 
 // Lazy-load the search overlay.
 // Only ships the overlay chunk once the user first taps search.
@@ -47,7 +48,7 @@ export function MobileBottomNav() {
       )}
 
       {/* Bottom Navigation Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden">
+      <nav className={`fixed bottom-0 left-0 right-0 ${Z_INDEX.overlay} lg:hidden`}>
         {/* Gradient fade above nav */}
         <div className="h-8 bg-gradient-to-t from-background to-transparent pointer-events-none" />
 
@@ -69,9 +70,9 @@ export function MobileBottomNav() {
                     }
                   }}
                   className={cn(
-                    "flex flex-col items-center justify-center gap-1 min-w-[60px] h-14 rounded-xl transition-all",
+                    `flex flex-col items-center justify-center gap-1 min-w-[60px] h-14 ${RADIUS.lg} transition-all`,
                     item.isAction
-                      ? "bg-primary text-primary-foreground -mt-6 shadow-lg shadow-primary/30 size-14 min-w-[56px] rounded-full"
+                      ? `bg-primary text-primary-foreground -mt-6 ${SHADOW.lg} shadow-primary/30 size-14 min-w-[56px] rounded-full`
                       : isActive
                         ? "text-primary bg-primary/10"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted"

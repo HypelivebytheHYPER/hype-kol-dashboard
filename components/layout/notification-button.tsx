@@ -1,8 +1,9 @@
 "use client";
 
 import { Bell } from "lucide-react";
+import { RADIUS } from "@/lib/design-tokens";
 import { Button } from "@/components/ui/button";
-import { useI18n } from "@/contexts/i18n-context";
+import { useI18n } from "@/components/providers";
 
 interface NotificationButtonProps {
   className?: string;
@@ -20,7 +21,7 @@ export function NotificationButton({ className }: NotificationButtonProps) {
       aria-label={t("header.notifications")}
     >
       <Bell aria-hidden="true" />
-      <span className="absolute top-1 right-1 size-2 bg-destructive rounded-full" aria-hidden="true" />
+      <span className={`absolute top-1 right-1 size-2 bg-destructive ${RADIUS.full}`} aria-hidden="true" />
     </Button>
   );
 }

@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
-import { PRIMARY_NAV } from "@/lib/nav-items";
+import { PRIMARY_NAV } from "@/lib/constants";
+import { DURATION, RADIUS } from "@/lib/design-tokens";
 
 interface NavLinksProps {
   onNavigate?: () => void;
@@ -24,7 +25,7 @@ export function NavLinks({ onNavigate, linkClassName }: NavLinksProps) {
             href={item.href}
             {...(onNavigate ? { onClick: onNavigate } : {})}
             className={cn(
-              "group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 relative",
+              `group flex items-center gap-3 px-3 py-2.5 ${RADIUS.md} text-sm transition-all ${DURATION.moderate} relative`,
               isActive
                 ? "text-foreground font-medium"
                 : "text-muted-foreground hover:text-foreground hover:bg-muted/40",
@@ -32,11 +33,11 @@ export function NavLinks({ onNavigate, linkClassName }: NavLinksProps) {
             )}
           >
             {isActive && (
-              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-full bg-foreground" />
+              <span className={`absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 ${RADIUS.full} bg-foreground`} />
             )}
             <item.icon
               className={cn(
-                "size-4 transition-colors duration-200",
+                `size-4 transition-colors ${DURATION.moderate}`,
                 isActive
                   ? "text-foreground"
                   : "text-muted-foreground group-hover:text-foreground"

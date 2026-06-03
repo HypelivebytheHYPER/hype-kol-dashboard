@@ -10,10 +10,10 @@ Creator and Live Seller management dashboard for Hype marketing agency.
 
 | Layer         | Technology                                       |
 | ------------- | ------------------------------------------------ |
-| Framework     | Next.js 16.2.1 + React 19 (App Router)          |
+| Framework     | Next.js 16.2.4 + React 19 (App Router)          |
 | Styling       | Tailwind CSS v4 + shadcn/ui components           |
-| Data fetching | Server Components (ISR, TanStack Query hydration) |
-| API backend   | Cloudflare Worker (`lark-http-hype`) -> Lark Base |
+| Data fetching | Server Components (ISR, `unstable_cache`)        |
+| API backend   | lark-cli subprocess → Lark Base                  |
 | Animations    | Framer Motion                                    |
 | Charts        | Recharts                                         |
 
@@ -23,10 +23,10 @@ Creator and Live Seller management dashboard for Hype marketing agency.
 
 ```
 Server Components (ISR, revalidate=300s)
-  -> POST /records/search  (list + filter)
-  -> GET  /records/:app/:table/:id  (single record)
-       -> lark-http-hype.hypelive.workers.dev (Cloudflare Worker)
-            -> Lark Base (database)
+  -> lark-cli base +record-list --view-id --field-id --filter-json --sort-json
+  -> lark-cli base +record-get --record-id
+  -> lark-cli base +table-get (schema cache)
+       -> Lark Base (database)
 
 App Router pages
   (dashboard) layout (sidebar + header)
@@ -36,6 +36,7 @@ App Router pages
     /kols                Creator catalog + smart search
     /kols/[id]           Creator profile
     /live                Live MC Catalog with video preview
+    /hypestudio          Studio/venue listings
 ```
 
 ---
@@ -50,38 +51,58 @@ App Router pages
 | `/kols`                | static, 300s ISR  | Creator catalog — smart search, filters, pagination              |
 | `/kols/[id]`           | dynamic           | Creator profile — metrics, contact, recharts                     |
 | `/live`                | static, 300s ISR  | Live MC Catalog — video preview with `#t=0.1` first-frame        |
+| `/hypestudio`          | static, 300s ISR  | Studio/venue listings with photos                                |
 
 ---
 
 ## Data Flow
 
-All data fetched server-side via two helpers in `lib/lark-base.ts`:
+All data fetched server-side via `lib/lark-cli-bridge.ts`:
 
-- `fetchRecords(tableId, opts)` → `POST /records/search` (list + filter)
-- `fetchRecord(tableId, recordId, opts)` → `GET /records/:app/:table/:id` (single lookup)
+| Function | Purpose |
+|----------|---------|
+| `fetchRecords(tableId, opts)` | Paginated list with view/filter/projection |
+| `fetchAllRecords(tableId, opts)` | Auto-paginated full list |
+| `filterRecords(tableId, opts)` | **Dynamic** server-side filter + sort |
+| `filterAllRecords(tableId, opts)` | Auto-paginated filter + sort |
+| `searchRecords(tableId, keyword, opts)` | Keyword search |
+| `getRecordsById(tableId, recordIds, opts)` | Batch record lookup |
+| `getTableSchema(tableId)` | Schema cache (fields + types) |
 
 | Table             | ID                  | Mapper                       |
 | ----------------- | ------------------- | ---------------------------- |
-| ALL_KOLS          | tblaijZshhnZLDWJ    | `recordToCreator()`          |
+| ALL_KOLS          | tbl5864QVOiEokTQ    | `recordToCreator()`          |
+| KOL_LIVE_SELLER   | tblaijZshhnZLDWJ    | (extended creator data)      |
 | LIVE_MC_LIST      | tblozhTWBHelXqRR    | `recordToLiveMC()`           |
 | DASHBOARD_SUMMARY | tblOwkSqf5rci6zq    | `recordToDashboardMetric()`  |
+| STUDIO_LIST       | tblKvYwcJY7Yxa20    | `recordToStudio()`           |
+| MC_REQUESTS       | tbl6wOMD7TDJdWJV    | (MC booking requests)        |
 
-Media URLs for video/image attachments are built via `buildMediaUrl(token, tableId)` →
-`${WORKER}/api/image/${token}?tableId=${tableId}`.
+### View Registry
+
+Lark Base views provide **server-side filtering**. Use these instead of client-side filtering:
+
+| View ID | Name | Filter | Use Case |
+|---------|------|--------|----------|
+| `vewfxCsqZ6` | Kols Management | None | Full catalog |
+| `vewC4ioP6S` | TikTok with Photos | Attachment ≠ empty | KOLs with profile images |
+| `vewwrNWBJD` | Creator KOLs | VideoGmv > 0 | Creator KOLs only |
+| `vewB7z2HDR` | Live Seller KOLs | LiveGmv > 0 | Live seller KOLs only |
+| `vewL4Gwm2Q` | Live Creator KOLs | LiveGmv > 0 AND VideoGmv > 0 | Hybrid KOLs |
+| `vewmNIShjx` | Macro KOL Creators | VideoGmv > 0 AND Follower ≥ 100k | Macro creators |
 
 ### Dashboard Data Flow
 
-The dashboard uses a pre-computed summary table (`DASHBOARD_SUMMARY`) for fast loading:
+Dashboard data comes from `DASHBOARD_SUMMARY` (pre-computed KPIs):
 
 ```
 Lark Base (DASHBOARD_SUMMARY)
-  ├─ loadDashboardMetrics(type, period?)     → KPI cards + Data table
-  ├─ loadDashboardMetricsHistory(type)       → Chart trends (all periods)
-  └─ loadDashboardPeriods()                  → Period selector dropdown
+  ├─ getDashboardKPIs(type, period?)       → KPI cards + Data table
+  ├─ loadDashboardMetricsHistory(type)     → Chart trends (all periods)
+  └─ loadDashboardPeriods()                → Period selector dropdown
 ```
 
-Metrics are computed from `ALL_KOLs` (1,400+ creators) and stored as one row per metric
-per dashboard type per period. This avoids aggregating 1,400 rows on every page load.
+> ⚠️ **Dashboard blocks are broken** — they reference deleted fields and return 4400 errors. All dashboard data now comes from `DASHBOARD_SUMMARY` table directly.
 
 ---
 
@@ -105,6 +126,7 @@ dashboard/
       page.tsx             Root — redirects to /dashboard/overview
       kols/                Creator catalog + [kolId] profile
       live/                Live MC Catalog (video grid, wire-map)
+      hypestudio/          Studio/venue listings
     layout.tsx             Root layout (ThemeProvider)
     globals.css            Tailwind v4 theme + utilities
   components/
@@ -113,18 +135,14 @@ dashboard/
     kol/                   KOLFeedCard (avatar + platform gradient)
     search/                CommandPalette (Cmd+K)
     layout/                Sidebar, header, mobile nav, theme toggle
-  contexts/
-    i18n-context.tsx       Internationalization context provider
-    theme-provider.tsx     next-themes wrapper (default: dark)
   lib/
-    lark-base.ts           fetchRecords + fetchAllRecords + buildMediaUrl
+    lark-cli-bridge.ts     Lark CLI data layer (fetch, filter, search, schema, aggregates)
     record-mappers.ts      Record mappers (recordToCreator, recordToDashboardMetric, etc.)
+    design-tokens.ts       Semantic Tailwind class tokens
+    taxonomy.ts            Content categories + platform maps
     constants.ts           App constants (routes, dashboard types, radar ceilings)
     nav-items.ts           Navigation config (PRIMARY_NAV, MOBILE_BOTTOM_NAV)
-    types/catalog.ts       Type definitions (Creator, LiveMC, DashboardMetric, ErrorProps)
-    categories.ts          Standardized creator categories (26 entries)
-    brand-categories.ts    Brand → content-category map (live MC page)
-    smart-search.ts        Natural language search parser
+    types.ts               Type definitions (Creator, LiveMC, DashboardMetric, Studio)
     format.ts              formatNumber, formatCurrency, formatEngagement
     cn.ts                  Tailwind className utility
   i18n/                    i18n config (next-intl setup)
@@ -135,28 +153,22 @@ dashboard/
 
 ## Environment Variables
 
-Set in Vercel project settings. Both are optional — the worker is open by default.
-
-```
-LARK_API_KEY               # Optional: only if the worker has API_KEY secret set
-NEXT_PUBLIC_LARK_API_URL   # Optional: defaults to https://lark-http-hype.hypelive.workers.dev
+```bash
+LARK_BASE_TOKEN="H2GQbZBFqaUW2usqPswlczYggWg"  # Base token for lark-cli
+LARK_APP_ID="cli_a8a819818eb9d029"               # Lark app ID
+LARK_APP_SECRET="xxx"                             # Lark app secret
+LARK_DASHBOARD_ID="blkEow75KKNcxFRE"             # Dashboard ID (deprecated, blocks broken)
 ```
 
 ---
 
 ## Design Tokens
 
-Tailwind v4 `@theme inline` in `app/globals.css`. All colors as OKLCH, referenced via
-semantic classes (`bg-muted`, `text-foreground`, `border-border`). Light + dark themes;
-`ThemeProvider` defaults to dark.
+Tailwind v4 `@theme inline` in `app/globals.css`. All colors as OKLCH, referenced via semantic classes (`bg-muted`, `text-foreground`, `border-border`). Light + dark themes; `ThemeProvider` defaults to dark.
 
-Tokens defined in both themes: `background`, `foreground`, `card`, `popover`, `primary`,
-`secondary`, `muted`, `accent`, `destructive` (+ `-foreground` for each), `border`,
-`input`, `ring`, `chart-1..5`, `sidebar*`.
+Tokens defined in both themes: `background`, `foreground`, `card`, `popover`, `primary`, `secondary`, `muted`, `accent`, `destructive` (+ `-foreground` for each), `border`, `input`, `ring`, `chart-1..5`, `sidebar*`.
 
 ### Trend Colors
-
-Dashboard trend indicators use semantic tokens (not raw Tailwind colors):
 
 | Trend | Text | Background | Chart |
 |-------|------|------------|-------|
@@ -164,5 +176,4 @@ Dashboard trend indicators use semantic tokens (not raw Tailwind colors):
 | Down (negative) | `text-destructive` | `bg-destructive/10` | `hsl(var(--destructive))` |
 | Neutral | `text-muted-foreground` | `bg-muted` | `hsl(var(--chart-5))` |
 
-**Always-dark media frames** — `/live` and `wire-map` use `bg-zinc-900/800/950` intentionally
-for video card backgrounds, regardless of theme. Not a token bypass.
+**Always-dark media frames** — `/live` and `wire-map` use `bg-zinc-900/800/950` intentionally for video card backgrounds, regardless of theme. Not a token bypass.

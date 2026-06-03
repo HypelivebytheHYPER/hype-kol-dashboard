@@ -1,0 +1,552 @@
+"use client";
+
+import { useState, useMemo, useCallback } from "react";
+import {
+  Search,
+  X,
+  SlidersHorizontal,
+  ChevronDown,
+  Check,
+  Users,
+  ImageIcon,
+} from "lucide-react";
+import {
+  Input,
+  Button,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+  SlideshowGrid,
+} from "@/components/ui";
+import { formatNumber } from "@/lib/format";
+
+import { TIER_ORDER } from "@/lib/constants";
+import type { Creator } from "@/lib/types";
+import { parseSmartSearch, applySmartFilters } from "@/lib/smart-search";
+import { KOLFeedCard } from "@/components/kol/feed-card";
+import { cn } from "@/lib/cn";
+import { DURATION, EASING, OVERLAY, Z_INDEX, SHADOW, RADIUS, WIDTH, SCALE } from "@/lib/design-tokens";
+import { ITEMS_PER_PAGE } from "@/lib/constants";
+
+type SortKey = "followers" | "gmv" | "engagement" | "revenue" | "views" | "quality";
+type TypeTab = "all" | "Live Creator" | "Live Seller" | "Creator";
+
+const SORT_OPTIONS: { key: SortKey; label: string }[] = [
+  { key: "revenue", label: "Revenue" },
+  { key: "followers", label: "Followers" },
+  { key: "gmv", label: "Avg GMV" },
+  { key: "engagement", label: "Engagement" },
+  { key: "views", label: "Views" },
+  { key: "quality", label: "Score" },
+];
+
+const TYPE_TABS: { value: TypeTab; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "Live Creator", label: "Live Creator" },
+  { value: "Live Seller", label: "Live Seller" },
+  { value: "Creator", label: "Creator" },
+];
+
+function getSortValue(kol: Creator, key: SortKey): number {
+  switch (key) {
+    case "followers": return kol.followers;
+    case "gmv": return kol.avgGMV || kol.avgLiveGMV;
+    case "engagement": return kol.engagementRate;
+    case "revenue": return kol.stats.revenue;
+    case "views": return kol.stats.views;
+    case "quality": return kol.qualityScore;
+  }
+}
+
+interface KOLsListClientProps {
+  initialKOLs: Creator[];
+  total: number;
+}
+
+export function KOLsListClient({ initialKOLs, total }: KOLsListClientProps) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<SortKey>("revenue");
+  const [sortDesc, setSortDesc] = useState(true);
+  const [selectedTiers, setSelectedTiers] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [hidePlaceholders, setHidePlaceholders] = useState(false);
+  const [typeTab, setTypeTab] = useState<TypeTab>("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showSidebar, setShowSidebar] = useState(false);
+
+  const allKOLs = useMemo(() => {
+    if (typeTab === "all") return initialKOLs;
+    return initialKOLs.filter((k) => k.kolType === typeTab);
+  }, [initialKOLs, typeTab]);
+
+  const tiers = useMemo(() => {
+    const present = new Set(initialKOLs.map((k) => k.tier).filter(Boolean));
+    return TIER_ORDER.filter((t) => present.has(t));
+  }, [initialKOLs]);
+
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    for (const k of initialKOLs) {
+      for (const c of k.categories) set.add(c);
+    }
+    return [...set].sort();
+  }, [initialKOLs]);
+
+  const smartFilters = useMemo(() => parseSmartSearch(searchQuery), [searchQuery]);
+
+  const filtered = useMemo(() => {
+    let result = allKOLs;
+    if (searchQuery.trim()) result = applySmartFilters(result, smartFilters);
+    if (selectedTiers.length > 0) result = result.filter((k) => selectedTiers.includes(k.tier));
+    if (selectedCategories.length > 0) {
+      result = result.filter((k) => k.categories.some((c) => selectedCategories.includes(c)));
+    }
+    if (hidePlaceholders) result = result.filter((k) => !!k.image);
+    return result;
+  }, [allKOLs, smartFilters, selectedTiers, selectedCategories, searchQuery, hidePlaceholders]);
+
+  const sorted = useMemo(() => {
+    return [...filtered].sort((a, b) => {
+      const va = getSortValue(a, sortBy);
+      const vb = getSortValue(b, sortBy);
+      return sortDesc ? vb - va : va - vb;
+    });
+  }, [filtered, sortBy, sortDesc]);
+
+  const totalPages = Math.ceil(sorted.length / ITEMS_PER_PAGE);
+  const paginated = sorted.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+  const withPhotoCount = useMemo(() => initialKOLs.filter((k) => !!k.image).length, [initialKOLs]);
+
+  const toggleFilter = useCallback(
+    (setter: React.Dispatch<React.SetStateAction<string[]>>, value: string) => {
+      setter((prev) => (prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]));
+    },
+    []
+  );
+
+  const activeFilterCount =
+    selectedTiers.length + selectedCategories.length + (hidePlaceholders ? 1 : 0);
+
+  const clearAllFilters = () => {
+    setSelectedTiers([]);
+    setSelectedCategories([]);
+    setHidePlaceholders(false);
+    setSearchQuery("");
+    setCurrentPage(1);
+  };
+
+  return (
+    <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 animate-fade-in">
+      {/* ── Mobile Filter Toggle ── */}
+      <div className="lg:hidden flex items-center gap-3">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowSidebar(!showSidebar)}
+          className={`h-10 ${RADIUS.lg} gap-2 active:scale-95 transition-transform`}
+        >
+          <SlidersHorizontal className="size-4" />
+          Filters
+          {activeFilterCount > 0 && (
+            <span className={`ml-0.5 px-1.5 py-0.5 text-2xs bg-primary text-primary-foreground ${RADIUS.full} min-w-[18px] inline-flex items-center justify-center`}>
+              {activeFilterCount}
+            </span>
+          )}
+        </Button>
+        {activeFilterCount > 0 && (
+          <button onClick={clearAllFilters} className="text-xs text-primary font-medium">
+            Clear all
+          </button>
+        )}
+      </div>
+
+      {/* ── Mobile Filter Overlay ── */}
+      {showSidebar && (
+        <div
+          className={cn(`fixed inset-0 backdrop-blur-sm ${Z_INDEX.overlay} lg:hidden`, OVERLAY.solid)}
+          onClick={() => setShowSidebar(false)}
+        />
+      )}
+
+      {/* ── Sidebar Filters ── */}
+      <aside
+        className={cn(
+          "lg:w-64 shrink-0 flex-col gap-6",
+          showSidebar
+            ? `fixed inset-y-0 left-0 ${Z_INDEX.modal} w-72 bg-background border-r border-border p-4 pt-6 flex lg:static lg:w-64 lg:bg-transparent lg:border-none lg:p-0 transition-transform ${DURATION.normal} ${EASING.default}`
+            : "hidden lg:flex"
+        )}
+      >
+        {/* Mobile close button */}
+        <div className="flex items-center justify-between lg:hidden">
+          <p className="text-sm font-semibold">Filters</p>
+          <Button variant="ghost" size="icon-sm" onClick={() => setShowSidebar(false)}>
+            <X className="size-4" />
+          </Button>
+        </div>
+
+        {/* Type Tabs */}
+        <div className="flex flex-col gap-2" role="tablist" aria-label="Creator type">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Type</p>
+          <div className="flex flex-col gap-0.5 relative">
+            {TYPE_TABS.map((tab) => {
+              const isActive = typeTab === tab.value;
+              const count = tab.value === "all"
+                ? initialKOLs.length
+                : initialKOLs.filter((k) => k.kolType === tab.value).length;
+              return (
+                <button
+                  key={tab.value}
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => {
+                    setTypeTab(tab.value);
+                  }}
+                  className={cn(
+                    `group relative text-left px-3 py-2.5 ${RADIUS.lg} text-sm font-medium transition-all ${DURATION.normal} ${EASING.default} ${SCALE.active} overflow-hidden`,
+                    isActive
+                      ? "text-primary translate-x-0.5"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
+                  )}
+                >
+                  {/* Sliding background pill */}
+                  <span
+                    className={cn(
+                      `absolute inset-0 ${RADIUS.lg} transition-all ${DURATION.normal} ${EASING.default}`,
+                      isActive ? "bg-primary/10 opacity-100" : "bg-transparent opacity-0"
+                    )}
+                  />
+                  {/* Left accent indicator */}
+                  <span
+                    className={cn(
+                      `absolute left-0 top-2 bottom-2 w-1 ${RADIUS.full} bg-primary transition-all ${DURATION.normal} ${EASING.default}`,
+                      isActive ? "opacity-100 scale-y-100" : "opacity-0 scale-y-0"
+                    )}
+                  />
+                  {/* Content */}
+                  <span className="relative flex items-center justify-between">
+                    <span className={cn(`transition-colors ${DURATION.normal}`, isActive && "font-semibold")}>
+                      {tab.label}
+                    </span>
+                    <span
+                      className={cn(
+                        `text-xs transition-all ${DURATION.normal}`,
+                        isActive
+                          ? `text-primary/70 bg-primary/10 px-2 py-0.5 ${RADIUS.full} font-mono`
+                          : "text-muted-foreground group-hover:text-foreground"
+                      )}
+                    >
+                      {count}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Tier Filter */}
+        {tiers.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tier</p>
+            <div className="flex flex-wrap gap-2">
+              {tiers.map((tier) => (
+                <FilterChip
+                  key={tier}
+                  label={tier.replace(" KOL", "")}
+                  active={selectedTiers.includes(tier)}
+                  onClick={() => toggleFilter(setSelectedTiers, tier)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Category Filter */}
+        {categories.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Category</p>
+            <div className="flex flex-wrap gap-2">
+              {categories.map((cat) => (
+                <FilterChip
+                  key={cat}
+                  label={cat}
+                  active={selectedCategories.includes(cat)}
+                  onClick={() => toggleFilter(setSelectedCategories, cat)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Photo Filter */}
+        <div className="flex flex-col gap-2">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Photos</p>
+          <button
+            onClick={() => {
+              setHidePlaceholders((v) => !v);
+              setCurrentPage(1);
+            }}
+            className={cn(
+              `flex items-center gap-2 px-3 py-2 ${RADIUS.lg} text-sm font-medium transition-all ${DURATION.fast} ${SCALE.active}`,
+              hidePlaceholders
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+            )}
+          >
+            <ImageIcon className="size-4" />
+            With photo only
+            <span className="ml-auto text-xs text-muted-foreground">{withPhotoCount}</span>
+          </button>
+        </div>
+
+        {/* Clear All */}
+        {activeFilterCount > 0 && (
+          <button
+            onClick={clearAllFilters}
+            className="text-xs text-primary font-medium hover:text-primary/80 transition-colors text-left px-3"
+          >
+            Clear all filters
+          </button>
+        )}
+      </aside>
+
+      {/* ── Main Content ── */}
+      <div className={`flex-1 min-w-0 flex flex-col gap-6 ${WIDTH.contentMax}`}>
+        {/* Header + Search + Sort */}
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Creators</h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                {formatNumber(total)} talent in our curated roster
+              </p>
+            </div>
+
+            {/* Sort Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger className={`flex items-center gap-2 px-4 py-2.5 ${RADIUS.lg} bg-muted/40 border border-border/60 text-sm font-medium hover:bg-muted/60 active:scale-95 transition-all`}>
+                Sort by: {SORT_OPTIONS.find((o) => o.key === sortBy)?.label}
+                <ChevronDown className="size-3.5" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className={WIDTH.dropdownMin}>
+                {SORT_OPTIONS.map((opt) => (
+                  <DropdownMenuItem
+                    key={opt.key}
+                    onClick={() => {
+                      if (sortBy === opt.key) setSortDesc(!sortDesc);
+                      else { setSortBy(opt.key); setSortDesc(true); }
+                      setCurrentPage(1);
+                    }}
+                    className="flex items-center justify-between cursor-pointer"
+                  >
+                    <span className={cn(sortBy === opt.key && "text-primary font-medium")}>{opt.label}</span>
+                    {sortBy === opt.key && <Check className="size-3.5 text-primary" />}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          {/* Search */}
+          <div className="relative max-w-xl">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/60" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
+              placeholder="Search creators, brands, categories..."
+              className={`pl-11 h-11 ${RADIUS.lg} bg-muted/30 border-border/40 focus:border-foreground/20 transition-colors`}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                aria-label="Clear search"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground active:scale-90 transition-all"
+              >
+                <X className="size-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Active Filter Chips */}
+          {activeFilterCount > 0 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              {hidePlaceholders && (
+                <FilterTag onRemove={() => setHidePlaceholders(false)}>With photo</FilterTag>
+              )}
+              {selectedTiers.map((t) => (
+                <FilterTag key={t} onRemove={() => toggleFilter(setSelectedTiers, t)}>
+                  {t.replace(" KOL", "")}
+                </FilterTag>
+              ))}
+              {selectedCategories.map((c) => (
+                <FilterTag key={c} onRemove={() => toggleFilter(setSelectedCategories, c)}>
+                  {c}
+                </FilterTag>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Results count + pagination */}
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            <span className="font-mono font-bold text-foreground">{sorted.length}</span> creators
+            {totalPages > 1 && (
+              <span className="ml-2">(page {currentPage} / {totalPages})</span>
+            )}
+          </p>
+        </div>
+
+        {totalPages > 1 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+        )}
+
+        {/* Slideshow */}
+        {paginated.length > 0 ? (
+          <SlideshowGrid>
+            {paginated.map((kol) => (
+              <KOLFeedCard key={kol.id} kol={kol} />
+            ))}
+          </SlideshowGrid>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className={`size-16 ${RADIUS.xl} bg-muted/60 border border-border/60 flex items-center justify-center mb-4`}>
+              <Users className="size-6 text-muted-foreground/30" />
+            </div>
+            <p className="text-lg font-semibold text-muted-foreground">No creators found</p>
+            <p className="text-sm text-muted-foreground mt-1">Try adjusting your filters or search</p>
+            <Button variant="link" onClick={clearAllFilters} className="mt-2">
+              Clear all filters
+            </Button>
+          </div>
+        )}
+
+
+      </div>
+    </div>
+  );
+}
+
+/* ── Sub-components ── */
+
+function Pagination({
+  currentPage,
+  totalPages,
+  onPageChange,
+}: {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) {
+  const getPages = () => {
+    const pages: (number | string)[] = [];
+    const showEllipsis = totalPages > 7;
+
+    if (!showEllipsis) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+      return pages;
+    }
+
+    pages.push(1);
+    if (currentPage > 3) pages.push("...");
+
+    const start = Math.max(2, currentPage - 1);
+    const end = Math.min(totalPages - 1, currentPage + 1);
+    for (let i = start; i <= end; i++) pages.push(i);
+
+    if (currentPage < totalPages - 2) pages.push("...");
+    pages.push(totalPages);
+    return pages;
+  };
+
+  return (
+    <div className="flex items-center justify-center gap-1.5 pt-2 flex-wrap">
+      <button
+        onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+        disabled={currentPage === 1}
+        className={`px-3 py-2 ${RADIUS.lg} text-sm font-medium border border-border/40 hover:bg-muted/50 disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition-all`}
+      >
+        Previous
+      </button>
+
+      {getPages().map((page, idx) =>
+        page === "..." ? (
+          <span key={`ellipsis-${idx}`} className="px-2 text-muted-foreground text-sm">...</span>
+        ) : (
+          <button
+            key={page}
+            onClick={() => onPageChange(page as number)}
+            className={cn(
+              `size-9 ${RADIUS.lg} text-sm font-medium transition-all active:scale-95`,
+              currentPage === page
+                ? "bg-primary text-primary-foreground"
+                : "border border-border/40 hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {page}
+          </button>
+        )
+      )}
+
+      <button
+        onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+        disabled={currentPage === totalPages}
+        className={`px-3 py-2 ${RADIUS.lg} text-sm font-medium border border-border/40 hover:bg-muted/50 disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition-all`}
+      >
+        Next
+      </button>
+    </div>
+  );
+}
+
+function FilterChip({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        `px-3 py-1.5 ${RADIUS.full} text-xs font-medium transition-all ${DURATION.fast} border min-h-9 active:scale-95 touch-manipulation`,
+        active
+          ? `bg-primary text-primary-foreground border-primary ${SHADOW.sm}`
+          : "bg-transparent text-muted-foreground border-border/40 hover:border-border/70 hover:text-foreground hover:bg-muted/30"
+      )}
+    >
+      {label}
+    </button>
+  );
+}
+
+function FilterTag({
+  children,
+  onRemove,
+}: {
+  children: React.ReactNode;
+  onRemove: () => void;
+}) {
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 ${RADIUS.full} text-xs font-medium bg-primary/10 text-primary border border-primary/20`}>
+      {children}
+      <button
+        onClick={onRemove}
+        aria-label={`Remove ${children} filter`}
+        className="hover:text-destructive transition-colors active:scale-90"
+      >
+        <X className="size-3" />
+      </button>
+    </span>
+  );
+}

@@ -2,11 +2,10 @@ import type { Metadata, Viewport } from "next";
 import { Noto_Sans_Thai, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-import { ThemeProvider } from "@/contexts/theme-provider";
-import { I18nProvider } from "@/contexts/i18n-context";
-import { BRAND } from "@/lib/brand";
+import { ThemeProvider } from "@/components/providers";
+import { I18nProvider } from "@/components/providers";
+import { BRAND, THEME_COLOR } from "@/lib/constants";
 import { Toaster } from "sonner";
-import { SERVICES } from "@/lib/external-services";
 
 const notoSansThai = Noto_Sans_Thai({
   subsets: ["thai", "latin"],
@@ -52,7 +51,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#000000",
+  themeColor: THEME_COLOR,
 };
 
 export default function RootLayout({
@@ -65,7 +64,6 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <link rel="preconnect" href={SERVICES.larkWorker} />
         <link rel="preconnect" href="https://p16-sign-sg.tiktokcdn.com" />
         <link rel="preconnect" href="https://p16-common-sign.tiktokcdn-us.com" />
         <link rel="dns-prefetch" href="https://www.tiktok.com" />

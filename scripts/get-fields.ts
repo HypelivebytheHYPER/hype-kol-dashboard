@@ -1,32 +1,28 @@
-const LARK_APP_ID = process.env.LARK_APP_ID!;
-const LARK_APP_SECRET = process.env.LARK_APP_SECRET!;
+import { execSync } from "node:child_process";
+import { TABLES } from "../lib/lark-cli-bridge";
 
-async function getTenantToken(): Promise<string> {
-  const res = await fetch("https://open.larksuite.com/open-apis/auth/v3/app_access_token/internal", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ app_id: LARK_APP_ID, app_secret: LARK_APP_SECRET }),
-  });
-  const data = await res.json() as any;
-  if (data.code !== 0 || !data.tenant_access_token) {
-    throw new Error(`Auth failed: ${data.msg}`);
-  }
-  return data.tenant_access_token;
-}
+const tableArg = process.argv[2] as keyof typeof TABLES;
+const TABLE = TABLES[tableArg] ?? TABLES.DASHBOARD_SUMMARY;
+const BASE_TOKEN = process.env["LARK_BASE_TOKEN"] ?? "H2GQbZBFqaUW2usqPswlczYggWg";
 
 async function main() {
-  const token = await getTenantToken();
-  const url = "https://open.larksuite.com/open-apis/bitable/v1/apps/H2GQbZBFqaUW2usqPswlczYggWg/tables/tblaijZshhnZLDWJ/fields?page_size=100";
-  const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  const data = await res.json();
-  if (data.data?.items) {
-    for (const item of data.data.items) {
-      console.log(`${item.field_name} (${item.type})`);
-    }
-  } else {
-    console.log("Error:", JSON.stringify(data, null, 2));
+  const stdout = execSync(
+    `lark-cli base +field-list --base-token ${BASE_TOKEN} --table-id ${TABLE} --format json 2>&1`,
+    { encoding: "utf-8" }
+  );
+  const res = JSON.parse(stdout) as {
+    ok: boolean;
+    data?: { fields: Array<{ id: string; name: string; type: string }> };
+    error?: { message: string };
+  };
+
+  if (!res.ok || !res.data?.fields) {
+    console.error("Error:", res.error?.message ?? "Unknown error");
+    process.exit(1);
+  }
+
+  for (const f of res.data.fields) {
+    console.log(`${f.name} (${f.type})`);
   }
 }
 main().catch(console.error);

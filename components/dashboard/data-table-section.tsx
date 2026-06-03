@@ -1,20 +1,16 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { DashboardMetric } from "@/lib/types/catalog";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import type { DashboardMetric } from "@/lib/types";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+  Card, CardContent, CardHeader, CardTitle,
+  Badge,
+  Input,
+  Button,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+} from "@/components/ui";
 import { cn } from "@/lib/cn";
-import { TREND, TREND_CHIP } from "@/lib/design-tokens";
+import { TREND, TREND_CHIP, RADIUS } from "@/lib/design-tokens";
 import { Search, ArrowUpDown, ArrowUp, ArrowDown, Download, TrendingUp, TrendingDown, X } from "lucide-react";
 
 type SortKey = "metricLabel" | "metricValue" | "change" | "trend";
@@ -252,13 +248,13 @@ export function DataTableSection({ metrics }: DataTableSectionProps) {
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-4 py-2">
-            <div className="flex items-center justify-between rounded-lg bg-muted/50 p-4">
+            <div className={`flex items-center justify-between ${RADIUS.md} bg-muted/50 p-4`}>
               <span className="text-sm text-muted-foreground">Value</span>
               <span className="text-xl font-bold tabular-nums">
                 {selectedMetric && formatValue(selectedMetric.metricValue, selectedMetric.metricUnit)}
               </span>
             </div>
-            <div className="flex items-center justify-between rounded-lg bg-muted/50 p-4">
+            <div className={`flex items-center justify-between ${RADIUS.md} bg-muted/50 p-4`}>
               <span className="text-sm text-muted-foreground">Change vs Last Period</span>
               <span className={cn(
                 "text-sm font-medium tabular-nums",
@@ -267,7 +263,7 @@ export function DataTableSection({ metrics }: DataTableSectionProps) {
                 {selectedMetric && `${selectedMetric.change >= 0 ? "+" : ""}${selectedMetric.change}%`}
               </span>
             </div>
-            <div className="flex items-center justify-between rounded-lg bg-muted/50 p-4">
+            <div className={`flex items-center justify-between ${RADIUS.md} bg-muted/50 p-4`}>
               <span className="text-sm text-muted-foreground">Trend</span>
               <Badge
                 variant="secondary"
@@ -279,13 +275,13 @@ export function DataTableSection({ metrics }: DataTableSectionProps) {
                 {selectedMetric?.trend}
               </Badge>
             </div>
-            <div className="flex items-center justify-between rounded-lg bg-muted/50 p-4">
+            <div className={`flex items-center justify-between ${RADIUS.md} bg-muted/50 p-4`}>
               <span className="text-sm text-muted-foreground">Dashboard Type</span>
               <span className="text-sm font-medium capitalize">
                 {selectedMetric?.dashboardType}
               </span>
             </div>
-            <div className="flex items-center justify-between rounded-lg bg-muted/50 p-4">
+            <div className={`flex items-center justify-between ${RADIUS.md} bg-muted/50 p-4`}>
               <span className="text-sm text-muted-foreground">Period</span>
               <span className="text-sm font-medium">
                 {selectedMetric?.period}

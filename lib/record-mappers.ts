@@ -1,31 +1,37 @@
-// Transform raw Lark records into typed domain objects (Creator, LiveMC) and
-// collapse multi-row creators down to one entry per KOL.
+// Transform raw Lark records into typed domain objects and collapse multi-row
+// creators down to one entry per KOL.
 
 import { unstable_cache } from "next/cache";
-import { str, num, arr, url, attachments, buildMediaUrl, fetchRecords, fetchAllRecords, TABLES, type LarkRecord, type LarkAttachment } from "./lark-base";
 import {
-  normalizeCategories,
-  CATEGORY_FIELD,
-  getMCContentCategories,
-} from "./taxonomy";
-import type { Creator, LiveMC, DashboardMetric, Studio } from "./types/catalog";
-
-
+  str, num, arr, url, resolveRecordAttachments,
+  fetchAllRecords, TABLES, VIEWS, type LarkRecord,
+  getDashboardKPIs, getDashboardPeriods, getLatestDashboardPeriod,
+} from "./lark-cli-bridge";
+import { normalizeCategories, CATEGORY_FIELD } from "./taxonomy";
+import type { Creator, DashboardMetric, Studio } from "./types";
 
 /* ── KOL Record Parsing ─────────────────────────────────────────────── */
 
-/** Convert a single raw Lark row into a typed Creator.
- *  Private — consumers should use `loadKOLCatalog` or `loadKOLProfile`. */
 /** Extract TikTok handle from a profile URL like https://www.tiktok.com/@username */
-function extractTikTokHandleFromUrl(urlStr: string): string | null {
+export function extractTikTokHandleFromUrl(urlStr: string): string | null {
   try {
-    const url = new URL(urlStr);
-    const match = url.pathname.match(/^\/@([^/]+)/);
+    const u = new URL(urlStr);
+    const match = u.pathname.match(/^\/@([^/]+)/);
     return match?.[1] ?? null;
   } catch {
     return null;
   }
 }
+
+// Platform field is a Formula returning SingleSelect option IDs
+const PLATFORM_MAP: Record<string, string> = {
+  optzonmtE3: "TikTok",
+  optPtaoZFs: "Other",
+  optbMWso1S: "YouTube",
+  optBJjwUkb: "Instagram",
+  optBucpYlz: "X",
+  optlFXdXnO: "Facebook",
+};
 
 function recordToCreator(r: LarkRecord): Creator {
   const f = r.fields;
@@ -43,7 +49,7 @@ function recordToCreator(r: LarkRecord): Creator {
     kolId: str(f, "Record ID") || r.record_id,
     name: str(f, "Nickname") || rawHandle,
     handle: tiktokHandleFromUrl || rawHandle,
-    platform: str(f, "Platform"),
+    platform: PLATFORM_MAP[str(f, "Platform")] || str(f, "Platform"),
     tier: str(f, "Levels of KOLs"),
     followers: num(f, "Follower"),
     engagementRate: num(f, "Engagement Rate"),
@@ -58,6 +64,10 @@ function recordToCreator(r: LarkRecord): Creator {
       liveGmv: num(f, "LiveGmv"), videoGmv: num(f, "VideoGmv"), revenue: num(f, "Revenue"),
       views: num(f, "Views"), productCount: num(f, "ProductCount"),
       liveNum: num(f, "LiveNum"), videoNum: num(f, "VideoNum"),
+      ...(num(f, "Likes") > 0 && { likes: num(f, "Likes") }),
+      ...(num(f, "Comments") > 0 && { comments: num(f, "Comments") }),
+      ...(num(f, "Shares") > 0 && { shares: num(f, "Shares") }),
+      ...(num(f, "Saves") > 0 && { saves: num(f, "Saves") }),
     },
     bio: { th: str(f, "Bio_TH"), en: str(f, "Bio_EN") },
     condition: str(f, "Condition"),
@@ -68,25 +78,10 @@ function recordToCreator(r: LarkRecord): Creator {
   };
   if (accountType) creator.accountType = accountType;
 
-  // 1. Prefer Lark Base attachment (uploaded image)
-  //    tmp_url expires quickly — always use the stable worker proxy.
-  const att = attachments(f, "Attachment");
-  const isImage = (a: LarkAttachment) =>
-    a.type?.startsWith("image/") ?? /\.(jpg|jpeg|png|gif|webp|avif)$/i.test(a.name);
-  const images = att.filter(isImage);
-  const img = images.length > 0 ? images[images.length - 1] : undefined;
-  if (img) {
-    creator.image = buildMediaUrl(img.file_token, TABLES.ALL_KOLS);
-  } else {
-    // 2. Fall back to stored profile photo URL (scraped from TikTok/IG profile page)
-    const profilePhotoUrl =
-      str(f, "Profile Photo URL") ||
-      str(f, "Avatar URL") ||
-      str(f, "Profile Image") ||
-      str(f, "Photo") ||
-      str(f, "Image");
-    if (profilePhotoUrl) creator.image = profilePhotoUrl;
-  }
+  const profilePhotoUrl = ["Profile Photo URL", "Avatar URL", "Profile Image", "Photo", "Image"]
+    .map((k) => str(f, k))
+    .find(Boolean);
+  if (profilePhotoUrl) creator.image = profilePhotoUrl;
 
   return creator;
 }
@@ -143,12 +138,108 @@ export function parseKOLRecords(records: LarkRecord[]) {
 /** Load the full KOL catalog (list view).
  *  Cached via Next.js unstable_cache — survives across requests, cold starts,
  *  and Vercel edge regions. Revalidates every 5 minutes. */
+/** Fields needed for Creator parsing — projection reduces payload vs fetching all 36 fields. */
+const KOL_CORE_FIELDS = [
+  "Record ID", "Nickname", "Handle", "Platform", "Levels of KOLs",
+  "Follower", "Engagement Rate", "Avg_Monthly_GMV_Numeric", "Avg_Live_GMV_Numeric",
+  "Quality Score", "Inferred Categories", "Location", "KOLs Type",
+  "LineId", "Phone", "Contact_Email", "LiveGmv", "VideoGmv", "Revenue",
+  "Views", "ProductCount", "LiveNum", "VideoNum", "Likes", "Comments",
+  "Shares", "Saves", "Bio_EN", "Bio_TH", "Condition", "Scope", "SourceUrl",
+  "Channel", "Fee", "Account Type", "Attachment",
+];
+
 export const loadKOLCatalog = unstable_cache(
   async () => {
-    const records = await fetchAllRecords(TABLES.ALL_KOLS, { tags: ["kols"] });
+    const records = await fetchAllRecords(TABLES.ALL_KOLS, {
+      viewId: VIEWS.KOLS_ALL,
+      fieldNames: KOL_CORE_FIELDS,
+    });
+    const { creators, byId } = parseKOLRecords(records);
+
+    const resolved = await resolveRecordAttachments(records, {
+      tableId: TABLES.ALL_KOLS,
+      fieldName: "Attachment",
+      filter: (a) => a.type?.startsWith("image/") || /\.(jpg|jpeg|png|gif|webp|avif)$/i.test(a.name),
+    });
+
+    for (const c of creators) {
+      const media = resolved.get(c.id);
+      if (media?.length) c.image = media[0].url;
+    }
+
+    return { creators, byId };
+  },
+  ["kol-catalog-v4"],
+  { revalidate: 300, tags: ["kols"] }
+);
+
+/** Load KOLs with profile photos (Attachment is not empty).
+ *  Uses the "TikTok with Photos" view for server-side filtering. */
+export const loadKOLsWithPhotos = unstable_cache(
+  async () => {
+    const records = await fetchAllRecords(TABLES.ALL_KOLS, {
+      viewId: VIEWS.KOLS_WITH_PHOTOS,
+      fieldNames: KOL_CORE_FIELDS,
+    });
+    const { creators, byId } = parseKOLRecords(records);
+
+    const resolved = await resolveRecordAttachments(records, {
+      tableId: TABLES.ALL_KOLS,
+      fieldName: "Attachment",
+      filter: (a) => a.type?.startsWith("image/") || /\.(jpg|jpeg|png|gif|webp|avif)$/i.test(a.name),
+    });
+
+    for (const c of creators) {
+      const media = resolved.get(c.id);
+      if (media?.length) c.image = media[0].url;
+    }
+
+    return { creators, byId };
+  },
+  ["kol-photos-v4"],
+  { revalidate: 300, tags: ["kols"] }
+);
+
+/** Load creator KOLs only (VideoGmv > 0).
+ *  Uses the "Creator KOLs" view for server-side filtering. */
+export const loadCreatorKOLs = unstable_cache(
+  async () => {
+    const records = await fetchAllRecords(TABLES.ALL_KOLS, {
+      viewId: VIEWS.KOLS_CREATOR,
+      fieldNames: KOL_CORE_FIELDS,
+    });
     return parseKOLRecords(records);
   },
-  ["kol-catalog-v3"],
+  ["kol-creators-v4"],
+  { revalidate: 300, tags: ["kols"] }
+);
+
+/** Load live seller KOLs only (LiveGmv > 0).
+ *  Uses the "Live Seller KOLs" view for server-side filtering. */
+export const loadLiveSellerKOLs = unstable_cache(
+  async () => {
+    const records = await fetchAllRecords(TABLES.ALL_KOLS, {
+      viewId: VIEWS.KOLS_LIVE_SELLER,
+      fieldNames: KOL_CORE_FIELDS,
+    });
+    return parseKOLRecords(records);
+  },
+  ["kol-live-sellers-v4"],
+  { revalidate: 300, tags: ["kols"] }
+);
+
+/** Load macro KOL creators (VideoGmv > 0 AND Follower >= 100k).
+ *  Uses the "Macro KOL Creators" view for server-side filtering. */
+export const loadMacroKOLCreators = unstable_cache(
+  async () => {
+    const records = await fetchAllRecords(TABLES.ALL_KOLS, {
+      viewId: VIEWS.KOLS_MACRO_CREATOR,
+      fieldNames: KOL_CORE_FIELDS,
+    });
+    return parseKOLRecords(records);
+  },
+  ["kol-macro-v4"],
   { revalidate: 300, tags: ["kols"] }
 );
 
@@ -157,46 +248,6 @@ export const loadKOLCatalog = unstable_cache(
 export async function loadKOLProfile(kolId: string) {
   const { byId } = await loadKOLCatalog();
   return byId[kolId] ?? null;
-}
-
-/* ── Live MC Record Parsing ─────────────────────────────────────────── */
-
-export function recordToLiveMC(r: LarkRecord): LiveMC {
-  const f = r.fields;
-  const refs = attachments(f, "LIVE Reference");
-  const brandList = arr(f, "Brand");
-
-  // Lark's +record-list API doesn't return type/url/tmp_url for attachments.
-  // Infer media type from filename extension and always use worker proxy.
-  const isImage = (name: string) => /\.(jpg|jpeg|png|gif|webp|avif|bmp|heic)$/i.test(name);
-  const isVideo = (name: string) => /\.(mp4|mov|avi|mkv|webm|m4v)$/i.test(name);
-  const mediaUrl = (a: LarkAttachment) => buildMediaUrl(a.file_token, TABLES.LIVE_MC_LIST);
-
-  const images = refs
-    .filter((a: LarkAttachment) => isImage(a.name) || a.type?.startsWith("image/"))
-    .map((img: LarkAttachment) => ({
-      token: img.file_token,
-      url: mediaUrl(img),
-      name: img.name,
-    }));
-  const profilePhoto = str(f, "Profile Photo URL") || str(f, "Avatar URL") || undefined;
-  const mc: LiveMC = {
-    id: r.record_id,
-    handle: str(f, "Handle"),
-    brands: brandList,
-    categories: normalizeCategories(arr(f, CATEGORY_FIELD)),
-    contentCategories: getMCContentCategories(brandList),
-    ...(profilePhoto ? { profilePhoto } : {}),
-    images,
-    videos: refs
-      .filter((a: LarkAttachment) => isVideo(a.name) || a.type?.startsWith("video/"))
-      .map((v: LarkAttachment) => ({
-        token: v.file_token,
-        url: mediaUrl(v),
-        name: v.name,
-      })),
-  };
-  return mc;
 }
 
 /* ── Dashboard Summary Record Parsing ───────────────────────────────── */
@@ -228,51 +279,35 @@ export function recordToDashboardMetric(r: LarkRecord): DashboardMetric {
     metricUnit: str(f, "Metric Unit"),
     change: num(f, "Change"),
     trend: parseTrend(str(f, "Trend")),
+    ...(num(f, "Benchmark Value") > 0 && { benchmarkValue: num(f, "Benchmark Value") }),
+    ...(num(f, "Forecast Value") > 0 && { forecastValue: num(f, "Forecast Value") }),
+    ...(f["Is Anomaly"] === true && { isAnomaly: true }),
+    ...(str(f, "Insight Text") && { insightText: str(f, "Insight Text") }),
   };
 }
 
 /** Load dashboard metrics for a given type and period.
- *  If no period is specified, defaults to the latest period available.
- *  Cached via Next.js unstable_cache — fast lookup from pre-computed summary table. */
+ *  Uses getDashboardKPIs which queries DASHBOARD_SUMMARY directly —
+ *  dashboard blocks are broken (reference deleted fields). */
 export const loadDashboardMetrics = unstable_cache(
   async (dashboardType: DashboardMetric["dashboardType"], period?: string) => {
     let targetPeriod = period;
-
-    // Default to the latest period when none specified
     if (!targetPeriod) {
-      const latest = await fetchRecords(TABLES.DASHBOARD_SUMMARY, {
-        filter: {
-          conjunction: "and",
-          conditions: [{ fieldName: "Dashboard Type", operator: "is", value: [dashboardType] }],
-        },
-        sort: [{ fieldName: "Period", desc: true }],
-        pageSize: 1,
-        fieldNames: ["Period"],
-      });
-      targetPeriod = latest.data[0] ? str(latest.data[0].fields, "Period") : undefined;
+      targetPeriod = await getLatestDashboardPeriod() ?? undefined;
     }
 
-    const filter: {
-      conjunction: "and";
-      conditions: Array<{
-        fieldName: string;
-        operator: "is" | "isNot" | "contains" | "doesNotContain" | "isEmpty" | "isNotEmpty";
-        value: string[];
-      }>;
-    } = {
-      conjunction: "and",
-      conditions: [
-        { fieldName: "Dashboard Type", operator: "is", value: [dashboardType] },
-      ],
-    };
-    if (targetPeriod) {
-      filter.conditions.push({ fieldName: "Period", operator: "is", value: [targetPeriod] });
-    }
-    const records = await fetchAllRecords(TABLES.DASHBOARD_SUMMARY, {
-      filter,
-      tags: ["dashboard"],
-    });
-    return records.map(recordToDashboardMetric);
+    const kpis = await getDashboardKPIs(dashboardType, targetPeriod);
+    return kpis.map((k) => ({
+      id: `${k.metricKey}-${k.period}`,
+      period: k.period,
+      dashboardType: dashboardType as DashboardMetric["dashboardType"],
+      metricKey: k.metricKey,
+      metricLabel: k.metricLabel,
+      metricValue: k.metricValue,
+      metricUnit: k.metricUnit,
+      change: k.change,
+      trend: k.trend,
+    }));
   },
   ["dashboard-metrics"],
   { revalidate: 300, tags: ["dashboard"] }
@@ -282,15 +317,20 @@ export const loadDashboardMetrics = unstable_cache(
  *  Used by charts to render multi-period trends. */
 export const loadDashboardMetricsHistory = unstable_cache(
   async (dashboardType: DashboardMetric["dashboardType"]) => {
-    const records = await fetchAllRecords(TABLES.DASHBOARD_SUMMARY, {
-      filter: {
-        conjunction: "and",
-        conditions: [{ fieldName: "Dashboard Type", operator: "is", value: [dashboardType] }],
-      },
-      sort: [{ fieldName: "Period", desc: false }],
-      tags: ["dashboard"],
-    });
-    return records.map(recordToDashboardMetric);
+    const kpis = await getDashboardKPIs(dashboardType);
+    return kpis
+      .sort((a, b) => a.period.localeCompare(b.period))
+      .map((k) => ({
+        id: `${k.metricKey}-${k.period}`,
+        period: k.period,
+        dashboardType: dashboardType as DashboardMetric["dashboardType"],
+        metricKey: k.metricKey,
+        metricLabel: k.metricLabel,
+        metricValue: k.metricValue,
+        metricUnit: k.metricUnit,
+        change: k.change,
+        trend: k.trend,
+      }));
   },
   ["dashboard-metrics-history"],
   { revalidate: 300, tags: ["dashboard"] }
@@ -299,17 +339,35 @@ export const loadDashboardMetricsHistory = unstable_cache(
 /** Load all distinct periods available in the Dashboard Summary table.
  *  Used by the period selector dropdown. */
 export const loadDashboardPeriods = unstable_cache(
-  async () => {
-    const records = await fetchAllRecords(TABLES.DASHBOARD_SUMMARY, {
-      fieldNames: ["Period"],
-      tags: ["dashboard"],
-    });
-    const periods = Array.from(new Set(records.map((r) => str(r.fields, "Period"))))
-      .filter(Boolean)
-      .sort();
-    return periods;
-  },
+  async () => getDashboardPeriods(),
   ["dashboard-periods"],
+  { revalidate: 300, tags: ["dashboard"] }
+);
+
+/** Load chart data from DASHBOARD_SUMMARY KPIs.
+ *  Dashboard blocks are broken — we compute from the summary table instead. */
+export const loadDashboardChartData = unstable_cache(
+  async (chartType: "salesCategories" | "collaborationStage" | "monthlyGMV") => {
+    // Map chart types to metric key prefixes in DASHBOARD_SUMMARY
+    const metricPrefixMap = {
+      salesCategories: ["category_"],
+      collaborationStage: ["stage_"],
+      monthlyGMV: ["gmv_"],
+    } as const;
+
+    const prefixes = metricPrefixMap[chartType];
+    const latestPeriod = await getLatestDashboardPeriod();
+    if (!latestPeriod) return [];
+
+    // Try gmv dashboard for monthlyGMV, overview for others
+    const dashboardType = chartType === "monthlyGMV" ? "gmv" : "overview";
+    const kpis = await getDashboardKPIs(dashboardType, latestPeriod);
+
+    return kpis
+      .filter((k) => prefixes.some((p) => k.metricKey.startsWith(p)))
+      .map((k) => ({ label: k.metricLabel, value: k.metricValue }));
+  },
+  ["dashboard-chart-data"],
   { revalidate: 300, tags: ["dashboard"] }
 );
 
@@ -317,7 +375,6 @@ export const loadDashboardPeriods = unstable_cache(
 
 function recordToStudio(r: LarkRecord): Studio {
   const f = r.fields;
-  const photos = attachments(f, "Photos");
   return {
     id: r.record_id,
     name: str(f, "Studio Name"),
@@ -331,7 +388,7 @@ function recordToStudio(r: LarkRecord): Studio {
     contact: str(f, "Contact"),
     reference: str(f, "Reference"),
     recommended: Boolean(f["Recommended"]),
-    images: photos.map((p) => buildMediaUrl(p.file_token, TABLES.STUDIO_LIST)),
+    images: [],
   };
 }
 
@@ -340,9 +397,25 @@ function recordToStudio(r: LarkRecord): Studio {
 export const loadStudioList = unstable_cache(
   async () => {
     const records = await fetchAllRecords(TABLES.STUDIO_LIST, {
-      tags: ["studio"],
+      fieldNames: [
+        "Studio Name", "Provider", "Starting Price", "Size",
+        "Capacity", "Parking", "Hours", "Deposit", "Contact",
+        "Reference", "Recommended", "Photos",
+      ],
     });
-    return records.map(recordToStudio);
+    const studios = records.map(recordToStudio);
+
+    const resolved = await resolveRecordAttachments(records, {
+      tableId: TABLES.STUDIO_LIST,
+      fieldName: "Photos",
+    });
+
+    for (const s of studios) {
+      const media = resolved.get(s.id);
+      if (media) s.images = media.map((m) => m.url);
+    }
+
+    return studios;
   },
   ["studio-list"],
   { revalidate: 300, tags: ["studio"] }

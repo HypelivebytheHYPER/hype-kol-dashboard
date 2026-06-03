@@ -8,9 +8,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { useI18n } from "@/contexts/i18n-context";
+import { useI18n } from "@/components/providers";
 import { localeLabels, localeFlags, type Locale } from "@/i18n/config";
 import { cn } from "@/lib/cn";
+import { RADIUS } from "@/lib/design-tokens";
 
 export function LanguageSwitcher() {
   const { locale, setLocale, t } = useI18n();
@@ -22,7 +23,7 @@ export function LanguageSwitcher() {
           <Button
             variant="outline"
             size="icon-lg"
-            className="rounded-md hover:bg-accent hover:text-accent-foreground"
+            className={`${RADIUS.sm} hover:bg-accent hover:text-accent-foreground`}
             title={t("header.language")}
           >
             <Globe />
@@ -42,7 +43,7 @@ export function LanguageSwitcher() {
           >
             <span className="text-base">{localeFlags[loc]}</span>
             <span className="flex-1">{localeLabels[loc]}</span>
-            {locale === loc && <span className="size-1.5 rounded-full bg-primary" />}
+            {locale === loc && <span className={`size-1.5 ${RADIUS.full} bg-primary`} />}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

@@ -2,8 +2,9 @@
 
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { RADIUS } from "@/lib/design-tokens";
 import { AlertCircle, RefreshCw } from "lucide-react";
-import type { ErrorProps } from "@/lib/types/catalog";
+import type { ErrorProps } from "@/lib/types";
 
 export default function GlobalError({ error, reset }: ErrorProps) {
   useEffect(() => {
@@ -13,7 +14,7 @@ export default function GlobalError({ error, reset }: ErrorProps) {
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="flex flex-col max-w-md w-full text-center gap-6">
-        <div className="size-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto">
+        <div className={`size-16 ${RADIUS.full} bg-destructive/10 flex items-center justify-center mx-auto`}>
           <AlertCircle className="size-8 text-destructive" />
         </div>
 

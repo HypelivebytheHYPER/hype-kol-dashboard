@@ -1,6 +1,6 @@
 "use client";
 
-import type { DashboardMetric } from "@/lib/types/catalog";
+import type { DashboardMetric } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/cn";
 import { TREND } from "@/lib/design-tokens";
