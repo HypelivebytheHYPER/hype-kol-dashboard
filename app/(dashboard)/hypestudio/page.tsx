@@ -38,7 +38,12 @@ export const metadata: Metadata = {
 };
 
 export default async function HypeStudioPage() {
-  const studios = (await loadStudioList()).slice(0, MAX_STUDIO_PREVIEW);
+  let studios: import("@/lib/types").Studio[] = [];
+  try {
+    studios = (await loadStudioList()).slice(0, MAX_STUDIO_PREVIEW);
+  } catch (e) {
+    console.warn("[HypeStudio] Studio list unavailable at build time:", e);
+  }
 
   return (
     <>

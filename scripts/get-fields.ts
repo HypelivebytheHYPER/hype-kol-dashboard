@@ -3,7 +3,11 @@ import { TABLES } from "../lib/lark-cli-bridge";
 
 const tableArg = process.argv[2] as keyof typeof TABLES;
 const TABLE = TABLES[tableArg] ?? TABLES.DASHBOARD_SUMMARY;
-const BASE_TOKEN = process.env["LARK_BASE_TOKEN"] ?? "H2GQbZBFqaUW2usqPswlczYggWg";
+const BASE_TOKEN = process.env["LARK_BASE_TOKEN"];
+if (!BASE_TOKEN) {
+  console.error("Error: LARK_BASE_TOKEN environment variable is required");
+  process.exit(1);
+}
 
 async function main() {
   const stdout = execSync(

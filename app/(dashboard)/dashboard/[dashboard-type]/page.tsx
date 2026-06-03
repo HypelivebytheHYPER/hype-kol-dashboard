@@ -23,11 +23,18 @@ export default async function DashboardPage({
     notFound();
   }
 
-  const [metrics, history, periods] = await Promise.all([
-    loadDashboardMetrics(type as DashboardType, period),
-    loadDashboardMetricsHistory(type as DashboardType),
-    loadDashboardPeriods(),
-  ]);
+  let metrics: import("@/lib/types").DashboardMetric[] = [];
+  let history: import("@/lib/types").DashboardMetric[] = [];
+  let periods: string[] = [];
+  try {
+    [metrics, history, periods] = await Promise.all([
+      loadDashboardMetrics(type as DashboardType, period),
+      loadDashboardMetricsHistory(type as DashboardType),
+      loadDashboardPeriods(),
+    ]);
+  } catch (e) {
+    console.warn("[Dashboard] Data unavailable at build time:", e);
+  }
 
   return (
     <DashboardClient

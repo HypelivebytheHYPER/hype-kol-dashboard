@@ -169,10 +169,22 @@ interface ExecOptions {
   dryRun?: boolean;
 }
 
+/** Build a CLI flag using --key=value syntax.
+ *  REQUIRED: lark-cli's parser breaks when a flag value is empty and passed
+ *  as a separate argument (--base-token  --table-id … treats --table-id as
+ *  a positional arg). --key=value works even with empty values. */
+function flag(key: string, value: string | number | boolean): string {
+  return `--${key}=${String(value)}`;
+}
+
 function execLarkCli(args: string[], opts: ExecOptions = {}): unknown {
-  const cmdArgs = [...args, "--format", "json"];
-  if (opts.jq) cmdArgs.push("--jq", opts.jq);
-  if (opts.dryRun) cmdArgs.push("--dry-run");
+  if (!BASE_TOKEN) {
+    throw new Error("LARK_BASE_TOKEN is not set");
+  }
+
+  const cmdArgs = [...args, flag("format", "json")];
+  if (opts.jq) cmdArgs.push(flag("jq", opts.jq));
+  if (opts.dryRun) cmdArgs.push(flag("dry-run", true));
 
   // Try system lark-cli first, fall back to npm-installed version
   let cmd: string;
@@ -225,7 +237,7 @@ export function getTableSchema(tableId: TableId): TableSchema {
   if (cached) return cached;
 
   const res = execLarkCli([
-    "base", "+table-get", "--base-token", BASE_TOKEN, "--table-id", tableId,
+    "base", "+table-get", flag("base-token", BASE_TOKEN), flag("table-id", tableId),
   ]) as {
     ok: boolean;
     data?: {
@@ -276,13 +288,13 @@ export function resolveFieldNames(tableId: TableId, fieldIds: string[]): string[
 // ─── Record read ────────────────────────────────────────────────────────────
 
 export async function fetchRecords(tableId: TableId, opts: FetchOptions = {}): Promise<FetchResult> {
-  const args = ["base", "+record-list", "--base-token", BASE_TOKEN, "--table-id", tableId];
-  if (opts.viewId) args.push("--view-id", opts.viewId);
+  const args = ["base", "+record-list", flag("base-token", BASE_TOKEN), flag("table-id", tableId)];
+  if (opts.viewId) args.push(flag("view-id", opts.viewId));
   if (opts.fieldNames?.length) {
-    for (const id of resolveFieldIds(tableId, opts.fieldNames)) args.push("--field-id", id);
+    for (const id of resolveFieldIds(tableId, opts.fieldNames)) args.push(flag("field-id", id));
   }
-  if (opts.pageSize) args.push("--limit", String(Math.min(opts.pageSize, 200)));
-  if (opts.pageToken) args.push("--offset", opts.pageToken);
+  if (opts.pageSize) args.push(flag("limit", Math.min(opts.pageSize, 200)));
+  if (opts.pageToken) args.push(flag("offset", opts.pageToken));
 
   const res = execLarkCli(args) as CliRecordListResponse;
   if (!res.ok || !res.data) {
@@ -309,12 +321,12 @@ export async function fetchAllRecords(
 
   while (true) {
     const args = [
-      "base", "+record-list", "--base-token", BASE_TOKEN, "--table-id", tableId,
-      "--limit", "200", "--offset", String(offset),
+      "base", "+record-list", flag("base-token", BASE_TOKEN), flag("table-id", tableId),
+      flag("limit", 200), flag("offset", offset),
     ];
-    if (opts.viewId) args.push("--view-id", opts.viewId);
+    if (opts.viewId) args.push(flag("view-id", opts.viewId));
     if (opts.fieldNames?.length) {
-      for (const id of resolveFieldIds(tableId, opts.fieldNames)) args.push("--field-id", id);
+      for (const id of resolveFieldIds(tableId, opts.fieldNames)) args.push(flag("field-id", id));
     }
 
     const res = execLarkCli(args) as CliRecordListResponse;
@@ -347,14 +359,14 @@ export async function filterRecords(
   tableId: TableId,
   opts: QueryOptions = {}
 ): Promise<FetchResult> {
-  const args = ["base", "+record-list", "--base-token", BASE_TOKEN, "--table-id", tableId];
+  const args = ["base", "+record-list", flag("base-token", BASE_TOKEN), flag("table-id", tableId)];
 
-  if (opts.viewId) args.push("--view-id", opts.viewId);
+  if (opts.viewId) args.push(flag("view-id", opts.viewId));
   if (opts.fieldNames?.length) {
-    for (const id of resolveFieldIds(tableId, opts.fieldNames)) args.push("--field-id", id);
+    for (const id of resolveFieldIds(tableId, opts.fieldNames)) args.push(flag("field-id", id));
   }
-  if (opts.pageSize) args.push("--limit", String(Math.min(opts.pageSize, 200)));
-  if (opts.pageToken) args.push("--offset", opts.pageToken);
+  if (opts.pageSize) args.push(flag("limit", Math.min(opts.pageSize, 200)));
+  if (opts.pageToken) args.push(flag("offset", opts.pageToken));
 
   // Build filter JSON
   if (opts.filter?.length) {
@@ -362,13 +374,13 @@ export async function filterRecords(
       logic: "and",
       conditions: opts.filter,
     };
-    args.push("--filter-json", JSON.stringify(filterJson));
+    args.push(flag("filter-json", JSON.stringify(filterJson)));
   }
 
   // Build sort JSON
   if (opts.sort?.length) {
     const sortJson = opts.sort.map((s) => ({ field: s.field, desc: s.desc ?? false }));
-    args.push("--sort-json", JSON.stringify(sortJson));
+    args.push(flag("sort-json", JSON.stringify(sortJson)));
   }
 
   const res = execLarkCli(args) as CliRecordListResponse;
@@ -422,8 +434,8 @@ export async function searchRecords(
   if (opts.selectFields?.length) searchJson["select_fields"] = resolveFieldIds(tableId, opts.selectFields);
 
   const res = execLarkCli([
-    "base", "+record-search", "--base-token", BASE_TOKEN, "--table-id", tableId,
-    "--json", JSON.stringify(searchJson),
+    "base", "+record-search", flag("base-token", BASE_TOKEN), flag("table-id", tableId),
+    flag("json", JSON.stringify(searchJson)),
   ]) as CliRecordListResponse;
 
   if (!res.ok || !res.data) {
@@ -447,10 +459,10 @@ export async function getRecordsById(
 ): Promise<LarkRecord[]> {
   if (recordIds.length === 0) return [];
 
-  const args = ["base", "+record-get", "--base-token", BASE_TOKEN, "--table-id", tableId];
-  for (const id of recordIds) args.push("--record-id", id);
+  const args = ["base", "+record-get", flag("base-token", BASE_TOKEN), flag("table-id", tableId)];
+  for (const id of recordIds) args.push(flag("record-id", id));
   if (opts.fieldNames?.length) {
-    for (const id of resolveFieldIds(tableId, opts.fieldNames)) args.push("--field-id", id);
+    for (const id of resolveFieldIds(tableId, opts.fieldNames)) args.push(flag("field-id", id));
   }
 
   const res = execLarkCli(args) as CliRecordListResponse;
@@ -541,13 +553,13 @@ export async function getDashboardKPIs(
   period: string;
 }>> {
   const args = [
-    "base", "+record-list", "--base-token", BASE_TOKEN,
-    "--table-id", TABLES.DASHBOARD_SUMMARY,
-    "--field-id", "Period", "--field-id", "Dashboard Type",
-    "--field-id", "Metric Key", "--field-id", "Metric Label",
-    "--field-id", "Metric Value", "--field-id", "Metric Unit",
-    "--field-id", "Change", "--field-id", "Trend",
-    "--limit", "200",
+    "base", "+record-list", flag("base-token", BASE_TOKEN),
+    flag("table-id", TABLES.DASHBOARD_SUMMARY),
+    flag("field-id", "Period"), flag("field-id", "Dashboard Type"),
+    flag("field-id", "Metric Key"), flag("field-id", "Metric Label"),
+    flag("field-id", "Metric Value"), flag("field-id", "Metric Unit"),
+    flag("field-id", "Change"), flag("field-id", "Trend"),
+    flag("limit", 200),
   ];
 
   const res = execLarkCli(args) as CliRecordListResponse;
@@ -577,10 +589,10 @@ export async function getDashboardKPIs(
 /** Get distinct periods available in DASHBOARD_SUMMARY, newest first. */
 export async function getDashboardPeriods(): Promise<string[]> {
   const args = [
-    "base", "+record-list", "--base-token", BASE_TOKEN,
-    "--table-id", TABLES.DASHBOARD_SUMMARY,
-    "--field-id", "Period",
-    "--limit", "200",
+    "base", "+record-list", flag("base-token", BASE_TOKEN),
+    flag("table-id", TABLES.DASHBOARD_SUMMARY),
+    flag("field-id", "Period"),
+    flag("limit", 200),
   ];
 
   const res = execLarkCli(args) as CliRecordListResponse;
@@ -867,9 +879,9 @@ export async function downloadAttachments(
     try {
       const res = execLarkCli([
         "base", "+record-download-attachment",
-        "--base-token", BASE_TOKEN, "--table-id", tableId, "--record-id", recordId,
-        "--file-token", token, "--output", outputDir,
-        ...(opts.overwrite ? ["--overwrite"] : []),
+        flag("base-token", BASE_TOKEN), flag("table-id", tableId), flag("record-id", recordId),
+        flag("file-token", token), flag("output", outputDir),
+        ...(opts.overwrite ? [flag("overwrite", true)] : []),
       ]) as {
         ok: boolean;
         data?: { downloaded?: Array<{ file_token: string; name: string; saved_path: string; content_type?: string }> };
@@ -926,10 +938,10 @@ export async function resolveRecordAttachments(
     try {
       const args = [
         "base", "+record-download-attachment",
-        "--base-token", BASE_TOKEN, "--table-id", tableId, "--record-id", recordId,
-        "--output", outputDir, "--format", "json",
+        flag("base-token", BASE_TOKEN), flag("table-id", tableId), flag("record-id", recordId),
+        flag("output", outputDir), flag("format", "json"),
       ];
-      for (const t of tokens) args.push("--file-token", t);
+      for (const t of tokens) args.push(flag("file-token", t));
 
       const res = execLarkCli(args) as {
         ok: boolean;
@@ -977,8 +989,8 @@ export async function upsertRecord(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const res = execLarkCli([
-      "base", "+record-upsert", "--base-token", BASE_TOKEN, "--table-id", tableId,
-      "--record-id", recordId, "--json", JSON.stringify(fields),
+      "base", "+record-upsert", flag("base-token", BASE_TOKEN), flag("table-id", tableId),
+      flag("record-id", recordId), flag("json", JSON.stringify(fields)),
     ]) as { ok: boolean; error?: { message: string } };
 
     if (res.ok) return { success: true };
@@ -1001,8 +1013,8 @@ export async function createRecords(
 
   try {
     const res = execLarkCli([
-      "base", "+record-batch-create", "--base-token", BASE_TOKEN, "--table-id", tableId,
-      "--json", JSON.stringify({ fields: fieldIds, rows }),
+      "base", "+record-batch-create", flag("base-token", BASE_TOKEN), flag("table-id", tableId),
+      flag("json", JSON.stringify({ fields: fieldIds, rows })),
     ]) as { ok: boolean; data?: { records?: unknown[] }; error?: { message: string } };
 
     if (res.ok) return { success: true, created: res.data?.records?.length ?? records.length };
@@ -1021,8 +1033,8 @@ export async function batchUpdateRecords(
 
   try {
     const res = execLarkCli([
-      "base", "+record-batch-update", "--base-token", BASE_TOKEN, "--table-id", tableId,
-      "--json", JSON.stringify({ record_id_list: recordIds, patch }),
+      "base", "+record-batch-update", flag("base-token", BASE_TOKEN), flag("table-id", tableId),
+      flag("json", JSON.stringify({ record_id_list: recordIds, patch })),
     ]) as { ok: boolean; data?: { records?: unknown[] }; error?: { message: string } };
 
     if (res.ok) return { success: true, updated: res.data?.records?.length ?? recordIds.length };
@@ -1040,8 +1052,8 @@ export async function deleteRecords(
 
   try {
     const res = execLarkCli([
-      "base", "+record-delete", "--base-token", BASE_TOKEN, "--table-id", tableId,
-      "--json", JSON.stringify({ record_id_list: recordIds }), "--yes",
+      "base", "+record-delete", flag("base-token", BASE_TOKEN), flag("table-id", tableId),
+      flag("json", JSON.stringify({ record_id_list: recordIds })), flag("yes", true),
     ]) as { ok: boolean; data?: { records?: unknown[] }; error?: { message: string } };
 
     if (res.ok) return { success: true, deleted: res.data?.records?.length ?? recordIds.length };
@@ -1077,7 +1089,7 @@ export interface LarkView {
 export async function fetchView(tableId: TableId, viewId: string): Promise<LarkView | null> {
   try {
     const res = execLarkCli([
-      "base", "+view-get", "--base-token", BASE_TOKEN, "--table-id", tableId, "--view-id", viewId,
+      "base", "+view-get", flag("base-token", BASE_TOKEN), flag("table-id", tableId), flag("view-id", viewId),
     ]) as {
       ok: boolean;
       data?: { view?: { view_id: string; view_name: string; view_type: string; property?: LarkView["property"] } };
@@ -1100,7 +1112,7 @@ export async function fetchView(tableId: TableId, viewId: string): Promise<LarkV
 export async function fetchViewFilter(tableId: TableId, viewId: string) {
   try {
     const res = execLarkCli([
-      "base", "+view-get-filter", "--base-token", BASE_TOKEN, "--table-id", tableId, "--view-id", viewId,
+      "base", "+view-get-filter", flag("base-token", BASE_TOKEN), flag("table-id", tableId), flag("view-id", viewId),
     ]) as { ok: boolean; data?: { filter?: unknown }; error?: { message: string } };
 
     if (!res.ok) { console.error("[LarkCLI] fetchViewFilter error:", res.error); return null; }
@@ -1114,7 +1126,7 @@ export async function fetchViewFilter(tableId: TableId, viewId: string) {
 export async function fetchViewVisibleFields(tableId: TableId, viewId: string): Promise<string[] | null> {
   try {
     const res = execLarkCli([
-      "base", "+view-get-visible-fields", "--base-token", BASE_TOKEN, "--table-id", tableId, "--view-id", viewId,
+      "base", "+view-get-visible-fields", flag("base-token", BASE_TOKEN), flag("table-id", tableId), flag("view-id", viewId),
     ]) as { ok: boolean; data?: { visible_fields?: string[] }; error?: { message: string } };
 
     if (!res.ok) { console.error("[LarkCLI] fetchViewVisibleFields error:", res.error); return null; }
@@ -1128,7 +1140,7 @@ export async function fetchViewVisibleFields(tableId: TableId, viewId: string): 
 export async function listViews(tableId: TableId) {
   try {
     const res = execLarkCli([
-      "base", "+view-list", "--base-token", BASE_TOKEN, "--table-id", tableId,
+      "base", "+view-list", flag("base-token", BASE_TOKEN), flag("table-id", tableId),
     ]) as { ok: boolean; data?: { views?: Array<{ id: string; name: string; type: string }> }; error?: { message: string } };
 
     if (!res.ok) { console.error("[LarkCLI] listViews error:", res.error); return []; }

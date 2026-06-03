@@ -17,13 +17,18 @@ const isVideo = (n: string, t?: string) => /\.(mp4|mov|avi|mkv|webm|m4v)$/i.test
 const isImage = (n: string, t?: string) => /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(n) || (!!t && t.startsWith("image/"));
 
 export default async function LiveCatalogPage() {
-  const view = await fetchView(TABLES.LIVE_MC_LIST, VIEWS.MC_ALL);
-  if (!view) {
-    console.error(`[LiveCatalog] View ${VIEWS.MC_ALL} not found or inaccessible`);
+  let res: { data: import("@/lib/lark-cli-bridge").LarkRecord[] } = { data: [] };
+  try {
+    const view = await fetchView(TABLES.LIVE_MC_LIST, VIEWS.MC_ALL);
+    if (!view) {
+      console.error(`[LiveCatalog] View ${VIEWS.MC_ALL} not found or inaccessible`);
+      return <LiveCatalogClient mcs={[]} />;
+    }
+    res = await fetchRecords(TABLES.LIVE_MC_LIST, { viewId: VIEWS.MC_ALL, pageSize: LIVE_CATALOG_PAGE_SIZE });
+  } catch (e) {
+    console.warn("[LiveCatalog] Data unavailable at build time:", e);
     return <LiveCatalogClient mcs={[]} />;
   }
-
-  const res = await fetchRecords(TABLES.LIVE_MC_LIST, { viewId: VIEWS.MC_ALL, pageSize: LIVE_CATALOG_PAGE_SIZE });
 
   // First pass: build MC objects + collect cover tokens
   const mcs: LiveMC[] = [];

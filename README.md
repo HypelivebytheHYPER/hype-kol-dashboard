@@ -154,10 +154,10 @@ dashboard/
 ## Environment Variables
 
 ```bash
-LARK_BASE_TOKEN="H2GQbZBFqaUW2usqPswlczYggWg"  # Base token for lark-cli
-LARK_APP_ID="cli_a8a819818eb9d029"               # Lark app ID
-LARK_APP_SECRET="xxx"                             # Lark app secret
-LARK_DASHBOARD_ID="blkEow75KKNcxFRE"             # Dashboard ID (deprecated, blocks broken)
+LARK_BASE_TOKEN="your-lark-base-token-here"       # Base token for lark-cli
+LARK_APP_ID="your-app-id-here"                    # Lark app ID (optional)
+LARK_APP_SECRET="your-app-secret-here"            # Lark app secret (optional)
+LARK_DASHBOARD_ID="your-dashboard-id-here"        # Dashboard ID (deprecated, blocks broken)
 ```
 
 ---

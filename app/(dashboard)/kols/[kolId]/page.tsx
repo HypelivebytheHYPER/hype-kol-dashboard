@@ -11,7 +11,12 @@ export async function generateMetadata({
   params: Promise<{ kolId: string }>;
 }): Promise<Metadata> {
   const { kolId } = await params;
-  const kol = await loadKOLProfile(kolId);
+  let kol: import("@/lib/types").Creator | null = null;
+  try {
+    kol = await loadKOLProfile(kolId);
+  } catch (e) {
+    console.warn(`[KOLProfile] Metadata fetch failed for ${kolId}:`, e);
+  }
   if (!kol) return { title: "Not Found" };
 
   const title = `${kol.name} (@${kol.handle})`;
@@ -47,7 +52,12 @@ export default async function KOLProfilePage({
   params: Promise<{ kolId: string }>;
 }) {
   const { kolId } = await params;
-  const kol = await loadKOLProfile(kolId);
+  let kol: import("@/lib/types").Creator | null = null;
+  try {
+    kol = await loadKOLProfile(kolId);
+  } catch (e) {
+    console.warn(`[KOLProfile] Page data fetch failed for ${kolId}:`, e);
+  }
   if (!kol) notFound();
 
   // Schema.org Person structured data for rich snippets

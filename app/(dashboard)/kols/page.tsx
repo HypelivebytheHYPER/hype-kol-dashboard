@@ -21,6 +21,12 @@ export const revalidate = 300; // = REVALIDATE_SECONDS
 // `loadKOLCatalog` fetches + parses the full catalog. Underlying fetch()
 // uses Next.js cache tags, so HTTP responses are deduped across pages.
 export default async function KOLsPage() {
-  const { creators } = await loadKOLCatalog();
+  let creators: import("@/lib/types").Creator[] = [];
+  try {
+    const catalog = await loadKOLCatalog();
+    creators = catalog.creators;
+  } catch (e) {
+    console.warn("[KOLs] Catalog unavailable at build time:", e);
+  }
   return <KOLsListClient initialKOLs={creators} total={creators.length} />;
 }
