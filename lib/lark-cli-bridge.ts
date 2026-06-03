@@ -197,6 +197,35 @@ function execLarkCli(args: string[], opts: ExecOptions = {}): unknown {
     cmd = `node ${runScript} ${cmdArgs.join(" ")} 2>&1`;
   }
 
+  // On Vercel (and other CI), lark-cli needs app credentials to authenticate.
+  // Write a temporary config file so lark-cli can get a tenant_access_token.
+  const appId = process.env["LARK_APP_ID"];
+  const appSecret = process.env["LARK_APP_SECRET"];
+  const larkCliDir = join(tmpdir(), ".lark-cli");
+  if (appId && appSecret) {
+    try {
+      mkdirSync(larkCliDir, { recursive: true });
+      const configPath = join(larkCliDir, "config.json");
+      const config = {
+        strictMode: "off",
+        apps: [
+          {
+            appId,
+            appSecret: { source: "plaintext", value: appSecret },
+            brand: "lark",
+            lang: "zh",
+            defaultAs: "bot",
+            users: [],
+          },
+        ],
+      };
+      require("node:fs").writeFileSync(configPath, JSON.stringify(config, null, 2));
+      process.env["LARK_CLI_CONFIG_DIR"] = larkCliDir;
+    } catch {
+      // ignore config write errors — lark-cli may already be configured
+    }
+  }
+
   const stdout = execSync(cmd, { encoding: "utf-8", maxBuffer: 50 * 1024 * 1024 });
   return JSON.parse(stdout);
 }
